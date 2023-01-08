@@ -1,9 +1,9 @@
 use crate::windowman::{AppWin, View};
-use chrono::{Local, TimeZone, Timelike};
+use chrono::{Local, Timelike};
 use eframe::epaint::{self, CircleShape};
 use egui::{emath, pos2, vec2, Color32, Frame, Pos2, Rect, Stroke};
 
-use std::f32::consts::PI;
+use std::f32::consts::TAU;
 
 pub struct Clock {}
 
@@ -36,13 +36,8 @@ impl View for Clock {
             Color32::from_black_alpha(240)
         };
 
-        let dt = Local::now();
-        ui.label(format!("{}", dt.to_string()));
-
         Frame::canvas(ui.style()).show(ui, |ui| {
             ui.ctx().request_repaint();
-            // let time = ui.input().time; // time since app start in millis
-
             let desired_size = ui.available_width() * vec2(1., 1.);
             let (_id, rect) = ui.allocate_space(desired_size);
 
@@ -55,45 +50,66 @@ impl View for Clock {
             let circle = epaint::Shape::Circle(circleshape);
             ui.painter().add(circle);
 
+            let marks = draw_marks(circ_center, radius, color);
+            ui.painter().extend(marks);
+
             let hands = draw_hands(circ_center, radius, color);
             ui.painter().extend(hands);
         });
     }
 }
 
-fn draw_hands(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {
-    let dt = Local::now();
-    let hour_angle = (2. * PI / 24.) * dt.hour() as f32;
-    let minute_angle = (2. * PI / 60.) * dt.minute() as f32;
-    let second_angle = (2. * PI / 60.) * dt.second() as f32;
-    let hour_coord = calc_polar_coord(hour_angle, radius * 0.8, center);
-    let minute_coord = calc_polar_coord(minute_angle, 100., center);
-    let second_coord = calc_polar_coord(second_angle, 100., center);
+fn draw_marks(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {
+    let angle = |period, time: f32| TAU * (time.rem_euclid(period) / period) as f32 - TAU / 4.0;
+    let coord = |angle: f32, radius: f32| {
+        pos2(
+            center[0] + radius * angle.cos(),
+            center[1] + radius * angle.sin(),
+        )
+    };
     let mut shapes = vec![];
-    for coord in [hour_coord, minute_coord, second_coord] {
-        let shape = epaint::Shape::line_segment([center, coord], Stroke::new(2.0, color));
+    for h in 0..12 {
+        let _angle = angle(12., h as f32);
+        let _inner_coord = coord(_angle, radius * 0.9);
+        let _outer_coord = coord(_angle, radius);
+        let shape =
+            epaint::Shape::line_segment([_inner_coord, _outer_coord], Stroke::new(2.0, color));
         shapes.push(shape)
     }
     shapes
 }
 
-fn calc_polar_coord(angle: f32, radius: f32, center: Pos2) -> Pos2 {
-    let x = center[0] + radius * angle.cos();
-    let y = center[1] + radius * angle.sin();
-    pos2(x, y)
-}
+/// Draw hands of the clock
+fn draw_hands(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {
+    let dt = Local::now(); // We need this to get nanoseconds (to get a smooth movement on the sec hand)
+    let sfm = dt.num_seconds_from_midnight() as f32; // we need this to get fractional hours
 
-fn calc_circle_points(points: u32, radius: f32, center: Pos2) -> Vec<Pos2> {
-    debug!("circ_center is {:?}", center);
-    let slice: f32 = 2. * PI / points as f32;
-    let mut result = vec![];
-    for i in 0..points {
-        let angle = slice * i as f32;
-        let new_x = center[0] + radius * angle.cos();
-        let new_y = center[1] + radius * angle.sin();
-        debug!("Point is {:?}", (new_x, new_y));
-        result.push(pos2(new_x, new_y));
-    }
+    // Closures to calculate the angle and polar coordinates for the hands
+    let angle = |period, time: f32| TAU * (time.rem_euclid(period) / period) as f32 - TAU / 4.0;
+    let coord = |angle: f32, radius: f32| {
+        pos2(
+            center[0] + radius * angle.cos(),
+            center[1] + radius * angle.sin(),
+        )
+    };
 
-    result
+    // The hour hand
+    let hour_angle = angle(12. * 60. * 60., sfm);
+    let hour_coord = coord(hour_angle, radius * 0.6);
+    let hour_hand = epaint::Shape::line_segment([center, hour_coord], Stroke::new(3.0, color));
+
+    // The minute hand
+    let minute_angle = angle(60. * 60., sfm);
+    let minute_coord = coord(minute_angle, radius * 0.85);
+    let minute_hand = epaint::Shape::line_segment([center, minute_coord], Stroke::new(2.0, color));
+
+    // The second hand
+    let frac_secs = dt.second() as f32 + dt.nanosecond() as f32 / 1_000_000_000.;
+    let second_angle = angle(60., frac_secs as f32);
+    let second_coord = coord(second_angle, radius * 0.85);
+    let second_hand =
+        epaint::Shape::line_segment([center, second_coord], Stroke::new(2.0, Color32::RED));
+
+    // Return vector of shapes
+    vec![hour_hand, minute_hand, second_hand]
 }
