@@ -17,5 +17,5 @@ Included:
 
 ## Technical
 Perhabs is written in Rust and relies primarily on the following crates:
-- egui for its UI
-- tts for all spoken cues
+- [egui](https://crates.io/crates/egui) [demo](https://egui.rs) for its UI
+- [tts](https://crates.io/crates/tts) for all spoken cues
