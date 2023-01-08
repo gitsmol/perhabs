@@ -81,10 +81,12 @@ fn draw_marks(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {
 
 /// Draw hands of the clock
 fn draw_hands(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {
-    let dt = Local::now(); // We need this to get nanoseconds (to get a smooth movement on the sec hand)
-    let sfm = dt.num_seconds_from_midnight() as f32; // we need this to get fractional hours
+    let dt = Local::now(); // to get nanoseconds (smooth movement on sec hand)
+    let sfm = dt.num_seconds_from_midnight() as f32; // to get fractional hours
 
     // Closures to calculate the angle and polar coordinates for the hands
+    // NOTE subtracting TAU / 4 rotates the clock -90 deg. This way 0hr is topleft
+    // instead of bottomleft (as in a usual x, y coord system).
     let angle = |period, time: f32| TAU * (time.rem_euclid(period) / period) as f32 - TAU / 4.0;
     let coord = |angle: f32, radius: f32| {
         pos2(

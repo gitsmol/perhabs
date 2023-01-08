@@ -1,23 +1,19 @@
 use crate::windowman::{AppWin, View};
-use egui::{color_picker::show_color, vec2, Color32};
+use chrono::{Local, Timelike};
+use eframe::epaint::{self, CircleShape};
+use egui::{emath, pos2, vec2, Color32, Frame, Pos2, Rect, Stroke};
 
-use ndarray::Array2;
+use std::f32::consts::TAU;
 
-pub struct Vergence {
-    matrix_size: u32,
-    matrix: Array2<u8>,
-}
-
-impl Vergence {}
+pub struct Vergence {}
 
 impl Default for Vergence {
     fn default() -> Self {
-        Self {
-            matrix_size: 10,
-            matrix: Array2::<u8>::zeros((10, 10)),
-        }
+        Self {}
     }
 }
+
+impl Vergence {}
 
 impl AppWin for Vergence {
     fn name(&self) -> &'static str {
@@ -28,19 +24,25 @@ impl AppWin for Vergence {
         egui::Window::new(self.name())
             .open(open)
             .default_height(500.0)
-            .show(ctx, |ui| self.ui(ui, &mut spk));
+            .show(ctx, |ui| self.ui(ui, spk));
     }
 }
 
 impl View for Vergence {
-    fn ui(&mut self, ui: &mut egui::Ui, mut spk: &mut tts::Tts) {
-        ui.heading("Vergence test");
-        let color = Color32::BLUE;
-        let size = vec2(10.0, 10.0);
-        for i in self.matrix.rows() {
-            for x in self.matrix.columns() {
-                show_color(ui, color, size);
-            }
-        }
+    fn ui(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
+        let color = if ui.visuals().dark_mode {
+            Color32::from_additive_luminance(196)
+        } else {
+            Color32::from_black_alpha(240)
+        };
+
+        Frame::canvas(ui.style()).show(ui, |ui| {
+            ui.ctx().request_repaint();
+            let desired_size = ui.available_width() * vec2(1., 1.);
+            let (_id, rect) = ui.allocate_space(desired_size);
+
+            let to_screen =
+                emath::RectTransform::from_to(Rect::from_x_y_ranges(0.0..=1.0, -1.0..=1.0), rect);
+        });
     }
 }

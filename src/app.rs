@@ -1,3 +1,5 @@
+use egui::{Align2, Vec2};
+
 use crate::windowman::Windows;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
@@ -65,13 +67,20 @@ impl eframe::App for Perhabs {
             speaker,
         } = self;
 
-        egui::SidePanel::left("Left panel").show(ctx, |ui| {
-            ui.vertical(|ui| {
-                self.windows.checkboxes(ui);
-            });
-        });
-
         egui::CentralPanel::default().show(ctx, |ui| {
+            egui::Window::new("Windows")
+                .anchor(Align2::RIGHT_TOP, (0., 0.))
+                .resizable(false)
+                .collapsible(false)
+                .show(ctx, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Theme");
+                        egui::widgets::global_dark_light_mode_buttons(ui);
+                    });
+                    ui.separator();
+                    self.windows.checkboxes(ui);
+                });
+            // Show open windows
             self.windows.windows(ctx, &mut self.speaker);
         });
 
