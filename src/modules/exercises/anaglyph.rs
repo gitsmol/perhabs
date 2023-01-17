@@ -1,5 +1,5 @@
 use eframe::{emath, epaint::RectShape};
-use egui::{pos2, style::Margin, vec2, Color32, Frame, Rect, Shape};
+use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape, Vec2};
 use ndarray::Array2;
 use ndarray_rand::{rand_distr::Binomial, RandomExt};
 use perhabs::{Direction, PhError};
@@ -18,8 +18,6 @@ impl Default for AnaglyphColor {
         }
     }
 }
-
-enum Position {}
 
 /// Struct for anaglyph images. Each image consists of a background and a focal point.
 /// draw() draws both focal point and background in order, according to the pub variables.
@@ -61,15 +59,51 @@ impl Anaglyph {
         self.pixel_array = Array2::random((self.grid_size, self.grid_size), distr);
         self.focal_array = Array2::random((self.grid_size, self.grid_size), distr);
         self.mask_array = Array2::zeros((self.grid_size, self.grid_size));
-        self.draw_focal(Direction::Left);
+        // self.draw_focal(Direction::Left);
     }
 
     /// Draws the background from a randomly generated self.bg_pixel_array.
     /// Draw_focal needs to be called beforehand so the pixels in the focal
     /// point are removed from the background array.
-    fn draw_background(self: &mut Self) -> Result<Vec<Shape>, std::io::Error> {
-        let mut shapes = vec![];
-        Ok(shapes)
+    fn draw_background(
+        self: &mut Self,
+        eye: Direction,
+        origin: &Pos2,
+    ) -> Result<Vec<Shape>, PhError> {
+        // Left/right image gets appropriate coloring and the offset value is split between them
+        let (color, bg_offset) = match eye {
+            Direction::Left => (self.color.left, (self.bg_offset as f32 * -0.5) as i32),
+            Direction::Right => (self.color.right, (self.bg_offset as f32 * 0.5) as i32),
+            _ => (self.color.left, 0),
+        };
+
+        // Create set of rectangles and push them to the screen
+        let mut rects = vec![];
+        // create rows
+        for y in 0..self.grid_size {
+            // fill in each row
+            for x in 0..self.grid_size {
+                // only create a 'pixel' if the random seed is 1 for this coord
+                if self.pixel_array[[x, y]] == 1 {
+                    let coords_min = vec2(
+                        (x * self.pixel_size) as f32 + bg_offset as f32,
+                        (y * self.pixel_size) as f32,
+                    );
+                    let coords_max =
+                        coords_min + vec2(self.pixel_size as f32, self.pixel_size as f32);
+                    let sq = RectShape::filled(
+                        Rect {
+                            min: *origin + coords_min,
+                            max: *origin + coords_max,
+                        },
+                        0.0,
+                        color,
+                    );
+                    rects.push(Shape::Rect(sq));
+                }
+            }
+        }
+        Ok(rects)
     }
 
     /// Draws a diamond shaped focal point. Removes the datapoints for the focal point from
@@ -79,17 +113,17 @@ impl Anaglyph {
     /// Focal offset creates the illusion of the focal point being in front of the background.
     /// To achieve this effect, the focal point is shifted slightly to the center of vision
     /// relative to the background. The brain interprets this as the object being closer.
-    fn draw_focal(self: &mut Self, eye: Direction) -> () {
+    fn draw_focal(self: &mut Self, eye: Direction, origin: &Pos2) -> Result<Vec<Shape>, PhError> {
         let (color, bg_offset, focal_offset) = match eye {
             Direction::Left => (
                 self.color.left,
-                (self.bg_offset as f32 * -0.5) as i32, // bg moves further apart
-                (self.focal_offset as f32 * 0.5) as i32, // focal is moved closer
+                (self.bg_offset as f32 * 0.5) as usize,
+                (self.focal_offset as f32 * 0.5) as usize, // focal is moved closer
             ),
             Direction::Right => (
                 self.color.right,
-                (self.bg_offset as f32 * 0.5) as i32,
-                (self.focal_offset as f32 * -0.5) as i32,
+                (self.bg_offset as f32 * -0.5) as usize,
+                (self.focal_offset as f32 * -0.5) as usize,
             ),
             _ => (self.color.left, 0, 0),
         };
@@ -103,8 +137,7 @@ impl Anaglyph {
         };
 
         // Determine the starting point for 'drawing' the diamond shape in the array
-        let focal_size = self.grid_size as f32 * self.focal_size_rel; // 35
-                                                                      // let focal_pixel_count = focal_size / self.pixel_size as f32; // 35 / 1
+        let focal_size = self.grid_size as f32 * self.focal_size_rel;
         let x_min = self.grid_size as f32 * focal_loc.0;
         let y_min = self.grid_size as f32 * focal_loc.1 - focal_size / 2.;
         let focal_size = focal_size as usize;
@@ -114,16 +147,18 @@ impl Anaglyph {
         // step means: how many extra pixels to draw on each subsequent row of the matrix
         // by incrementing the amount of pixels to draw, a triangle shape is created
         let step = (focal_size / (focal_size / 2)) as usize;
-        // create a list of the number of pixels to draw on each row
+        // create a vec of the number of pixels to draw on each row
         for i in (0..focal_size).step_by(step) {
             diamond.push(i)
         }
-        // finally, extend the list with itself reversed,
+        // finally, extend the vec with itself reversed,
         // effectively appending an upside down triangle
         let mut rev = diamond.clone();
         rev.reverse();
         diamond.extend(rev);
 
+        let mut rects = vec![];
+        // Now
         let zip = zip(0..diamond.len(), diamond.iter());
         for (y, pixels) in zip {
             let y = y_min as usize + y; // == y_min + current row
@@ -131,8 +166,28 @@ impl Anaglyph {
                                                  // must be drawn left of center
             for x in x..(x + pixels) {
                 self.pixel_array[[x + focal_offset as usize, y]] = 0; // remove the diamond from the bg array
+
+                if self.focal_array[[x, y]] == 1 {
+                    // draw focal pixels
+                    let coords_min = vec2(
+                        (x * self.pixel_size + bg_offset + focal_offset) as f32,
+                        (y * self.pixel_size) as f32,
+                    );
+                    let coords_max =
+                        coords_min + vec2(self.pixel_size as f32, self.pixel_size as f32);
+                    let sq = RectShape::filled(
+                        Rect {
+                            min: *origin + coords_min,
+                            max: *origin + coords_max,
+                        },
+                        0.0,
+                        color,
+                    );
+                    rects.push(Shape::Rect(sq));
+                }
             }
         }
+        Ok(rects)
     }
 
     /// Draw the background pixels and the focal pixes for left and right eye.
@@ -141,7 +196,7 @@ impl Anaglyph {
     //  Generate pixel array for the background
     //  Generate pixel array for the shape of the focal point
     //  Remove focal point shape from background (with slight offset)
-    //  Generate focal array in the shpae of the focal point
+    //  Generate focal array in the shape of the focal point
     // Per frame:
     //  Draw the bg array (func takes ui, left/right eye)
     //  Draw the focal array (func takes ui, left/right eye)
@@ -158,12 +213,12 @@ impl Anaglyph {
                 // Determine size of drawing surface: full screen
                 let desired_size = ui.available_size_before_wrap();
                 let (_id, rect) = ui.allocate_space(desired_size);
-
                 // Determine starting coords to end up with a centered drawing
                 let to_screen = emath::RectTransform::from_to(
                     Rect::from_x_y_ranges(0.0..=1.0, -1.0..=1.0),
                     rect,
                 );
+
                 // how many pixels do we need?
                 let drawsize: f32 = self.grid_size as f32 * self.pixel_size as f32;
                 let rel_size_x = drawsize / desired_size[0] / 2.; // how wide is half a drawing?
@@ -171,36 +226,20 @@ impl Anaglyph {
                 let screen_offset = pos2(0.5 - rel_size_x, 0.0 - rel_size_y);
                 let origin = to_screen * screen_offset;
 
-                // We need two glyphs in two distinct colors (left and right eye)
-                // After we create the glyphs, we punch holes in them.
-                // Then we draw the focal points.
+                let bg_left = self
+                    .draw_background(Direction::Left, &origin)
+                    .unwrap_or_default(); // TODO error handling
+                let bg_right = self
+                    .draw_background(Direction::Right, &origin)
+                    .unwrap_or_default(); // TODO error handling
 
-                // Create set of rectangles and push them to the screen
-                let mut rects = vec![];
-                // create rows
-                for y in 0..self.grid_size {
-                    // fill in each row
-                    for x in 0..self.grid_size {
-                        // only create a 'pixel' if the random seed is 1 for this coord
-                        if self.pixel_array[[x, y]] == 1 {
-                            let coords_min =
-                                vec2((x * self.pixel_size) as f32, (y * self.pixel_size) as f32);
-                            let coords_max =
-                                coords_min + vec2(self.pixel_size as f32, self.pixel_size as f32);
-                            let sq = RectShape::filled(
-                                Rect {
-                                    min: origin + coords_min,
-                                    max: origin + coords_max,
-                                },
-                                0.0,
-                                color,
-                            );
-                            rects.push(Shape::Rect(sq));
-                        }
-                    }
-                }
+                let focal_left = self.draw_focal(Direction::Left, &origin).unwrap();
+                let focal_right = self.draw_focal(Direction::Right, &origin).unwrap();
 
-                ui.painter().extend(rects);
+                ui.painter().extend(bg_left);
+                ui.painter().extend(bg_right);
+                ui.painter().extend(focal_left);
+                ui.painter().extend(focal_right);
             });
     }
 }

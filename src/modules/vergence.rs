@@ -32,6 +32,12 @@ impl View for Vergence {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
         ui.add(egui::Slider::new(&mut self.anaglyph.pixel_size, 1..=10).suffix("pixel size"));
         ui.add(egui::Slider::new(&mut self.anaglyph.grid_size, 30..=150).suffix("anaglyph size"));
+        if ui
+            .add(egui::Slider::new(&mut self.anaglyph.bg_offset, 0..=30).suffix("bg_offset size"))
+            .changed()
+        {
+            self.anaglyph.gen_pixel_arrays()
+        };
 
         self.anaglyph.draw(ui);
     }

@@ -18,7 +18,7 @@ struct SourceFile {
 #[derive(PartialEq, strum_macros::Display)]
 enum ExerciseType {
     Numbers,
-    Words,
+    Sentences,
 }
 
 struct ExcerciseConfig {
@@ -62,7 +62,7 @@ impl Default for Sequences {
             file: sourcefile,
             config: ExcerciseConfig {
                 keypress_delay: Duration::from_secs(2),
-                exercise_type: ExerciseType::Words,
+                exercise_type: ExerciseType::Sentences,
             },
         }
     }
@@ -88,7 +88,7 @@ impl Sequences {
 
     fn pick_next(&mut self) -> () {
         match self.config.exercise_type {
-            ExerciseType::Words => self.pick_sentence(),
+            ExerciseType::Sentences => self.pick_sentence(),
             ExerciseType::Numbers => self.pick_numbers(),
         };
     }
@@ -157,7 +157,7 @@ impl View for Sequences {
             .show_ui(ui, |ui| {
                 ui.selectable_value(
                     &mut self.config.exercise_type,
-                    ExerciseType::Words,
+                    ExerciseType::Sentences,
                     "Sentences",
                 );
                 ui.selectable_value(
@@ -167,7 +167,7 @@ impl View for Sequences {
                 );
             });
 
-        if self.config.exercise_type == ExerciseType::Words {
+        if self.config.exercise_type == ExerciseType::Sentences {
             egui::ComboBox::from_label("Select sentences file")
                 .selected_text(
                     self.file
