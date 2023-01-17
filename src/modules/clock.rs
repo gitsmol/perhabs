@@ -20,7 +20,7 @@ impl AppWin for Clock {
         "Clock"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, mut spk: &mut tts::Tts) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, spk: &mut tts::Tts) {
         egui::Window::new(self.name())
             .open(open)
             .default_height(500.0)
@@ -29,7 +29,7 @@ impl AppWin for Clock {
 }
 
 impl View for Clock {
-    fn ui(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {
         let color = if ui.visuals().dark_mode {
             Color32::from_additive_luminance(196)
         } else {

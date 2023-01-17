@@ -1,4 +1,4 @@
-use egui::{Align2, Vec2};
+use egui::Align2;
 
 use crate::windowman::Windows;
 
@@ -21,6 +21,7 @@ impl Default for Perhabs {
             windows: Windows::default(),
             error_msg: "".to_string(),
             speaker: tts::Tts::new(tts::Backends::AppKit).unwrap(), // TODO use default (but fix Mac!)
+                                                                    // speaker: tts::Tts::default().unwrap(),
         }
     }
 }

@@ -1,5 +1,7 @@
 pub mod clock;
+pub mod debug_info;
+pub mod exercises;
 pub mod rand_timer;
-pub mod sentences;
 pub mod seq_numbers;
+pub mod sequences;
 pub mod vergence;

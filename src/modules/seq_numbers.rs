@@ -5,22 +5,21 @@ pub struct NumSeq {
     operators: Vec<i32>,
     sequence: Vec<i32>,
     seq_length: u32,
-    operators_num: u32,
+    operators_num: usize,
     operators_var: i32,
     seq_show: bool,
-    operators_fmt: String,
 }
 
 impl NumSeq {
     fn gen_seq(&mut self) -> () {
         self.sequence.resize(1, 0);
         self.operators.resize(0, 0);
-        for _ in 0..self.operators_num {
-            let sign = if fastrand::bool() { 1 } else { -1 };
+        while self.operators.len() < self.operators_num {
+            let sign = if self.operators.len() % 2 == 0 { 1 } else { -1 };
             let op = sign * fastrand::i32(1..=self.operators_var);
-            self.operators.push(op);
-            // self.operators_fmt.push();
-            // self.operators_fmt.push(op)
+            if !self.operators.contains(&op) {
+                self.operators.push(op);
+            }
         }
         for _ in 1..self.seq_length {
             for step in &self.operators {
@@ -42,7 +41,6 @@ impl Default for NumSeq {
             operators_num: 2,
             operators_var: 10,
             seq_show: false,
-            operators_fmt: String::new(),
         }
     }
 }

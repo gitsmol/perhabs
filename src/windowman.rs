@@ -1,5 +1,5 @@
 #![warn(clippy::all)]
-use crate::exercises::{clock, rand_timer, sentences, seq_numbers, vergence};
+use crate::modules::{clock, debug_info, rand_timer, seq_numbers, sequences, vergence};
 use egui::{Context, Ui};
 use std::collections::BTreeSet;
 
@@ -13,10 +13,11 @@ impl Default for Windows {
     fn default() -> Self {
         Self::from_windows(vec![
             Box::new(seq_numbers::NumSeq::default()),
-            Box::new(sentences::Sentences::default()),
+            Box::new(sequences::Sequences::default()),
             Box::new(vergence::Vergence::default()),
             Box::new(rand_timer::RandTimer::default()),
             Box::new(clock::Clock::default()),
+            Box::new(debug_info::DebugInfo::default()),
         ])
     }
 }
@@ -24,7 +25,8 @@ impl Default for Windows {
 impl Windows {
     pub fn from_windows(windows: Vec<Box<dyn AppWin>>) -> Self {
         let mut open = BTreeSet::new();
-        open.insert(clock::Clock::default().name().to_owned());
+        open.insert(vergence::Vergence::default().name().to_owned());
+        open.insert(debug_info::DebugInfo::default().name().to_owned());
         Self { windows, open }
     }
 
