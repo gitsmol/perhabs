@@ -72,12 +72,12 @@ impl Anaglyph {
     ) -> Result<Vec<Shape>, PhError> {
         // Left/right image gets appropriate coloring and the offset value is split between them
         let (color, bg_offset) = match eye {
-            Direction::Left => (self.color.left, (self.bg_offset as f32 * -0.5) as i32),
-            Direction::Right => (self.color.right, (self.bg_offset as f32 * 0.5) as i32),
-            _ => (self.color.left, 0),
+            Direction::Left => (self.color.left, self.bg_offset as f32 * -0.5),
+            Direction::Right => (self.color.right, self.bg_offset as f32 * 0.5),
+            _ => (self.color.left, 0.),
         };
 
-        // Create set of rectangles and push them to the screen
+        // Create rectangles and push them to a vec
         let mut rects = vec![];
         // create rows
         for y in 0..self.grid_size {
@@ -117,15 +117,15 @@ impl Anaglyph {
         let (color, bg_offset, focal_offset) = match eye {
             Direction::Left => (
                 self.color.left,
-                (self.bg_offset as f32 * 0.5) as usize,
-                (self.focal_offset as f32 * 0.5) as usize, // focal is moved closer
+                self.bg_offset as f32 * -0.5,   // bg moves further apart
+                self.focal_offset as f32 * 0.5, // focal moves closer
             ),
             Direction::Right => (
                 self.color.right,
-                (self.bg_offset as f32 * -0.5) as usize,
-                (self.focal_offset as f32 * -0.5) as usize,
+                self.bg_offset as f32 * 0.5,
+                self.focal_offset as f32 * -0.5,
             ),
-            _ => (self.color.left, 0, 0),
+            _ => (self.color.left, 0., 0.),
         };
 
         // Return a tuple giving the position of the focal point relative to the background
@@ -140,7 +140,7 @@ impl Anaglyph {
         let focal_size = self.grid_size as f32 * self.focal_size_rel;
         let x_min = self.grid_size as f32 * focal_loc.0;
         let y_min = self.grid_size as f32 * focal_loc.1 - focal_size / 2.;
-        let focal_size = focal_size as usize;
+        let (x_min, y_min, focal_size) = (x_min as usize, y_min as usize, focal_size as usize);
 
         // create a matrix containing the diamond shape focal point
         let mut diamond = vec![];
@@ -157,21 +157,38 @@ impl Anaglyph {
         rev.reverse();
         diamond.extend(rev);
 
-        let mut rects = vec![];
-        // Now
-        let zip = zip(0..diamond.len(), diamond.iter());
-        for (y, pixels) in zip {
-            let y = y_min as usize + y; // == y_min + current row
-            let x = x_min as usize - pixels / 2; // half of the pixels to be drawn
-                                                 // must be drawn left of center
-            for x in x..(x + pixels) {
-                self.pixel_array[[x + focal_offset as usize, y]] = 0; // remove the diamond from the bg array
+        // For the next part we need to do some type conversions
+        let pixel_size = self.pixel_size as f32;
 
-                if self.focal_array[[x, y]] == 1 {
+        // Now we remove the focal pixels from the background array
+        // and create the pixels (shapes) for the focal point
+        let mut rects = vec![];
+        let zip = zip(0..diamond.len(), diamond.iter());
+
+        // A row has a row number and a number of pixels to fill it
+        for (row, pixels) in zip {
+            // TODO little type conversion problem
+            // array indexing needs usize
+            // all other stuff needs f32
+            // So: convert all to f32
+            // And cast to usize only for indexing
+
+            // Determine x and y coords for the topleft of the first pixel in this row
+            let y = y_min + row; // add the current row to the topmost coord of the glyph
+            let x = x_min - pixels / 2; // Find the horizontal starting coord considering
+                                        // half the pixels must be drawn left of center
+
+            // Iterate over the number of pixels in this row
+            for col in x..(x + pixels) {
+                let x = col as f32;
+                self.pixel_array[[(x + focal_offset) as usize, y]] = 0; // remove the diamond from the bg array
+
+                // Do we need to draw a 'pixel' here?
+                if self.focal_array[[col, row]] == 1 {
                     // draw focal pixels
                     let coords_min = vec2(
-                        (x * self.pixel_size + bg_offset + focal_offset) as f32,
-                        (y * self.pixel_size) as f32,
+                        x * pixel_size + bg_offset + focal_offset,
+                        y as f32 * pixel_size,
                     );
                     let coords_max =
                         coords_min + vec2(self.pixel_size as f32, self.pixel_size as f32);
@@ -193,15 +210,14 @@ impl Anaglyph {
     /// Draw the background pixels and the focal pixes for left and right eye.
     // How?
     // Per anaglyph:
-    //  Generate pixel array for the background
-    //  Generate pixel array for the shape of the focal point
-    //  Remove focal point shape from background (with slight offset)
-    //  Generate focal array in the shape of the focal point
+    //  - Generate pixel arrays for bg and focal_point
+    //  - Remove focal point shape from background (with slight offset)
+    //  - Create focal pixels
+    //  - Create bg pixels
     // Per frame:
     //  Draw the bg array (func takes ui, left/right eye)
     //  Draw the focal array (func takes ui, left/right eye)
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
-        let color = Color32::from_additive_luminance(196);
         if self.pixel_array.nrows() != self.grid_size {
             self.gen_pixel_arrays()
         };
