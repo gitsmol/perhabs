@@ -1,9 +1,14 @@
 use eframe::{emath, epaint::RectShape};
-use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape, Vec2};
+use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
 use ndarray_rand::{rand_distr::Binomial, RandomExt};
 use perhabs::{Direction, PhError};
 use std::iter::zip;
+
+enum Eye {
+    Left,
+    Right,
+}
 
 pub struct AnaglyphColor {
     left: Color32,
@@ -19,19 +24,46 @@ impl Default for AnaglyphColor {
     }
 }
 
+struct AnaglyphArrays {
+    background: Array2<u64>,
+    background_left: Array2<u64>,
+    background_right: Array2<u64>,
+    focal: Array2<u64>,
+    focal_mask: Array2<u64>,
+    diamond: Vec<usize>,
+}
+
+impl Default for AnaglyphArrays {
+    fn default() -> Self {
+        Self {
+            background: Array2::zeros((10, 10)),
+            background_left: Array2::zeros((10, 10)),
+            background_right: Array2::zeros((10, 10)),
+            focal: Array2::zeros((10, 10)),
+            focal_mask: Array2::zeros((10, 10)),
+            diamond: vec![],
+        }
+    }
+}
+
+pub struct Debug {
+    pub draw_left: bool,
+    pub draw_right: bool,
+    pub focal_mark: bool,
+}
+
 /// Struct for anaglyph images. Each image consists of a background and a focal point.
 /// draw() draws both focal point and background in order, according to the pub variables.
 pub struct Anaglyph {
-    pub bg_offset: usize,
-    pub pixel_size: usize,
+    pub background_offset: isize,
+    pub pixel_size: isize,
     pub grid_size: usize,
-    pixel_array: Array2<u64>,
-    focal_array: Array2<u64>,
-    mask_array: Array2<u64>,
-    focal_offset: usize, // The offset creates the illusion of depth
+    pub focal_offset: isize, // The offset creates the illusion of depth
     pub focal_size_rel: f32,
     pub focal_position: Direction, // Where is the focal point?
     pub color: AnaglyphColor,
+    arrays: AnaglyphArrays,
+    pub debug: Debug,
 }
 
 impl Default for Anaglyph {
@@ -39,14 +71,17 @@ impl Default for Anaglyph {
         Self {
             pixel_size: 3,
             grid_size: 100,
-            pixel_array: Array2::zeros((10, 10)),
-            focal_array: Array2::zeros((10, 10)),
-            mask_array: Array2::zeros((10, 10)),
-            bg_offset: 0,
+            arrays: AnaglyphArrays::default(),
+            background_offset: 0,
             focal_offset: 2,
             focal_size_rel: 0.35,
             focal_position: Direction::Up,
             color: AnaglyphColor::default(),
+            debug: Debug {
+                draw_left: true,
+                draw_right: false,
+                focal_mark: false,
+            },
         }
     }
 }
@@ -56,92 +91,19 @@ impl Anaglyph {
     /// to the focal glyphs to create depth illusion.
     pub fn gen_pixel_arrays(&mut self) {
         let distr = Binomial::new(1, 0.5).unwrap();
-        self.pixel_array = Array2::random((self.grid_size, self.grid_size), distr);
-        self.focal_array = Array2::random((self.grid_size, self.grid_size), distr);
-        self.mask_array = Array2::zeros((self.grid_size, self.grid_size));
-        // self.draw_focal(Direction::Left);
+        self.arrays.background = Array2::random((self.grid_size, self.grid_size), distr);
+        self.arrays.background_left = Array2::random((self.grid_size, self.grid_size), distr);
+        self.arrays.background_right = self.arrays.background_left.clone();
+        self.arrays.focal = Array2::random((self.grid_size, self.grid_size), distr);
+        self.arrays.focal_mask = Array2::zeros((self.grid_size, self.grid_size));
+        self.remove_focal_from_bg();
     }
 
-    /// Draws the background from a randomly generated self.bg_pixel_array.
-    /// Draw_focal needs to be called beforehand so the pixels in the focal
-    /// point are removed from the background array.
-    fn draw_background(
-        self: &mut Self,
-        eye: Direction,
-        origin: &Pos2,
-    ) -> Result<Vec<Shape>, PhError> {
-        // Left/right image gets appropriate coloring and the offset value is split between them
-        let (color, bg_offset) = match eye {
-            Direction::Left => (self.color.left, self.bg_offset as f32 * -0.5),
-            Direction::Right => (self.color.right, self.bg_offset as f32 * 0.5),
-            _ => (self.color.left, 0.),
-        };
-
-        // Create rectangles and push them to a vec
-        let mut rects = vec![];
-        // create rows
-        for y in 0..self.grid_size {
-            // fill in each row
-            for x in 0..self.grid_size {
-                // only create a 'pixel' if the random seed is 1 for this coord
-                if self.pixel_array[[x, y]] == 1 {
-                    let coords_min = vec2(
-                        (x * self.pixel_size) as f32 + bg_offset as f32,
-                        (y * self.pixel_size) as f32,
-                    );
-                    let coords_max =
-                        coords_min + vec2(self.pixel_size as f32, self.pixel_size as f32);
-                    let sq = RectShape::filled(
-                        Rect {
-                            min: *origin + coords_min,
-                            max: *origin + coords_max,
-                        },
-                        0.0,
-                        color,
-                    );
-                    rects.push(Shape::Rect(sq));
-                }
-            }
-        }
-        Ok(rects)
-    }
-
-    /// Draws a diamond shaped focal point. Removes the datapoints for the focal point from
+    /// Calculates a diamond shape. Removes the datapoints for the focal point from
     /// the pixel_array used for the background. This creates the illusion of the focal point
     /// obscuring its background.
-    ///
-    /// Focal offset creates the illusion of the focal point being in front of the background.
-    /// To achieve this effect, the focal point is shifted slightly to the center of vision
-    /// relative to the background. The brain interprets this as the object being closer.
-    fn draw_focal(self: &mut Self, eye: Direction, origin: &Pos2) -> Result<Vec<Shape>, PhError> {
-        let (color, bg_offset, focal_offset) = match eye {
-            Direction::Left => (
-                self.color.left,
-                self.bg_offset as f32 * -0.5,   // bg moves further apart
-                self.focal_offset as f32 * 0.5, // focal moves closer
-            ),
-            Direction::Right => (
-                self.color.right,
-                self.bg_offset as f32 * 0.5,
-                self.focal_offset as f32 * -0.5,
-            ),
-            _ => (self.color.left, 0., 0.),
-        };
-
-        // Return a tuple giving the position of the focal point relative to the background
-        let focal_loc = match self.focal_position {
-            Direction::Up => (0.5, 0.25),
-            Direction::Down => (0.5, 0.75),
-            Direction::Left => (0.25, 0.5),
-            Direction::Right => (0.75, 0.5),
-        };
-
-        // Determine the starting point for 'drawing' the diamond shape in the array
-        let focal_size = self.grid_size as f32 * self.focal_size_rel;
-        let x_min = self.grid_size as f32 * focal_loc.0;
-        let y_min = self.grid_size as f32 * focal_loc.1 - focal_size / 2.;
-        let (x_min, y_min, focal_size) = (x_min as usize, y_min as usize, focal_size as usize);
-
+    fn remove_focal_from_bg(self: &mut Self) {
+        let focal_size = (self.grid_size as f32 * self.focal_size_rel) as usize;
         // create a matrix containing the diamond shape focal point
         let mut diamond = vec![];
         // step means: how many extra pixels to draw on each subsequent row of the matrix
@@ -157,41 +119,86 @@ impl Anaglyph {
         rev.reverse();
         diamond.extend(rev);
 
-        // For the next part we need to do some type conversions
-        let pixel_size = self.pixel_size as f32;
+        self.arrays.diamond = diamond;
 
-        // Now we remove the focal pixels from the background array
-        // and create the pixels (shapes) for the focal point
-        let mut rects = vec![];
-        let zip = zip(0..diamond.len(), diamond.iter());
+        // Return a tuple giving the position of the focal point relative to the background
+        let focal_loc = match self.focal_position {
+            Direction::Up => (0.5, 0.25),
+            Direction::Down => (0.5, 0.75),
+            Direction::Left => (0.25, 0.5),
+            Direction::Right => (0.75, 0.5),
+        };
 
-        // A row has a row number and a number of pixels to fill it
-        for (row, pixels) in zip {
-            // TODO little type conversion problem
-            // array indexing needs usize
-            // all other stuff needs f32
-            // So: convert all to f32
-            // And cast to usize only for indexing
+        // Determine the starting point for 'drawing' the diamond shape in the array
+        let focal_size = self.grid_size as f32 * self.focal_size_rel;
+        let x_min = self.grid_size as f32 * focal_loc.0;
+        let y_min = self.grid_size as f32 * focal_loc.1 - focal_size / 2.;
+        let (x_min, y_min) = (x_min as usize, y_min as usize);
 
+        let diamond_zip = zip(
+            0..self.arrays.diamond.len(), // create a zip of rowcount
+            self.arrays.diamond.iter(),   // and number of pixels
+        );
+
+        // A row has a row number and a number of pixels to fill in
+        for (row, pixels) in diamond_zip {
             // Determine x and y coords for the topleft of the first pixel in this row
             let y = y_min + row; // add the current row to the topmost coord of the glyph
             let x = x_min - pixels / 2; // Find the horizontal starting coord considering
                                         // half the pixels must be drawn left of center
 
             // Iterate over the number of pixels in this row
-            for col in x..(x + pixels) {
-                let x = col as f32;
-                self.pixel_array[[(x + focal_offset) as usize, y]] = 0; // remove the diamond from the bg array
+            for x in x..(x + pixels) {
+                // self.arrays.focal_mask[[x + self.focal_offset as usize, y]] = 1;
+                self.arrays.focal_mask[[x, y]] = 1;
+                // remove the diamond from the bg array (left)
+                self.arrays.background_left[[x + self.focal_offset as usize, y]] = 0;
+                // remove the diamond from the bg array (right)
+                self.arrays.background_right[[x - self.focal_offset as usize, y]] = 0;
+            }
+        }
+    }
 
-                // Do we need to draw a 'pixel' here?
-                if self.focal_array[[col, row]] == 1 {
-                    // draw focal pixels
+    /// Draws the background from a randomly generated self.bg_pixel_array.
+    /// Draw_focal needs to be called beforehand so the pixels in the focal
+    /// point are removed from the background array.
+    ///
+    /// Draw the focal point in the shape of a diamond in exactly the spot we removed from the background.
+    /// Focal offset creates the illusion of the focal point being in front of the background.
+    /// To achieve this effect, the focal point is shifted slightly to the center of vision
+    /// relative to the background. The brain interprets this as the object being closer.
+    fn draw_background(self: &mut Self, eye: Eye, origin: &Pos2) -> Result<Vec<Shape>, PhError> {
+        // Left/right image gets appropriate coloring and the offset value is split between them
+        let (color, bg_offset, focal_offset, background) = match eye {
+            Eye::Left => (
+                self.color.left,
+                self.background_offset * -1, // move bg to the left
+                self.focal_offset,
+                &self.arrays.background_left,
+            ),
+            Eye::Right => (
+                self.color.right,
+                self.background_offset,
+                self.focal_offset * -1, // move focal to the left
+                &self.arrays.background_right,
+            ),
+        };
+        let pixel_size = self.pixel_size;
+
+        // Create rectangles and push them to a vec
+        let mut rects = vec![];
+        // create rows
+        for y in 0..self.grid_size {
+            // fill in each row
+            for x in 0..self.grid_size {
+                // only create a 'pixel' if the random seed is 1 for this coord
+                // if self.arrays.background[[x, y]] == 1 {
+                if background[[x, y]] == 1 {
                     let coords_min = vec2(
-                        x * pixel_size + bg_offset + focal_offset,
-                        y as f32 * pixel_size,
+                        (x as isize * pixel_size + bg_offset) as f32,
+                        (y as isize * pixel_size) as f32,
                     );
-                    let coords_max =
-                        coords_min + vec2(self.pixel_size as f32, self.pixel_size as f32);
+                    let coords_max = coords_min + vec2(pixel_size as f32, pixel_size as f32);
                     let sq = RectShape::filled(
                         Rect {
                             min: *origin + coords_min,
@@ -202,23 +209,36 @@ impl Anaglyph {
                     );
                     rects.push(Shape::Rect(sq));
                 }
+                if self.arrays.focal_mask[[x, y]] == 1 && self.arrays.focal[[x, y]] == 1 {
+                    // draw focal pixels
+                    let coords_min = vec2(
+                        // (x as isize * pixel_size + bg_offset + focal_offset as isize) as f32,
+                        (x as isize * pixel_size + bg_offset + focal_offset * pixel_size) as f32,
+                        (y as isize * pixel_size) as f32,
+                    );
+                    let coords_max = coords_min + vec2(pixel_size as f32, pixel_size as f32);
+                    let sq = RectShape::filled(
+                        Rect {
+                            min: *origin + coords_min,
+                            max: *origin + coords_max,
+                        },
+                        0.0,
+                        if self.debug.focal_mark == true {
+                            Color32::from_additive_luminance(192)
+                        } else {
+                            color
+                        },
+                    );
+                    rects.push(Shape::Rect(sq));
+                }
             }
         }
         Ok(rects)
     }
 
     /// Draw the background pixels and the focal pixes for left and right eye.
-    // How?
-    // Per anaglyph:
-    //  - Generate pixel arrays for bg and focal_point
-    //  - Remove focal point shape from background (with slight offset)
-    //  - Create focal pixels
-    //  - Create bg pixels
-    // Per frame:
-    //  Draw the bg array (func takes ui, left/right eye)
-    //  Draw the focal array (func takes ui, left/right eye)
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
-        if self.pixel_array.nrows() != self.grid_size {
+        if self.arrays.background.nrows() != self.grid_size {
             self.gen_pixel_arrays()
         };
 
@@ -242,20 +262,19 @@ impl Anaglyph {
                 let screen_offset = pos2(0.5 - rel_size_x, 0.0 - rel_size_y);
                 let origin = to_screen * screen_offset;
 
-                let bg_left = self
-                    .draw_background(Direction::Left, &origin)
-                    .unwrap_or_default(); // TODO error handling
-                let bg_right = self
-                    .draw_background(Direction::Right, &origin)
-                    .unwrap_or_default(); // TODO error handling
+                if self.debug.draw_left == true {
+                    let left = self.draw_background(Eye::Left, &origin).unwrap_or_default(); // TODO error handling
+                    ui.painter().extend(left);
+                }
+                if self.debug.draw_right == true {
+                    let right = self
+                        .draw_background(Eye::Right, &origin)
+                        .unwrap_or_default(); // TODO error handling
+                    ui.painter().extend(right);
+                }
 
-                let focal_left = self.draw_focal(Direction::Left, &origin).unwrap();
-                let focal_right = self.draw_focal(Direction::Right, &origin).unwrap();
-
-                ui.painter().extend(bg_left);
-                ui.painter().extend(bg_right);
-                ui.painter().extend(focal_left);
-                ui.painter().extend(focal_right);
+                // ui.painter().extend(focal_left);
+                // ui.painter().extend(focal_right);
             });
     }
 }

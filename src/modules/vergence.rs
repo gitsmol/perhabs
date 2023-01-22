@@ -1,5 +1,3 @@
-use egui::Slider;
-
 use crate::modules::exercises::anaglyph::Anaglyph;
 use crate::windowman::{AppWin, View};
 
@@ -30,10 +28,34 @@ impl AppWin for Vergence {
 
 impl View for Vergence {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
+        ui.horizontal(|ui| {
+            ui.add(egui::Checkbox::new(
+                &mut self.anaglyph.debug.draw_left,
+                "Left",
+            ));
+            ui.add(egui::Checkbox::new(
+                &mut self.anaglyph.debug.draw_right,
+                "Right",
+            ));
+            ui.add(egui::Checkbox::new(
+                &mut self.anaglyph.debug.focal_mark,
+                "Focal mark",
+            ));
+        });
+
         ui.add(egui::Slider::new(&mut self.anaglyph.pixel_size, 1..=10).suffix("pixel size"));
-        ui.add(egui::Slider::new(&mut self.anaglyph.grid_size, 30..=150).suffix("anaglyph size"));
+        ui.add(egui::Slider::new(&mut self.anaglyph.grid_size, 10..=150).suffix("anaglyph size"));
         if ui
-            .add(egui::Slider::new(&mut self.anaglyph.bg_offset, 0..=30).suffix("bg_offset size"))
+            .add(
+                egui::Slider::new(&mut self.anaglyph.background_offset, 0..=30)
+                    .suffix("bg_offset size"),
+            )
+            .changed()
+        {
+            self.anaglyph.gen_pixel_arrays()
+        };
+        if ui
+            .add(egui::Slider::new(&mut self.anaglyph.focal_offset, 0..=10).suffix("focal_offset"))
             .changed()
         {
             self.anaglyph.gen_pixel_arrays()
