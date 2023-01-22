@@ -41,25 +41,32 @@ impl View for Vergence {
                 &mut self.anaglyph.debug.focal_mark,
                 "Focal mark",
             ));
+            ui.label(&self.anaglyph.debug.size_info);
         });
-
-        ui.add(egui::Slider::new(&mut self.anaglyph.pixel_size, 1..=10).suffix("pixel size"));
-        ui.add(egui::Slider::new(&mut self.anaglyph.grid_size, 10..=150).suffix("anaglyph size"));
-        if ui
-            .add(
-                egui::Slider::new(&mut self.anaglyph.background_offset, 0..=30)
-                    .suffix("bg_offset size"),
-            )
-            .changed()
-        {
-            self.anaglyph.gen_pixel_arrays()
-        };
-        if ui
-            .add(egui::Slider::new(&mut self.anaglyph.focal_offset, 0..=10).suffix("focal_offset"))
-            .changed()
-        {
-            self.anaglyph.gen_pixel_arrays()
-        };
+        ui.horizontal(|ui| {
+            ui.add(egui::Slider::new(&mut self.anaglyph.pixel_size, 1..=10).suffix("pixel size"));
+            ui.add(
+                egui::Slider::new(&mut self.anaglyph.grid_size, 10..=150).suffix("anaglyph size"),
+            );
+            if ui
+                .add(
+                    egui::Slider::new(&mut self.anaglyph.background_offset, 0..=30)
+                        .suffix("bg_offset size"),
+                )
+                .changed()
+            {
+                self.anaglyph.initialize_arrays()
+            };
+            if ui
+                .add(
+                    egui::Slider::new(&mut self.anaglyph.focal_offset, 0..=10)
+                        .suffix("focal_offset"),
+                )
+                .changed()
+            {
+                self.anaglyph.initialize_arrays()
+            };
+        });
 
         self.anaglyph.draw(ui);
     }
