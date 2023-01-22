@@ -59,7 +59,7 @@ impl AppWin for NumSeq {
 }
 
 impl View for NumSeq {
-    fn ui(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 if ui.button("Generate").clicked() {

@@ -1,3 +1,4 @@
+use chrono::{DateTime, Duration, Local};
 use eframe::{emath, epaint::RectShape};
 use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
@@ -50,6 +51,34 @@ pub struct Debug {
     pub focal_mark: bool,
     pub size_info: String,
 }
+impl Default for Debug {
+    fn default() -> Self {
+        Self {
+            draw_left: true,
+            draw_right: true,
+            focal_mark: false,
+            size_info: String::new(),
+        }
+    }
+}
+
+pub struct Session {
+    pub start_time: DateTime<Local>,
+    pub duration: Duration,
+    pub count: usize,
+    pub results: Vec<bool>,
+}
+
+impl Default for Session {
+    fn default() -> Self {
+        Self {
+            start_time: Local::now(),
+            duration: Duration::seconds(0),
+            count: 0,
+            results: vec![],
+        }
+    }
+}
 
 /// Struct for anaglyph images. Each image consists of a background and a focal point.
 /// draw() draws both focal point and background in order, according to the pub variables.
@@ -66,6 +95,7 @@ pub struct Anaglyph {
     pub color: AnaglyphColor,
     arrays: AnaglyphArrays,
     pub debug: Debug,
+    pub session: Session,
 }
 
 impl Default for Anaglyph {
@@ -79,23 +109,18 @@ impl Default for Anaglyph {
             focal_size_rel: 0.35,
             focal_position: Direction::Up,
             color: AnaglyphColor::default(),
-            debug: Debug {
-                draw_left: true,
-                draw_right: false,
-                focal_mark: false,
-                size_info: String::new(),
-            },
+            debug: Debug::default(),
+            session: Session::default(),
         }
     }
 }
 
 impl Anaglyph {
-    /// Generate a random array of 1's and 0's. Then remove the 'background'
-    /// to the focal glyphs to create depth illusion.
-    /// Calculates a diamond shape. Removes the datapoints for the focal point from
-    /// the pixel_array used for the background. This creates the illusion of the focal point
-    /// obscuring its background.
-    pub fn initialize_arrays(&mut self) {
+    /// - Generate random arrays of 1's and 0's for left and right backgrounds.
+    /// - Calculate a diamond shape for the focal glyphs.
+    /// - Remove the 'background' to the focal glyphs to create depth illusion (occlusion).
+    pub fn initialize(&mut self) {
+        // Create necessary arrays
         let distr = Binomial::new(1, 0.5).unwrap();
         self.arrays.background_left = Array2::random((self.grid_size, self.grid_size), distr);
         self.arrays.background_right = self.arrays.background_left.clone();
@@ -103,6 +128,7 @@ impl Anaglyph {
         self.arrays.focal_mask = Array2::zeros((self.grid_size, self.grid_size));
 
         let focal_size = (self.grid_size as f32 * self.focal_size_rel) as usize;
+
         // create a matrix containing the diamond shape focal point
         let mut diamond = vec![];
         // step means: how many extra pixels to draw on each subsequent row of the matrix
@@ -233,7 +259,7 @@ impl Anaglyph {
     /// Draw the background pixels and the focal pixes for left and right eye.
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
         if self.arrays.background_left.nrows() != self.grid_size {
-            self.initialize_arrays()
+            self.initialize()
         };
 
         Frame::dark_canvas(ui.style())

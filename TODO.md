@@ -7,7 +7,7 @@ In a very loose sense of the word.
 
 ## IN PROGRESS
 - Porting Vizier to Perhabs
-    - Rework anaglyph algo to split manipulation of arrays and drawing pixels (in the interest of wasting less cpu cycles)
+
 
 ## TODO
 - Delay on speaking new sentence (get back to task first)
@@ -21,3 +21,5 @@ In a very loose sense of the word.
 - Scattegories game
 - Visual error handling
 - Breaking down words game
+- Say 'Finished' when timer ends.
+- Don't sleep computer when timer is running

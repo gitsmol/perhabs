@@ -41,6 +41,7 @@ pub fn numvec_to_string(seq: &Vec<u32>) -> String {
     result.trim_end_matches(", ").to_string()
 }
 
+#[derive(PartialEq)]
 pub enum Direction {
     Up,
     Down,
