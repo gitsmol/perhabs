@@ -67,6 +67,7 @@ pub struct Session {
     pub duration: Duration,
     pub count: usize,
     pub results: Vec<bool>,
+    pub answer_thresh: bool,
 }
 
 impl Default for Session {
@@ -76,6 +77,7 @@ impl Default for Session {
             duration: Duration::seconds(0),
             count: 0,
             results: vec![],
+            answer_thresh: false,
         }
     }
 }

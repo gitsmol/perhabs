@@ -41,11 +41,46 @@ impl View for Vergence {
 impl Vergence {
     fn read_keypress(&mut self, ctx: &egui::Context) {
         let mut eval = |a: Direction| {
+            // If the answer is correct, add true to the results vec.
+            // If the previous answer was also correct (indicated by the answer threshold),
+            // increase the difficulty of the exercise.
+            // If the previous answer was not correct, set the answer threshold to true.
             if a == self.anaglyph.focal_position {
-                self.anaglyph.session.count += 1;
                 self.anaglyph.session.results.push(true);
-                self.anaglyph.initialize();
+                match self.anaglyph.session.results.last() {
+                    Some(prev_val) => {
+                        if prev_val == &true && self.anaglyph.session.answer_thresh == true {
+                            self.anaglyph.session.answer_thresh = false;
+                            self.anaglyph.background_offset += 1;
+                        } else {
+                            self.anaglyph.session.answer_thresh = true
+                        }
+                    }
+                    None => (),
+                }
             }
+
+            // If the answer is incorrect, add false to the results vec.
+            // If the previous answer was also incorrect (indicated by the answer threshold),
+            // reset the difficulty of the exercise and set the answer_threshold to false.
+            // If the previous answer was correct, set the answer_threshhold to true.
+            if a != self.anaglyph.focal_position {
+                self.anaglyph.session.results.push(false);
+                match self.anaglyph.session.results.last() {
+                    Some(prev_val) => {
+                        if prev_val == &false && self.anaglyph.session.answer_thresh == true {
+                            self.anaglyph.session.answer_thresh = false;
+                            self.anaglyph.background_offset = 0;
+                        } else {
+                            self.anaglyph.session.answer_thresh = true
+                        }
+                    }
+                    None => (),
+                }
+            }
+            // draw a new anaglyph
+            self.anaglyph.session.count += 1;
+            self.anaglyph.initialize();
         };
 
         if ctx.input().key_pressed(Key::ArrowUp) {
