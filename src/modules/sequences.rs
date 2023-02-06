@@ -100,6 +100,7 @@ impl Sequences {
         };
     }
 
+    /// Get contents from a given file and put into contents vec
     fn get_file(&mut self) -> () {
         self.file.contents.clear();
         let lines = read_file(&self.file.sel_file_path);
@@ -108,6 +109,8 @@ impl Sequences {
                 self.file.contents.push(ip);
             }
         }
+        // now shuffle the lines so we can pop random items from the vec
+        self.shuffle_contents();
     }
 
     fn pick_next(&mut self) -> () {
@@ -116,6 +119,7 @@ impl Sequences {
             ExerciseType::Numbers => self.pick_numbers(),
         };
     }
+
     fn pick_numbers(&mut self) -> () {
         let mut seq = vec![];
         while seq.len() < self.config.seq_length {
@@ -138,17 +142,16 @@ impl Sequences {
     fn shuffle_contents(&mut self) {
         let length = self.file.contents.len();
         for i in 0..length {
-            let j = fastrand::usize(0..length);
+            let j = fastrand::usize(i..length);
             let tmp = self.file.contents[i].clone();
             self.file.contents[i] = self.file.contents[j].clone();
             self.file.contents[j] = tmp;
         }
     }
+
     fn pick_sentence(&mut self) {
-        let max = self.file.contents.len();
-        if max > 0 {
-            let randnum = fastrand::usize(0..max);
-            self.answers.sequence = self.file.contents[randnum].clone().to_lowercase();
+        if self.file.contents.len() > 0 {
+            self.answers.sequence = self.file.contents.pop().unwrap_or_default().to_lowercase();
             let mut sorted: Vec<&str> = self.answers.sequence.split(" ").collect();
             sorted.reverse();
             self.answers.sequence_rev = sorted.join(" ");
@@ -156,8 +159,12 @@ impl Sequences {
             self.answers.sequence_alpha = sorted.join(" ");
             sorted.reverse();
             self.answers.sequence_alpha_rev = sorted.join(" ");
+        } else {
+            self.get_file();
+            self.pick_sentence();
         }
     }
+
     fn show_session(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
