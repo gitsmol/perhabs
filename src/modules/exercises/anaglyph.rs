@@ -1,4 +1,3 @@
-use chrono::{DateTime, Duration, Local};
 use eframe::{emath, epaint::RectShape};
 use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
@@ -11,9 +10,10 @@ enum Eye {
     Right,
 }
 
+#[derive(PartialEq, Clone)]
 pub struct AnaglyphColor {
-    left: Color32,
-    right: Color32,
+    pub left: Color32,
+    pub right: Color32,
 }
 
 impl Default for AnaglyphColor {
@@ -46,38 +46,20 @@ impl Default for AnaglyphArrays {
 }
 
 pub struct Debug {
-    pub draw_left: bool,
-    pub draw_right: bool,
-    pub focal_mark: bool,
-    pub size_info: String,
+    pub show: bool,
+    draw_left: bool,
+    draw_right: bool,
+    focal_mark: bool,
+    size_info: String,
 }
 impl Default for Debug {
     fn default() -> Self {
         Self {
+            show: false,
             draw_left: true,
             draw_right: true,
             focal_mark: false,
             size_info: String::new(),
-        }
-    }
-}
-
-pub struct Session {
-    pub start_time: DateTime<Local>,
-    pub duration: Duration,
-    pub count: usize,
-    pub results: Vec<bool>,
-    pub answer_thresh: bool,
-}
-
-impl Default for Session {
-    fn default() -> Self {
-        Self {
-            start_time: Local::now(),
-            duration: Duration::seconds(0),
-            count: 0,
-            results: vec![],
-            answer_thresh: false,
         }
     }
 }
@@ -89,15 +71,14 @@ impl Default for Session {
 /// relative to the background. The brain interprets this as the object being closer.
 pub struct Anaglyph {
     pub background_offset: isize,
-    pub pixel_size: isize,
+    pixel_size: isize,
     pub grid_size: usize,
-    pub focal_offset: isize, // The offset creates the illusion of depth
+    focal_offset: isize, // The offset creates the illusion of depth
     pub focal_size_rel: f32,
     pub focal_position: Direction, // Where is the focal point?
     pub color: AnaglyphColor,
     arrays: AnaglyphArrays,
     pub debug: Debug,
-    pub session: Session,
 }
 
 impl Default for Anaglyph {
@@ -112,12 +93,14 @@ impl Default for Anaglyph {
             focal_position: Direction::Up,
             color: AnaglyphColor::default(),
             debug: Debug::default(),
-            session: Session::default(),
         }
     }
 }
 
 impl Anaglyph {
+    pub fn reset(&mut self) {
+        self.background_offset = 0;
+    }
     /// - Generate random arrays of 1's and 0's for left and right backgrounds.
     /// - Calculate a diamond shape for the focal glyphs.
     /// - Remove the 'background' to the focal glyphs to create depth illusion (occlusion).
@@ -128,6 +111,15 @@ impl Anaglyph {
         self.arrays.background_right = self.arrays.background_left.clone();
         self.arrays.focal = Array2::random((self.grid_size, self.grid_size), distr);
         self.arrays.focal_mask = Array2::zeros((self.grid_size, self.grid_size));
+        self.focal_position = {
+            match fastrand::usize(0..=3) {
+                0 => Direction::Up,
+                1 => Direction::Left,
+                2 => Direction::Right,
+                3 => Direction::Down,
+                _ => panic!("Fatal error in focal position random number generator."),
+            }
+        };
 
         let focal_size = (self.grid_size as f32 * self.focal_size_rel) as usize;
 
@@ -260,6 +252,10 @@ impl Anaglyph {
 
     /// Draw the background pixels and the focal pixes for left and right eye.
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
+        if self.debug.show {
+            self.debug_controls(ui);
+        }
+
         if self.arrays.background_left.nrows() != self.grid_size {
             self.initialize()
         };
@@ -268,27 +264,30 @@ impl Anaglyph {
             .outer_margin(Margin::from(0.0)) // TODO: look into eliminating visible margin
             // (negative number works but what are the downsides?)
             .show(ui, |ui| {
-                // Determine size of drawing surface: full screen
-                let desired_size = ui.available_size_before_wrap();
-                let (_id, rect) = ui.allocate_space(desired_size);
-                // Determine starting coords to end up with a centered drawing
-                let to_screen = emath::RectTransform::from_to(
-                    Rect::from_x_y_ranges(0.0..=1.0, -1.0..=1.0),
-                    rect,
-                );
+                let origin = {
+                    // Determine size of drawing surface: full screen
+                    let desired_size = ui.available_size_before_wrap();
+                    let (_id, rect) = ui.allocate_space(desired_size);
+                    // Determine starting coords to end up with a centered drawing
+                    let to_screen = emath::RectTransform::from_to(
+                        Rect::from_x_y_ranges(0.0..=1.0, -1.0..=1.0),
+                        rect,
+                    );
 
-                // how many pixels do we need?
-                let drawsize: f32 = self.grid_size as f32 * self.pixel_size as f32;
-                let rel_size_x = drawsize / desired_size[0] / 2.; // how wide is half a drawing?
-                let rel_size_y = drawsize / desired_size[1]; // how high is half a drawing?
-                let screen_offset = pos2(0.5 - rel_size_x, 0.0 - rel_size_y);
-                let origin = to_screen * screen_offset;
+                    // how many pixels do we need?
+                    let drawsize: f32 = self.grid_size as f32 * self.pixel_size as f32;
+                    let rel_size_x = drawsize / desired_size[0] / 2.; // how wide is half a drawing?
+                    let rel_size_y = drawsize / desired_size[1]; // how high is half a drawing?
+                    let screen_offset = pos2(0.5 - rel_size_x, 0.0 - rel_size_y);
 
-                // debug info
-                self.debug.size_info = format!(
-                    "desired_size: {:?} | rel_size_y: {}",
-                    desired_size, rel_size_y
-                );
+                    // debug info
+                    self.debug.size_info = format!(
+                        "desired_size: {:?} | rel_size_y: {}",
+                        desired_size, rel_size_y
+                    );
+
+                    to_screen * screen_offset
+                };
 
                 if self.debug.draw_left == true {
                     let left = self.draw_pixels(Eye::Left, &origin).unwrap_or_default(); // TODO error handling
@@ -299,5 +298,35 @@ impl Anaglyph {
                     ui.painter().extend(right);
                 }
             });
+    }
+    fn debug_controls(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.add(egui::Checkbox::new(&mut self.debug.draw_left, "Left"));
+            ui.add(egui::Checkbox::new(&mut self.debug.draw_right, "Right"));
+            ui.add(egui::Checkbox::new(
+                &mut self.debug.focal_mark,
+                "Focal mark",
+            ));
+            ui.label(&self.debug.size_info);
+        });
+        ui.horizontal(|ui| {
+            ui.add(egui::Slider::new(&mut self.pixel_size, 1..=10).suffix("pixel size"));
+            ui.add(egui::Slider::new(&mut self.grid_size, 10..=150).suffix("anaglyph size"));
+            if ui
+                .add(
+                    egui::Slider::new(&mut self.background_offset, -30..=30)
+                        .suffix("bg_offset size"),
+                )
+                .changed()
+            {
+                self.initialize()
+            };
+            if ui
+                .add(egui::Slider::new(&mut self.focal_offset, 0..=10).suffix("focal_offset"))
+                .changed()
+            {
+                self.initialize()
+            };
+        });
     }
 }

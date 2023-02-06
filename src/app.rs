@@ -1,13 +1,10 @@
-use egui::Align2;
-
 use crate::windowman::Windows;
+use egui::Align2;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
 pub struct Perhabs {
-    error_show: bool,
-    error_msg: String,
     #[serde(skip)]
     windows: Windows,
     #[serde(skip)]
@@ -17,9 +14,7 @@ pub struct Perhabs {
 impl Default for Perhabs {
     fn default() -> Self {
         Self {
-            error_show: false,
             windows: Windows::default(),
-            error_msg: "".to_string(),
             speaker: tts::Tts::new(tts::Backends::AppKit).unwrap(), // TODO use default (but fix Mac!)
                                                                     // speaker: tts::Tts::default().unwrap(),
         }
@@ -40,16 +35,6 @@ impl Perhabs {
 
         Default::default()
     }
-
-    fn error(&mut self, ctx: &egui::Context) -> () {
-        egui::Window::new("Error").show(ctx, |ui| {
-            ui.label(&self.error_msg);
-            if ui.button("Close").clicked() {
-                self.error_show = false;
-                self.error_msg = "".to_string()
-            };
-        });
-    }
 }
 
 impl eframe::App for Perhabs {
@@ -61,18 +46,11 @@ impl eframe::App for Perhabs {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self {
-            error_show,
-            error_msg,
-            windows,
-            speaker,
-        } = self;
-
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Window::new("Windows")
                 .anchor(Align2::RIGHT_TOP, (0., 0.))
                 .resizable(false)
-                .collapsible(false)
+                .collapsible(true)
                 .show(ctx, |ui| {
                     ui.horizontal(|ui| {
                         ui.label("Theme");
@@ -84,9 +62,5 @@ impl eframe::App for Perhabs {
             // Show open windows
             self.windows.windows(ctx, &mut self.speaker);
         });
-
-        if self.error_show {
-            self.error(ctx);
-        }
     }
 }

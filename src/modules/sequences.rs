@@ -1,4 +1,5 @@
 use crate::windowman::{AppWin, View};
+use egui::{Direction, Layout, RichText};
 use fastrand;
 
 use perhabs::{dirwalk, numvec_to_string, read_file};
@@ -21,20 +22,45 @@ enum ExerciseType {
     Sentences,
 }
 
-struct ExcerciseConfig {
+struct Session {
+    active: bool,
+}
+
+impl Default for Session {
+    fn default() -> Self {
+        Self { active: false }
+    }
+}
+
+struct Configuration {
+    seq_length: usize,
+    seq_show: bool,
     keypress_delay: Duration,
     exercise_type: ExerciseType,
 }
 
-pub struct Sequences {
-    seq_length: usize,
-    seq_show: bool,
+struct Answers {
     sequence: String,
     sequence_alpha: String,
     sequence_alpha_rev: String,
     sequence_rev: String,
+}
+impl Default for Answers {
+    fn default() -> Self {
+        Self {
+            sequence: String::from("No sequence."),
+            sequence_alpha: String::new(),
+            sequence_alpha_rev: String::new(),
+            sequence_rev: String::new(),
+        }
+    }
+}
+
+pub struct Sequences {
     file: SourceFile,
-    config: ExcerciseConfig,
+    config: Configuration,
+    session: Session,
+    answers: Answers,
 }
 
 impl Default for Sequences {
@@ -53,24 +79,22 @@ impl Default for Sequences {
         };
 
         Self {
-            seq_length: 4,
-            seq_show: false,
-            sequence: String::from("No sequence."),
-            sequence_alpha: String::new(),
-            sequence_alpha_rev: String::new(),
-            sequence_rev: String::new(),
+            answers: Answers::default(),
             file: sourcefile,
-            config: ExcerciseConfig {
+            config: Configuration {
                 keypress_delay: Duration::from_secs(2),
                 exercise_type: ExerciseType::Sentences,
+                seq_length: 4,
+                seq_show: false,
             },
+            session: Session::default(),
         }
     }
 }
 
 impl Sequences {
     fn say(&mut self, spk: &mut tts::Tts) -> () {
-        match spk.speak(&self.sequence, false) {
+        match spk.speak(&self.answers.sequence, false) {
             Ok(_) => debug!("TTS: Sentence spoken."),
             Err(e) => warn!("TTS error: {:?}", e),
         };
@@ -94,7 +118,7 @@ impl Sequences {
     }
     fn pick_numbers(&mut self) -> () {
         let mut seq = vec![];
-        while seq.len() < self.seq_length {
+        while seq.len() < self.config.seq_length {
             // this means no seq longer than 11 numbers (0..10)!
             let num = fastrand::u32(0..=10);
             if !seq.contains(&num) {
@@ -102,30 +126,68 @@ impl Sequences {
             };
         }
 
-        self.sequence = numvec_to_string(&seq);
+        self.answers.sequence = numvec_to_string(&seq);
         seq.reverse();
-        self.sequence_rev = numvec_to_string(&seq);
+        self.answers.sequence_rev = numvec_to_string(&seq);
         seq.sort();
-        self.sequence_alpha = numvec_to_string(&seq);
+        self.answers.sequence_alpha = numvec_to_string(&seq);
         seq.reverse();
-        self.sequence_alpha_rev = numvec_to_string(&seq);
+        self.answers.sequence_alpha_rev = numvec_to_string(&seq);
     }
 
-    fn pick_sentence(&mut self) -> () {
+    fn shuffle_contents(&mut self) {
+        let length = self.file.contents.len();
+        for i in 0..length {
+            let j = fastrand::usize(0..length);
+            let tmp = self.file.contents[i].clone();
+            self.file.contents[i] = self.file.contents[j].clone();
+            self.file.contents[j] = tmp;
+        }
+    }
+    fn pick_sentence(&mut self) {
         let max = self.file.contents.len();
         if max > 0 {
             let randnum = fastrand::usize(0..max);
-            self.sequence = self.file.contents[randnum].clone().to_lowercase();
-            let mut sorted: Vec<&str> = self.sequence.split(" ").collect();
+            self.answers.sequence = self.file.contents[randnum].clone().to_lowercase();
+            let mut sorted: Vec<&str> = self.answers.sequence.split(" ").collect();
             sorted.reverse();
-            self.sequence_rev = sorted.join(" ");
+            self.answers.sequence_rev = sorted.join(" ");
             sorted.sort();
-            self.sequence_alpha = sorted.join(" ");
+            self.answers.sequence_alpha = sorted.join(" ");
             sorted.reverse();
-            self.sequence_alpha_rev = sorted.join(" ");
+            self.answers.sequence_alpha_rev = sorted.join(" ");
         }
     }
-    fn show_answer(&mut self, ui: &mut egui::Ui) {}
+    fn show_session(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                self.session = Session::default();
+            };
+        });
+
+        ui.vertical_centered(|ui| {
+            ui.add_space(ui.available_height() / 4.);
+
+            ui.label("Sentence");
+            ui.heading(RichText::new(&self.answers.sequence).size(25.));
+            ui.add_space(20.);
+
+            ui.label("Reversed");
+            ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
+            ui.add_space(20.);
+
+            ui.label("Alphabetical");
+            ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
+            ui.add_space(20.);
+
+            ui.label("Alphabetical reversed");
+            ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
+            ui.add_space(20.);
+
+            ui.add_space(50.);
+            ui.label("Press space for next sequence. Press return to repeat sequence.");
+        });
+    }
 }
 
 impl AppWin for Sequences {
@@ -134,18 +196,24 @@ impl AppWin for Sequences {
     }
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool, mut spk: &mut tts::Tts) {
-        egui::Window::new(self.name())
-            .open(open)
-            .default_size((250.0, 250.0))
-            .vscroll(false)
-            .resizable(true)
-            .show(ctx, |ui| self.ui(ui, &mut spk));
-        if ctx.input().key_pressed(egui::Key::Space) {
-            self.pick_next();
-            self.say(spk);
+        if !self.session.active {
+            egui::Window::new(self.name())
+                .open(open)
+                .default_size((250.0, 250.0))
+                .vscroll(false)
+                .resizable(true)
+                .show(ctx, |ui| self.ui(ui, &mut spk));
         }
-        if ctx.input().key_pressed(egui::Key::Enter) {
-            self.say(spk);
+
+        if self.session.active {
+            if ctx.input().key_pressed(egui::Key::Space) {
+                self.pick_next();
+                self.say(spk);
+            }
+            if ctx.input().key_pressed(egui::Key::Enter) {
+                self.say(spk);
+            }
+            egui::CentralPanel::default().show(ctx, |ui| self.show_session(ui));
         }
     }
 }
@@ -206,9 +274,12 @@ impl View for Sequences {
                     self.say(spk);
                 }
                 if ui.button("Clear").clicked() {
-                    self.sequence.clear();
+                    self.answers.sequence.clear();
                 }
-                ui.checkbox(&mut self.seq_show, "Show sentence");
+                if ui.button("Start session").clicked() {
+                    self.session.active = true;
+                }
+                ui.checkbox(&mut self.config.seq_show, "Show sentence");
             });
             egui::Grid::new("my_grid")
                 .num_columns(2)
@@ -216,10 +287,10 @@ impl View for Sequences {
                 .striped(true)
                 .show(ui, |ui| {
                     ui.label("Sequence length");
-                    ui.add(egui::Slider::new(&mut self.seq_length, 1..=10));
+                    ui.add(egui::Slider::new(&mut self.config.seq_length, 1..=10));
                     ui.end_row();
                 });
-            if self.seq_show {
+            if self.config.seq_show {
                 ui.separator();
                 egui::Grid::new("answer_grid")
                     .num_columns(2)
@@ -227,19 +298,19 @@ impl View for Sequences {
                     .striped(true)
                     .show(ui, |ui| {
                         ui.label("Sentence");
-                        ui.heading(&self.sequence.to_string());
+                        ui.heading(&self.answers.sequence.to_string());
                         ui.end_row();
 
                         ui.label("Reversed");
-                        ui.label(&self.sequence_rev);
+                        ui.label(&self.answers.sequence_rev);
                         ui.end_row();
 
                         ui.label("Alphabetical");
-                        ui.label(&self.sequence_alpha);
+                        ui.label(&self.answers.sequence_alpha);
                         ui.end_row();
 
                         ui.label("Alphabetical reversed");
-                        ui.label(&self.sequence_alpha_rev);
+                        ui.label(&self.answers.sequence_alpha_rev);
                         ui.end_row();
                     });
             }

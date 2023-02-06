@@ -1,14 +1,12 @@
-use std::fs;
-use std::io;
-use std::path::Path;
-use std::path::PathBuf;
+use log::debug;
+
+use std::fs::{self, DirEntry, File};
+use std::io::{self, BufReader, Read};
+use std::path::{Path, PathBuf};
 use std::{error::Error, fmt};
 
-// extern crate log;
-// extern crate simplelog;
-
 pub fn dirwalk(dir: &Path) -> io::Result<Vec<PathBuf>> {
-    let mut files: Vec<fs::DirEntry> = vec![];
+    let mut files: Vec<DirEntry> = vec![];
     let mut paths: Vec<PathBuf> = vec![];
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
@@ -22,13 +20,12 @@ pub fn dirwalk(dir: &Path) -> io::Result<Vec<PathBuf>> {
             }
         }
     }
-    // Ok(files)
     Ok(paths)
 }
 
-pub fn read_file(filepath: &PathBuf) -> io::BufReader<fs::File> {
-    let _file = fs::File::open(filepath).unwrap();
-    let lines = io::BufReader::new(_file);
+pub fn read_file(filepath: &PathBuf) -> BufReader<File> {
+    let _file = File::open(filepath).unwrap();
+    let lines = BufReader::new(_file);
     return lines;
 }
 

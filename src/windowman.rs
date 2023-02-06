@@ -25,7 +25,7 @@ impl Default for Windows {
 impl Windows {
     pub fn from_windows(windows: Vec<Box<dyn AppWin>>) -> Self {
         let mut open = BTreeSet::new();
-        open.insert(vergence::Vergence::default().name().to_owned());
+        open.insert(sequences::Sequences::default().name().to_owned());
         // open.insert(debug_info::DebugInfo::default().name().to_owned());
         Self { windows, open }
     }
