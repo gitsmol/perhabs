@@ -9,7 +9,7 @@ use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
 
 use crate::modules::exercises::anaglyph::Anaglyph;
 use crate::windowman::{AppWin, View};
-use crate::configs::{read_config, Exercise};
+use crate::configs::{read_config, Exercise, get_default};
 use perhabs::Direction;
 
 pub struct Session {
@@ -46,7 +46,10 @@ impl Default for Configuration {
             // TODO centralize all such config paths
             exercises: {
                 let config_file = PathBuf::from_str("appdata/exercise_configs.json").unwrap_or_default(); 
-                let config = read_config(&config_file);
+                let config = match read_config(&config_file) {
+                    Ok(res) => res,
+                    Err(_) => get_default() // TODO get rid of ugly wasm-hack
+                };
                 config.exercises
                 
             }
@@ -92,12 +95,12 @@ impl AppWin for Vergence {
                     .fixed_size([250., 300.])
                     .anchor(center, vec2(0., 0.))
                     .show(ctx, |ui| {
-                        self.menu(ui);
+                        self.ui(ui, _spk);
                     });
             }
 
             if self.session.active {
-                egui::CentralPanel::default().show(ctx, |ui| self.ui(ui, _spk));
+                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, _spk));
             }
 
             self.read_keypress(ctx);
@@ -107,6 +110,37 @@ impl AppWin for Vergence {
 
 impl View for Vergence {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
+        if self.configuration.calibrating {
+            self.calibrate(ui);
+            return;
+        }
+        
+        ui.vertical(|ui| {
+            for excercise in &self.configuration.exercises {
+                ui.label(format!("{}", excercise.name));
+                ui.horizontal(|ui| {
+                    for level in &excercise.levels {
+                        if ui.button(&level.name).clicked() {
+                            self.session.step = level.params.step;
+                            self.session.active = true;
+                        }
+                    };    
+                });                
+            };
+            
+            ui.allocate_space(egui::Vec2 { x: 0., y: 10. });
+            if ui.button("Calibrate").clicked() {
+                self.configuration.calibrating = true
+            }
+        });
+        
+
+
+        // Fill space
+        ui.allocate_space(ui.available_size());
+    }
+    
+    fn session(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
                 self.session = Session::default();
@@ -201,37 +235,6 @@ impl Vergence {
         });
     }
 
-    fn menu(&mut self, ui: &mut egui::Ui) {
-        if self.configuration.calibrating {
-            self.calibrate(ui);
-            return;
-        }
-        
-        ui.vertical(|ui| {
-            for excercise in &self.configuration.exercises {
-                ui.label(format!("{}", excercise.name));
-                ui.horizontal(|ui| {
-                    for level in &excercise.levels {
-                        if ui.button(&level.name).clicked() {
-                            self.session.step = level.params.step;
-                            self.session.active = true;
-                        }
-                    };    
-                });                
-            };
-            
-            ui.allocate_space(egui::Vec2 { x: 0., y: 10. });
-            if ui.button("Calibrate").clicked() {
-                self.configuration.calibrating = true
-            }
-        });
-        
-
-
-        // Fill space
-        ui.allocate_space(ui.available_size());
-    }
-
     fn read_keypress(&mut self, ctx: &egui::Context) {
         let mut eval = |a: Direction| {
             // If the answer is correct, add true to the results vec.
@@ -277,16 +280,16 @@ impl Vergence {
             self.anaglyph.initialize();
         };
 
-        if ctx.input().key_pressed(Key::ArrowUp) {
+        if ctx.input(|i| i.key_pressed(Key::ArrowUp)) {
             eval(Direction::Up)
         };
-        if ctx.input().key_pressed(Key::ArrowDown) {
+        if ctx.input(|i| i.key_pressed(Key::ArrowDown)) {
             eval(Direction::Down)
         };
-        if ctx.input().key_pressed(Key::ArrowLeft) {
+        if ctx.input(|i| i.key_pressed(Key::ArrowLeft)) {
             eval(Direction::Left)
         };
-        if ctx.input().key_pressed(Key::ArrowRight) {
+        if ctx.input(|i| i.key_pressed(Key::ArrowRight)) {
             eval(Direction::Right)
         };
     }

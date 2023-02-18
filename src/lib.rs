@@ -1,7 +1,5 @@
-use log::debug;
-
 use std::fs::{self, DirEntry, File};
-use std::io::{self, BufReader, Read};
+use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
 use std::{error::Error, fmt};
 

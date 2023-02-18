@@ -25,7 +25,8 @@ impl Default for Windows {
 impl Windows {
     pub fn from_windows(windows: Vec<Box<dyn AppWin>>) -> Self {
         let mut open = BTreeSet::new();
-        open.insert(sequences::Sequences::default().name().to_owned());
+        open.insert(rand_timer::RandTimer::default().name().to_owned());
+        // open.insert(sequences::Sequences::default().name().to_owned());
         // open.insert(debug_info::DebugInfo::default().name().to_owned());
         Self { windows, open }
     }
@@ -61,6 +62,7 @@ impl Windows {
 
 pub trait View {
     fn ui(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts);
+    fn session(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts);
 }
 
 /// Something to view

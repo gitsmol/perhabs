@@ -3,6 +3,7 @@ use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
 use ndarray_rand::{rand_distr::Binomial, RandomExt};
 use perhabs::{Direction, PhError};
+use rand::prelude::*;
 use std::iter::zip;
 
 enum Eye {
@@ -111,14 +112,13 @@ impl Anaglyph {
         self.arrays.background_right = self.arrays.background_left.clone();
         self.arrays.focal = Array2::random((self.grid_size, self.grid_size), distr);
         self.arrays.focal_mask = Array2::zeros((self.grid_size, self.grid_size));
-        self.focal_position = {
-            match fastrand::usize(0..=3) {
-                0 => Direction::Up,
-                1 => Direction::Left,
-                2 => Direction::Right,
-                3 => Direction::Down,
-                _ => panic!("Fatal error in focal position random number generator."),
-            }
+        let mut rng = thread_rng();
+        self.focal_position = match rng.gen_range(0..=3) {
+            0 => Direction::Up,
+            1 => Direction::Left,
+            2 => Direction::Right,
+            3 => Direction::Down,
+            _ => panic!("Fatal error in focal position random number generator."),
         };
 
         let focal_size = (self.grid_size as f32 * self.focal_size_rel) as usize;

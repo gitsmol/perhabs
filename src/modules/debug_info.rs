@@ -31,4 +31,5 @@ impl View for DebugInfo {
         ui.label(format!("Avail width: {}", desired_size[0]));
         ui.label(format!("Avail height: {}", desired_size[1]));
     }
+    fn session(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {}
 }

@@ -27,3 +27,8 @@ In a very loose sense of the word.
 - Switch exercises, for example: visual task like tracking and a cognitive task like cog numbes
 - Lingo (excercise)
 - Metronome (module)
+- Line drawing patterns (module)
+    - Reproduction (excercise)
+    - Tilted reproduction (exercise)
+    - Addition (exercise)
+    - Subtraction (exercise)

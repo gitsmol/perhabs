@@ -1,6 +1,6 @@
 use crate::windowman::{AppWin, View};
-use egui::{Direction, Layout, RichText};
-use fastrand;
+use egui::RichText;
+use rand::prelude::*;
 
 use perhabs::{dirwalk, numvec_to_string, read_file};
 use std::{
@@ -122,9 +122,13 @@ impl Sequences {
 
     fn pick_numbers(&mut self) -> () {
         let mut seq = vec![];
+        if self.config.seq_length > 11 {
+            return;
+        }
+        let mut rng = thread_rng();
         while seq.len() < self.config.seq_length {
             // this means no seq longer than 11 numbers (0..10)!
-            let num = fastrand::u32(0..=10);
+            let num = rng.gen_range(0..=10);
             if !seq.contains(&num) {
                 seq.push(num);
             };
@@ -139,16 +143,19 @@ impl Sequences {
         self.answers.sequence_alpha_rev = numvec_to_string(&seq);
     }
 
+    /// Shuffle the file contents vec using the Fisher-Yates shuffle.
     fn shuffle_contents(&mut self) {
         let length = self.file.contents.len();
+        let mut rng = thread_rng();
         for i in 0..length {
-            let j = fastrand::usize(i..length);
+            let j = rng.gen_range(i..length);
             let tmp = self.file.contents[i].clone();
             self.file.contents[i] = self.file.contents[j].clone();
             self.file.contents[j] = tmp;
         }
     }
 
+    /// Pop the last sentence from the vec of file contents.
     fn pick_sentence(&mut self) {
         if self.file.contents.len() > 0 {
             self.answers.sequence = self.file.contents.pop().unwrap_or_default().to_lowercase();
@@ -164,37 +171,6 @@ impl Sequences {
             self.pick_sentence();
         }
     }
-
-    fn show_session(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            if ui.button("Close").clicked() {
-                self.session = Session::default();
-            };
-        });
-
-        ui.vertical_centered(|ui| {
-            ui.add_space(ui.available_height() / 4.);
-
-            ui.label("Sentence");
-            ui.heading(RichText::new(&self.answers.sequence).size(25.));
-            ui.add_space(20.);
-
-            ui.label("Reversed");
-            ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
-            ui.add_space(20.);
-
-            ui.label("Alphabetical");
-            ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
-            ui.add_space(20.);
-
-            ui.label("Alphabetical reversed");
-            ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
-            ui.add_space(20.);
-
-            ui.add_space(50.);
-            ui.label("Press space for next sequence. Press return to repeat sequence.");
-        });
-    }
 }
 
 impl AppWin for Sequences {
@@ -202,6 +178,7 @@ impl AppWin for Sequences {
         "Cog Sequences"
     }
 
+    /// Show the configuration dialog
     fn show(&mut self, ctx: &egui::Context, open: &mut bool, mut spk: &mut tts::Tts) {
         if !self.session.active {
             egui::Window::new(self.name())
@@ -213,14 +190,14 @@ impl AppWin for Sequences {
         }
 
         if self.session.active {
-            if ctx.input().key_pressed(egui::Key::Space) {
+            if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
                 self.pick_next();
                 self.say(spk);
             }
-            if ctx.input().key_pressed(egui::Key::Enter) {
+            if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
                 self.say(spk);
             }
-            egui::CentralPanel::default().show(ctx, |ui| self.show_session(ui));
+            egui::CentralPanel::default().show(ctx, |ui| self.session(ui, spk));
         }
     }
 }
@@ -321,6 +298,36 @@ impl View for Sequences {
                         ui.end_row();
                     });
             }
+        });
+    }
+    fn session(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                self.session = Session::default();
+            };
+        });
+
+        ui.vertical_centered(|ui| {
+            ui.add_space(ui.available_height() / 4.);
+
+            ui.label("Sentence");
+            ui.heading(RichText::new(&self.answers.sequence).size(25.));
+            ui.add_space(20.);
+
+            ui.label("Reversed");
+            ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
+            ui.add_space(20.);
+
+            ui.label("Alphabetical");
+            ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
+            ui.add_space(20.);
+
+            ui.label("Alphabetical reversed");
+            ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
+            ui.add_space(20.);
+
+            ui.add_space(50.);
+            ui.label("Press space for next sequence. Press return to repeat sequence.");
         });
     }
 }

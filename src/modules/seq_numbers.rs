@@ -1,5 +1,5 @@
 use crate::windowman::{AppWin, View};
-use fastrand;
+use rand::prelude::*;
 
 pub struct NumSeq {
     operators: Vec<i32>,
@@ -14,9 +14,10 @@ impl NumSeq {
     fn gen_seq(&mut self) -> () {
         self.sequence.resize(1, 0);
         self.operators.resize(0, 0);
+        let mut rng = thread_rng();
         while self.operators.len() < self.operators_num {
             let sign = if self.operators.len() % 2 == 0 { 1 } else { -1 };
-            let op = sign * fastrand::i32(1..=self.operators_var);
+            let op = sign * rng.gen_range(1..=self.operators_var);
             if !self.operators.contains(&op) {
                 self.operators.push(op);
             }
@@ -29,7 +30,7 @@ impl NumSeq {
                 self.sequence.push(num);
             }
         }
-        for _ in self.operators.iter() {}
+        // for _ in self.operators.iter() {}
     }
 }
 impl Default for NumSeq {
@@ -101,4 +102,5 @@ impl View for NumSeq {
             }
         });
     }
+    fn session(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {}
 }

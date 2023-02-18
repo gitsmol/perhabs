@@ -57,6 +57,7 @@ impl View for Clock {
             ui.painter().extend(hands);
         });
     }
+    fn session(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {}
 }
 
 fn draw_marks(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {

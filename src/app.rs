@@ -15,8 +15,12 @@ impl Default for Perhabs {
     fn default() -> Self {
         Self {
             windows: Windows::default(),
+            #[cfg(not(target_arch = "wasm32"))]
             speaker: tts::Tts::new(tts::Backends::AppKit).unwrap(), // TODO use default (but fix Mac!)
-                                                                    // speaker: tts::Tts::default().unwrap(),
+
+            // speaker: tts::Tts::default().unwrap(),
+            #[cfg(target_arch = "wasm32")]
+            speaker: tts::Tts::default().unwrap(), // TODO use default (but fix Mac!)
         }
     }
 }
@@ -44,7 +48,6 @@ impl eframe::App for Perhabs {
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
-    /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::Window::new("Windows")
