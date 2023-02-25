@@ -1,6 +1,4 @@
 use std::path::PathBuf;
-use std::str::FromStr;
-
 use chrono::{DateTime, Duration, Local};
 use eframe::emath;
 use eframe::epaint::PathShape;
@@ -9,7 +7,7 @@ use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
 
 use crate::modules::exercises::anaglyph::Anaglyph;
 use crate::windowman::{AppWin, View};
-use crate::configs::{read_config, Exercise, get_default};
+use crate::configs::{Exercise, get_exc_config};
 use perhabs::Direction;
 
 pub struct Session {
@@ -45,11 +43,8 @@ impl Default for Configuration {
             calibrating: false,
             // TODO centralize all such config paths
             exercises: {
-                let config_file = PathBuf::from_str("appdata/exercise_configs.json").unwrap_or_default(); 
-                let config = match read_config(&config_file) {
-                    Ok(res) => res,
-                    Err(_) => get_default() // TODO get rid of ugly wasm-hack
-                };
+                let config_file = PathBuf::from("appdata/exercise_configs.json"); 
+                let config = get_exc_config(&config_file);
                 config.exercises
                 
             }
@@ -92,7 +87,7 @@ impl AppWin for Vergence {
                 egui::Window::new("Vergence")
                     .collapsible(false)
                     .resizable(false)
-                    .fixed_size([250., 300.])
+                    .fixed_size([250., 200.])
                     .anchor(center, vec2(0., 0.))
                     .show(ctx, |ui| {
                         self.ui(ui, _spk);
@@ -171,7 +166,8 @@ impl Vergence {
             ui.separator();
             
             Frame::dark_canvas(ui.style())
-                .outer_margin(Margin::from(0.0)) // TODO: look into eliminating visible margin
+                .outer_margin(Margin::from(0.0)) 
+                // TODO: look into eliminating visible margin
                 // (negative number works but what are the downsides?)
                 .show(ui, |ui| {
                     let space = ui.available_size();

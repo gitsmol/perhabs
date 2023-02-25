@@ -15,7 +15,8 @@ impl Default for Windows {
             Box::new(seq_numbers::NumSeq::default()),
             Box::new(sequences::Sequences::default()),
             Box::new(vergence::Vergence::default()),
-            Box::new(rand_timer::RandTimer::default()),
+            #[cfg(not(target_arch = "wasm32"))]
+            Box::new(rand_timer::RandTimer::default()), // WASM doesn't support threading
             Box::new(clock::Clock::default()),
             Box::new(debug_info::DebugInfo::default()),
         ])
@@ -25,23 +26,13 @@ impl Default for Windows {
 impl Windows {
     pub fn from_windows(windows: Vec<Box<dyn AppWin>>) -> Self {
         let mut open = BTreeSet::new();
-        open.insert(rand_timer::RandTimer::default().name().to_owned());
+        // open.insert(rand_timer::RandTimer::default().name().to_owned());
         // open.insert(sequences::Sequences::default().name().to_owned());
         // open.insert(debug_info::DebugInfo::default().name().to_owned());
         Self { windows, open }
     }
 
     pub fn labels(&mut self, ui: &mut Ui) {
-        let Self { windows, open } = self;
-        for window in windows {
-            let is_open = open.contains(window.name());
-            if ui.selectable_label(is_open, window.name()).clicked() {
-                // set_open(open, window.name(), is_open);
-            };
-        }
-    }
-
-    pub fn checkboxes(&mut self, ui: &mut Ui) {
         let Self { windows, open } = self;
         for window in windows {
             let mut is_open = open.contains(window.name());

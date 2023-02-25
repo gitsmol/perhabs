@@ -1,0 +1,50 @@
+{
+    "exercises": [
+        {
+            "name": "Divergence",
+            "levels": [
+                {
+                    "name": "Easy",
+                    "params": {
+                        "step": 1
+                    }
+                },
+                {
+                    "name": "Medium",
+                    "params": {
+                        "step": 2
+                    }
+                },
+                {
+                    "name": "Hard",
+                    "params": {
+                        "step": 3
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Convergence",
+            "levels": [
+                {
+                    "name": "Easy",
+                    "params": {
+                        "step": -1
+                    }
+                },
+                {
+                    "name": "Medium",
+                    "params": {
+                        "step": -2
+                    }
+                },
+                {
+                    "name": "Hard",
+                    "params": {
+                        "step": -3
+                    }
+                }
+            ]
+        }
+    ]
+}

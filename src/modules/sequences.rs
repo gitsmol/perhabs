@@ -1,3 +1,4 @@
+use crate::asset_loader::{self, get_sentences, SentenceFile};
 use crate::windowman::{AppWin, View};
 use egui::RichText;
 use rand::prelude::*;
@@ -10,10 +11,53 @@ use std::{
 };
 use tts;
 
+// Lets remove this
 struct SourceFile {
     dirfiles: Vec<PathBuf>,
     sel_file_path: PathBuf,
     contents: Vec<String>,
+}
+
+// The sentences and all config go here
+struct Sentences {
+    available_files: Vec<SentenceFile>,
+    selected_file: Option<SentenceFile>,
+    contents: Option<Vec<String>>,
+}
+
+impl Default for Sentences {
+    fn default() -> Self {
+        let appconfig = asset_loader::PerhabsConfig::new();
+        Self {
+            available_files: appconfig.sentences_files,
+            selected_file: None,
+            contents: None,
+        }
+    }
+}
+
+impl Sentences {
+    fn use_file(&mut self, file: SentenceFile) {
+        // self.selected_file = Some(file);
+        if let Ok(res) = get_sentences(&file.filename) {
+            self.contents = Some(res);
+            self.shuffle_contents();
+        }
+    }
+
+    /// Shuffle the file contents vec using the Fisher-Yates shuffle algorithm.
+    fn shuffle_contents(&mut self) {
+        if let Some(contents) = &mut self.contents {
+            let length = contents.len();
+            let mut rng = thread_rng();
+            for i in 0..length {
+                let j = rng.gen_range(i..length);
+                let tmp = contents[i].clone();
+                contents[i] = contents[j].clone();
+                contents[j] = tmp;
+            }
+        }
+    }
 }
 
 #[derive(PartialEq, strum_macros::Display)]
@@ -56,8 +100,10 @@ impl Default for Answers {
     }
 }
 
+/// Sequences
 pub struct Sequences {
     file: SourceFile,
+    sentences: Sentences,
     config: Configuration,
     session: Session,
     answers: Answers,
@@ -65,15 +111,15 @@ pub struct Sequences {
 
 impl Default for Sequences {
     fn default() -> Self {
-        let dirs = match dirwalk(Path::new("appdata")) {
-            Ok(dirs) => dirs,
+        let dir_content = match dirwalk(Path::new("excdata")) {
+            Ok(files) => files,
             Err(e) => {
                 warn!("Can't find dir: {:?}", e);
                 vec![]
             }
         };
         let sourcefile = SourceFile {
-            dirfiles: dirs,
+            dirfiles: dir_content,
             sel_file_path: PathBuf::new(),
             contents: vec![],
         };
@@ -81,6 +127,7 @@ impl Default for Sequences {
         Self {
             answers: Answers::default(),
             file: sourcefile,
+            sentences: Sentences::default(),
             config: Configuration {
                 keypress_delay: Duration::from_secs(2),
                 exercise_type: ExerciseType::Sentences,
@@ -98,19 +145,6 @@ impl Sequences {
             Ok(_) => debug!("TTS: Sentence spoken."),
             Err(e) => warn!("TTS error: {:?}", e),
         };
-    }
-
-    /// Get contents from a given file and put into contents vec
-    fn get_file(&mut self) -> () {
-        self.file.contents.clear();
-        let lines = read_file(&self.file.sel_file_path);
-        for line in lines.lines() {
-            if let Ok(ip) = line {
-                self.file.contents.push(ip);
-            }
-        }
-        // now shuffle the lines so we can pop random items from the vec
-        self.shuffle_contents();
     }
 
     fn pick_next(&mut self) -> () {
@@ -143,33 +177,28 @@ impl Sequences {
         self.answers.sequence_alpha_rev = numvec_to_string(&seq);
     }
 
-    /// Shuffle the file contents vec using the Fisher-Yates shuffle.
-    fn shuffle_contents(&mut self) {
-        let length = self.file.contents.len();
-        let mut rng = thread_rng();
-        for i in 0..length {
-            let j = rng.gen_range(i..length);
-            let tmp = self.file.contents[i].clone();
-            self.file.contents[i] = self.file.contents[j].clone();
-            self.file.contents[j] = tmp;
-        }
-    }
-
     /// Pop the last sentence from the vec of file contents.
     fn pick_sentence(&mut self) {
-        if self.file.contents.len() > 0 {
-            self.answers.sequence = self.file.contents.pop().unwrap_or_default().to_lowercase();
-            let mut sorted: Vec<&str> = self.answers.sequence.split(" ").collect();
-            sorted.reverse();
-            self.answers.sequence_rev = sorted.join(" ");
-            sorted.sort();
-            self.answers.sequence_alpha = sorted.join(" ");
-            sorted.reverse();
-            self.answers.sequence_alpha_rev = sorted.join(" ");
-        } else {
-            self.get_file();
-            self.pick_sentence();
-        }
+        if let Some(contents) = &mut self.sentences.contents {
+            match contents.pop() {
+                Some(answer) => {
+                    self.answers.sequence = answer.to_lowercase();
+                    let mut sorted: Vec<&str> = answer.split(" ").collect();
+                    sorted.reverse();
+                    self.answers.sequence_rev = sorted.join(" ");
+                    sorted.sort();
+                    self.answers.sequence_alpha = sorted.join(" ");
+                    sorted.reverse();
+                    self.answers.sequence_alpha_rev = sorted.join(" ");
+                }
+                None => {
+                    if let Some(file) = &self.sentences.selected_file {
+                        self.sentences.use_file(file.clone()); // TODO meh cloning...
+                        self.pick_sentence(); // TODO Can cause infinite loop. Not good.
+                    }
+                }
+            };
+        };
     }
 }
 
@@ -221,28 +250,22 @@ impl View for Sequences {
 
         if self.config.exercise_type == ExerciseType::Sentences {
             egui::ComboBox::from_label("Select sentences file")
-                .selected_text(
-                    self.file
-                        .sel_file_path
-                        .file_name()
-                        .unwrap_or_default()
-                        .to_str()
-                        .unwrap_or_default(),
-                )
+                .selected_text(match &self.sentences.selected_file {
+                    Some(res) => res.filename.clone(),
+                    None => String::from("No file selected."),
+                })
                 .show_ui(ui, |ui| {
-                    let files = self.file.dirfiles.clone();
-                    for file in files {
-                        let filename = file
-                            .file_name()
-                            .unwrap_or_default()
-                            .to_str()
-                            .unwrap_or_default()
-                            .to_owned();
+                    let available_files = self.sentences.available_files.clone();
+                    for file in available_files {
                         if ui
-                            .selectable_value(&mut self.file.sel_file_path, file, &filename)
+                            .selectable_value(
+                                &mut self.sentences.selected_file,
+                                Some(file.clone()),
+                                &file.language,
+                            )
                             .clicked()
                         {
-                            self.get_file();
+                            self.sentences.use_file(file);
                         };
                     }
                 });

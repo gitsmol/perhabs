@@ -1,0 +1,17 @@
+{
+    "excconfig_path_disk": "./appdata/exercise_configs.json",
+    "excconfig_path_web": "https://www.polyprax.nl/perhabs/appdata/exercise_configs.json",
+    "sentences_path_disk": "./excdata/sentences/",
+    "sentences_path_web": "https://www.polyprax.nl/perhabs/excdata/sentences/",
+    "sentences_files": [
+        {
+            "language": "English",
+            "filename": "sentences_EN.txt"
+        },
+        {
+            "language": "Nederlands",
+            "filename": "sentences_NL.txt"
+        }
+    ],
+    "source": "Unknown"
+}

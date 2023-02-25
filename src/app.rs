@@ -1,5 +1,4 @@
 use crate::windowman::Windows;
-use egui::Align2;
 
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -15,12 +14,11 @@ impl Default for Perhabs {
     fn default() -> Self {
         Self {
             windows: Windows::default(),
-            #[cfg(not(target_arch = "wasm32"))]
-            speaker: tts::Tts::new(tts::Backends::AppKit).unwrap(), // TODO use default (but fix Mac!)
 
-            // speaker: tts::Tts::default().unwrap(),
-            #[cfg(target_arch = "wasm32")]
-            speaker: tts::Tts::default().unwrap(), // TODO use default (but fix Mac!)
+            #[cfg(target_os = "macos")]
+            speaker: tts::Tts::new(tts::Backends::AppKit).unwrap(), // NOTE default is AvKit which is bugged(?)
+            #[cfg(not(target_os = "macos"))]
+            speaker: tts::Tts::default().unwrap(),
         }
     }
 }
@@ -49,21 +47,18 @@ impl eframe::App for Perhabs {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            egui::Window::new("Windows")
-                .anchor(Align2::RIGHT_TOP, (0., 0.))
-                .resizable(false)
-                .collapsible(true)
-                .show(ctx, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.label("Theme");
-                        egui::widgets::global_dark_light_mode_buttons(ui);
-                    });
-                    ui.separator();
-                    self.windows.checkboxes(ui);
-                });
-            // Show open windows
-            self.windows.windows(ctx, &mut self.speaker);
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+            // The top panel is often a good place for a menu bar:
+            egui::menu::bar(ui, |ui| {
+                ui.label("Theme");
+                egui::widgets::global_dark_light_mode_switch(ui);
+                ui.label(" | ");
+                self.windows.labels(ui);
+            });
         });
+
+        egui::CentralPanel::default().show(ctx, |_ui| {});
+        // Show open windows
+        self.windows.windows(ctx, &mut self.speaker);
     }
 }
