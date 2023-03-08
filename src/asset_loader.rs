@@ -74,6 +74,7 @@ impl PerhabsConfig {
         let config = PerhabsConfig::deserialize(&mut de)?;
         Ok(config)
     }
+
     fn from_web() -> Result<Self, reqwest::Error> {
         debug!("Getting Perhabs config: trying web.");
         let resp = reqwest::blocking::get("https://www.polyprax.nl/perhabs/appdata/config.json")?;

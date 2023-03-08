@@ -182,7 +182,8 @@ impl Sequences {
         if let Some(contents) = &mut self.sentences.contents {
             match contents.pop() {
                 Some(answer) => {
-                    self.answers.sequence = answer.to_lowercase();
+                    let answer = answer.to_lowercase();
+                    self.answers.sequence = answer.to_owned();
                     let mut sorted: Vec<&str> = answer.split(" ").collect();
                     sorted.reverse();
                     self.answers.sequence_rev = sorted.join(" ");

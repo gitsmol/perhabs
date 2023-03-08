@@ -1,13 +1,12 @@
-use std::path::PathBuf;
 use chrono::{DateTime, Duration, Local};
 use eframe::emath;
 use eframe::epaint::PathShape;
 use egui::style::Margin;
 use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
 
+use crate::asset_loader::{self, Exercise};
 use crate::modules::exercises::anaglyph::Anaglyph;
 use crate::windowman::{AppWin, View};
-use crate::configs::{Exercise, get_exc_config};
 use perhabs::Direction;
 
 pub struct Session {
@@ -41,10 +40,8 @@ impl Default for Configuration {
     fn default() -> Self {
         Self { 
             calibrating: false,
-            // TODO centralize all such config paths
             exercises: {
-                let config_file = PathBuf::from("appdata/exercise_configs.json"); 
-                let config = get_exc_config(&config_file);
+                let config = asset_loader::ExcConfig::new();
                 config.exercises
                 
             }
@@ -87,7 +84,7 @@ impl AppWin for Vergence {
                 egui::Window::new("Vergence")
                     .collapsible(false)
                     .resizable(false)
-                    .fixed_size([250., 200.])
+                    .fixed_size([250., 300.])
                     .anchor(center, vec2(0., 0.))
                     .show(ctx, |ui| {
                         self.ui(ui, _spk);
@@ -123,16 +120,13 @@ impl View for Vergence {
                 });                
             };
             
-            ui.allocate_space(egui::Vec2 { x: 0., y: 10. });
+            // Fill space
+            ui.allocate_space(ui.available_size());
+
             if ui.button("Calibrate").clicked() {
                 self.configuration.calibrating = true
             }
         });
-        
-
-
-        // Fill space
-        ui.allocate_space(ui.available_size());
     }
     
     fn session(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
@@ -220,8 +214,11 @@ impl Vergence {
                     
                 });
 
+            // ui.allocate_space(vec2(ui.available_width() / 3., ui.available_height() / 3.));
+            
             ui.horizontal(|ui| {
                 if ui.button("Cancel").clicked() {
+                    self.anaglyph = Anaglyph::default();
                     self.configuration.calibrating = false
                 }
                 if ui.button("Save and close").clicked() {
