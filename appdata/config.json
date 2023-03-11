@@ -1,4 +1,6 @@
 {
+    "config_path_disk": "./appdata/config.json",
+    "config_path_web": "https://www.polyprax.nl/perhabs/appdata/config.json",
     "excconfig_path_disk": "./appdata/exercise_configs.json",
     "excconfig_path_web": "https://www.polyprax.nl/perhabs/appdata/exercise_configs.json",
     "sentences_path_disk": "./excdata/sentences/",
