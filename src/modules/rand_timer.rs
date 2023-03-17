@@ -1,10 +1,11 @@
+use crate::asset_loader::AppData;
 use crate::windowman::{AppWin, View};
 use egui::RichText;
 use rand::prelude::*;
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread::{self, sleep, JoinHandle};
 use std::time::Duration;
-use tts;
+use tts::{self, Tts};
 
 /// RandTimer runs a loop. Within this 'outer' loop, short delays of a random duration
 /// are set. When a delay runs out, 'switch' is spoken by TTS. Within the outer thread,
@@ -108,7 +109,7 @@ impl AppWin for RandTimer {
         "Timer"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, mut spk: &mut tts::Tts) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
         // update the session info
 
         match self.session_rx.try_recv() {
@@ -121,19 +122,19 @@ impl AppWin for RandTimer {
             // does not run this function if there is no input. If we don't request repaint
             // none of the logic in session is run.
             ctx.request_repaint();
-            egui::CentralPanel::default().show(ctx, |ui| self.session(ui, spk));
+            egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
         }
         if !self.session_active {
             egui::Window::new(self.name())
                 .open(open)
                 .default_height(500.0)
-                .show(ctx, |ui| self.ui(ui, &mut spk));
+                .show(ctx, |ui| self.ui(ui, appdata, tts));
         }
     }
 }
 
 impl View for RandTimer {
-    fn ui(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
         // basic configuration UI
         ui.vertical(|ui| {
             ui.add(egui::Slider::new(&mut self.timer_mins, 1..=30).suffix("min"));
@@ -143,13 +144,13 @@ impl View for RandTimer {
                 if ui.button("Start").clicked() {
                     self.session_active = true;
                     *self.act.lock().unwrap() = true;
-                    self.run(spk)
+                    self.run(tts)
                 }
             });
         });
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
         ui.horizontal(|ui| {
             if ui.button("Stop").clicked() {
                 *self.act.lock().unwrap() = false;

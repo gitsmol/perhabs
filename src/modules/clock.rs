@@ -1,7 +1,11 @@
-use crate::windowman::{AppWin, View};
+use crate::{
+    asset_loader::AppData,
+    windowman::{AppWin, View},
+};
 use chrono::{Local, Timelike};
 use eframe::epaint::{self, CircleShape};
 use egui::{emath, pos2, vec2, Color32, Frame, Pos2, Rect, Stroke};
+use tts::Tts;
 
 use std::f32::consts::TAU;
 
@@ -20,16 +24,16 @@ impl AppWin for Clock {
         "Clock"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, spk: &mut tts::Tts) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
         egui::Window::new(self.name())
             .open(open)
             .default_height(500.0)
-            .show(ctx, |ui| self.ui(ui, spk));
+            .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
 }
 
 impl View for Clock {
-    fn ui(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
         let color = if ui.visuals().dark_mode {
             Color32::from_additive_luminance(196)
         } else {
@@ -57,7 +61,7 @@ impl View for Clock {
             ui.painter().extend(hands);
         });
     }
-    fn session(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {}
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
 }
 
 fn draw_marks(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {

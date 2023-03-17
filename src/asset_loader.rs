@@ -1,42 +1,74 @@
-use log::{self, debug};
-use reqwest::Error;
-use serde::Deserialize;
 use std::{
     fs::File,
     io::{self, BufRead, BufReader},
 };
+
+use ehttp::{Response, Result};
+use log::{self, debug};
+use poll_promise::Promise;
+use serde::Deserialize;
+
+/// AppData is loaded when launching Perhabs. Individual modules/windows get app-wide
+/// data and 'public access features' like TTS through a reference to this struct.
+pub struct AppData {
+    pub config: Option<PerhabsConfig>,
+    pub config_promise: Option<Promise<Result<Response>>>,
+    pub excconfig: Option<ExcConfig>,
+    pub excconfig_promise: Option<Promise<Result<Response>>>,
+}
+
+impl Default for AppData {
+    fn default() -> Self {
+        Self {
+            config: None,
+            config_promise: None,
+            excconfig: None,
+            excconfig_promise: None,
+        }
+    }
+}
 
 /// PerhabsConfig
 /// PerhabsConfig contains information about file locations.
 ///
 
 #[derive(Deserialize, Debug)]
-pub enum Source {
+pub enum AssetSource {
     Disk,
     Web,
     Default,
     Unknown,
 }
+
+impl AssetSource {
+    pub fn to_string(&self) -> String {
+        match self {
+            AssetSource::Disk => String::from("Disk"),
+            AssetSource::Web => String::from("Web"),
+            AssetSource::Default => String::from("Default"),
+            AssetSource::Unknown => String::from("Unknown"),
+        }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct PerhabsConfig {
-    excconfig_path_disk: String,
-    excconfig_path_web: String,
+    pub config_path_disk: String,
+    pub config_path_web: String,
+    pub excconfig_path_disk: String,
+    pub excconfig_path_web: String,
     pub sentences_path_disk: String,
     pub sentences_path_web: String,
     pub sentences_files: Vec<SentenceFile>,
-    pub source: Source,
-}
-
-#[derive(Deserialize, PartialEq, Clone, Debug)]
-pub struct SentenceFile {
-    pub filename: String,
-    pub language: String,
+    pub source: AssetSource,
 }
 
 impl Default for PerhabsConfig {
     fn default() -> Self {
         debug!("Getting Perhabs config: falling back to default.");
         Self {
+            config_path_disk: String::from("./appdata/config.json"),
+            config_path_web: String::from("https://www.polyprax.nl/perhabs/appdata/config.json"),
             excconfig_path_disk: String::from("./appdata/config.json"),
             excconfig_path_web: String::from("https://www.polyprax.nl/perhabs/appdata/config.json"),
             sentences_path_disk: String::from("./excdata/sentences/"),
@@ -45,28 +77,13 @@ impl Default for PerhabsConfig {
                 filename: String::from("sentences_EN.txt"),
                 language: String::from("English"),
             }],
-            source: Source::Default,
+            source: AssetSource::Default,
         }
     }
 }
 
 impl PerhabsConfig {
-    pub fn new() -> Self {
-        debug!("Getting Perhabs config.");
-        if let Ok(mut res) = PerhabsConfig::from_disk() {
-            res.source = Source::Disk;
-            return res;
-        }
-
-        if let Ok(mut res) = PerhabsConfig::from_web() {
-            res.source = Source::Web;
-            return res;
-        } else {
-            PerhabsConfig::default()
-        }
-    }
-
-    fn from_disk() -> io::Result<Self> {
+    pub fn from_disk() -> io::Result<Self> {
         debug!("Getting Perhabs config: trying disk.");
         let file = File::open("./appdata/config.json")?;
         let reader = BufReader::new(file);
@@ -75,11 +92,16 @@ impl PerhabsConfig {
         Ok(config)
     }
 
-    fn from_web() -> Result<Self, reqwest::Error> {
+    pub fn from_web() -> Promise<Result<Response>> {
         debug!("Getting Perhabs config: trying web.");
-        let resp = reqwest::blocking::get("https://www.polyprax.nl/perhabs/appdata/config.json")?;
-        let result: PerhabsConfig = resp.json()?;
-        Ok(result)
+        let path = PerhabsConfig::default().config_path_web;
+        let (sender, promise) = Promise::new();
+        let request = ehttp::Request::get(path);
+        ehttp::fetch(request, move |response| {
+            sender.send(response);
+        });
+
+        promise
     }
 }
 
@@ -89,6 +111,7 @@ impl PerhabsConfig {
 #[derive(Deserialize, Debug)]
 pub struct ExcConfig {
     pub exercises: Vec<Exercise>,
+    pub source: AssetSource,
 }
 
 #[derive(Deserialize, Debug)]
@@ -128,24 +151,13 @@ impl Default for ExcConfig {
                     }],
                 },
             ],
+            source: AssetSource::Default,
         }
     }
 }
 
 impl ExcConfig {
-    pub fn new() -> Self {
-        debug!("Getting excercise config.");
-        let config = PerhabsConfig::new();
-        if let Ok(res) = ExcConfig::from_disk(&config.excconfig_path_disk) {
-            return res;
-        }
-        if let Ok(res) = ExcConfig::from_web(&config.excconfig_path_web) {
-            return res;
-        } else {
-            ExcConfig::default()
-        }
-    }
-    fn from_disk(path: &String) -> io::Result<ExcConfig> {
+    pub fn from_disk(path: &String) -> io::Result<ExcConfig> {
         debug!("Getting excercise config: trying disk.");
         let file = File::open(path)?;
         let reader = BufReader::new(file);
@@ -153,33 +165,29 @@ impl ExcConfig {
         let config = ExcConfig::deserialize(&mut de)?;
         Ok(config)
     }
-    fn from_web(path: &String) -> Result<ExcConfig, reqwest::Error> {
-        debug!("Getting excercise config: trying web.");
-        let resp = reqwest::blocking::get(path)?;
-        let result: ExcConfig = resp.json()?;
-        Ok(result)
+    pub fn from_web() -> Promise<Result<Response>> {
+        debug!("Getting Perhabs config: trying web.");
+        let path = PerhabsConfig::default().excconfig_path_web;
+        let (sender, promise) = Promise::new();
+        let request = ehttp::Request::get(path);
+        ehttp::fetch(request, move |response| {
+            sender.send(response);
+        });
+
+        promise
     }
+}
+
+#[derive(Deserialize, PartialEq, Clone, Debug)]
+pub struct SentenceFile {
+    pub filename: String,
+    pub language: String,
 }
 
 /// Sentences
 /// get_sentences finds the most relevant source for practice sentences.
 ///
-pub fn get_sentences(filename: &String) -> Result<Vec<String>, Error> {
-    debug!("Getting sentences.");
-    let config = PerhabsConfig::new();
-    let path_disk = config.sentences_path_disk + &filename;
-    let path_web = config.sentences_path_web + &filename;
-    if let Ok(res) = get_sentences_disk(&path_disk) {
-        return Ok(res);
-    }
-    if let Ok(res) = get_sentences_web(&path_web) {
-        return Ok(res);
-    } else {
-        return Ok(default_sentences());
-    }
-}
-
-fn get_sentences_disk(path: &String) -> io::Result<Vec<String>> {
+pub fn get_sentences_disk(path: String) -> io::Result<Vec<String>> {
     debug!("Getting sentences: trying disk.");
     let file = File::open(path)?;
     let lines = BufReader::new(file);
@@ -192,20 +200,27 @@ fn get_sentences_disk(path: &String) -> io::Result<Vec<String>> {
     Ok(contents)
 }
 
-fn get_sentences_web(path: &String) -> Result<Vec<String>, reqwest::Error> {
+pub fn get_sentences_web(path: String) -> Promise<Result<Response>> {
+    debug!("Getting Perhabs config: trying web.");
+    let (sender, promise) = Promise::new();
+    let request = ehttp::Request::get(path);
+    ehttp::fetch(request, move |response| {
+        sender.send(response);
+    });
+
+    promise
+}
+
+pub fn read_sentences_promise(file: &str) -> io::Result<Vec<String>> {
     debug!("Getting sentences: trying web.");
-    let resp = reqwest::blocking::get(path)?;
-    let result = BufReader::new(resp);
-    let mut contents = vec![];
-    for line in result.lines() {
-        if let Ok(ip) = line {
-            contents.push(ip);
-        }
+    let mut contents: Vec<String> = vec![];
+    for line in file.lines() {
+        contents.push(String::from(line));
     }
     Ok(contents)
 }
 
-fn default_sentences() -> Vec<String> {
+pub fn default_sentences() -> Vec<String> {
     debug!("Getting sentences: falling back to default.");
     let sentences = vec![
         "these are waves, not mountains",
@@ -231,4 +246,12 @@ fn default_sentences() -> Vec<String> {
         returnvec.push(String::from(s))
     }
     returnvec
+}
+
+pub fn loading(ui: &mut egui::Ui) {
+    ui.horizontal_centered(|ui| {
+        ui.add_space(100.);
+        ui.heading("Loading...");
+        ui.spinner();
+    });
 }

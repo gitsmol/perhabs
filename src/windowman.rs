@@ -1,7 +1,11 @@
 #![warn(clippy::all)]
-use crate::modules::{clock, debug_info, rand_timer, seq_numbers, sequences, vergence};
+use crate::{
+    asset_loader::AppData,
+    modules::{clock, cog_numbers, cog_words, debug_info, rand_timer, seq_numbers, vergence},
+};
 use egui::{Context, Ui};
 use std::collections::BTreeSet;
+use tts::Tts;
 
 pub struct Windows {
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -13,7 +17,8 @@ impl Default for Windows {
     fn default() -> Self {
         Self::from_windows(vec![
             Box::new(seq_numbers::NumSeq::default()),
-            Box::new(sequences::Sequences::default()),
+            Box::new(cog_words::CogWords::default()),
+            Box::new(cog_numbers::CogNumbers::default()),
             Box::new(vergence::Vergence::default()),
             #[cfg(not(target_arch = "wasm32"))]
             Box::new(rand_timer::RandTimer::default()), // WASM doesn't support threading
@@ -41,19 +46,19 @@ impl Windows {
         }
     }
 
-    pub fn windows(&mut self, ctx: &Context, spk: &mut tts::Tts) {
+    pub fn windows(&mut self, ctx: &Context, appdata: &AppData, tts: &mut Tts) {
         let Self { windows, open } = self;
         for window in windows {
             let mut is_open = open.contains(window.name());
-            window.show(ctx, &mut is_open, spk);
+            window.show(ctx, &mut is_open, appdata, tts);
             set_open(open, window.name(), is_open);
         }
     }
 }
 
 pub trait View {
-    fn ui(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts);
-    fn session(&mut self, ui: &mut egui::Ui, spk: &mut tts::Tts);
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
 }
 
 /// Something to view
@@ -62,7 +67,7 @@ pub trait AppWin {
     fn name(&self) -> &'static str;
 
     /// Show windows, etc
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, spk: &mut tts::Tts);
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts);
 }
 
 // Open and close windows

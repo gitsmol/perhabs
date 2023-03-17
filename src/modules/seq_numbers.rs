@@ -1,5 +1,9 @@
-use crate::windowman::{AppWin, View};
+use crate::{
+    asset_loader::AppData,
+    windowman::{AppWin, View},
+};
 use rand::prelude::*;
+use tts::Tts;
 
 pub struct NumSeq {
     operators: Vec<i32>,
@@ -51,16 +55,16 @@ impl AppWin for NumSeq {
         "Number sequences"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, mut spk: &mut tts::Tts) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
         egui::Window::new(self.name())
             .open(open)
             .default_height(500.0)
-            .show(ctx, |ui| self.ui(ui, &mut spk));
+            .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
 }
 
 impl View for NumSeq {
-    fn ui(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _appdata: &AppData, tts: &mut Tts) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 if ui.button("Generate").clicked() {
@@ -102,5 +106,5 @@ impl View for NumSeq {
             }
         });
     }
-    fn session(&mut self, ui: &mut egui::Ui, _spk: &mut tts::Tts) {}
+    fn session(&mut self, _ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
 }

@@ -3,8 +3,9 @@ use eframe::emath;
 use eframe::epaint::PathShape;
 use egui::style::Margin;
 use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
+use tts::Tts;
 
-use crate::asset_loader::{self, Exercise};
+use crate::asset_loader::AppData;
 use crate::modules::exercises::anaglyph::Anaglyph;
 use crate::windowman::{AppWin, View};
 use perhabs::Direction;
@@ -33,19 +34,11 @@ impl Default for Session {
 
 struct Configuration {
     calibrating: bool,
-    exercises: Vec<Exercise>,
 }
 
 impl Default for Configuration {
     fn default() -> Self {
-        Self { 
-            calibrating: false,
-            exercises: {
-                let config = asset_loader::ExcConfig::new();
-                config.exercises
-                
-            }
-        }
+        Self { calibrating: false }
     }
 }
 /// Exercise to train binocular convergence/divergence usign anaglyph images.
@@ -70,9 +63,8 @@ impl AppWin for Vergence {
         "Vergence"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, _spk: &mut tts::Tts) {
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
         if open == &true {
-            
             //determine center of screen to anchor startup window
             let center = {
                 let mut center = Align2::CENTER_TOP;
@@ -87,12 +79,12 @@ impl AppWin for Vergence {
                     .fixed_size([250., 300.])
                     .anchor(center, vec2(0., 0.))
                     .show(ctx, |ui| {
-                        self.ui(ui, _spk);
+                        self.ui(ui, appdata, tts);
                     });
             }
 
             if self.session.active {
-                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, _spk));
+                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
             }
 
             self.read_keypress(ctx);
@@ -101,25 +93,27 @@ impl AppWin for Vergence {
 }
 
 impl View for Vergence {
-    fn ui(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
         if self.configuration.calibrating {
             self.calibrate(ui);
             return;
         }
-        
+
         ui.vertical(|ui| {
-            for excercise in &self.configuration.exercises {
-                ui.label(format!("{}", excercise.name));
-                ui.horizontal(|ui| {
-                    for level in &excercise.levels {
-                        if ui.button(&level.name).clicked() {
-                            self.session.step = level.params.step;
-                            self.session.active = true;
+            if let Some(excconfig) = &appdata.excconfig {
+                for excercise in &excconfig.exercises {
+                    ui.label(format!("{}", excercise.name));
+                    ui.horizontal(|ui| {
+                        for level in &excercise.levels {
+                            if ui.button(&level.name).clicked() {
+                                self.session.step = level.params.step;
+                                self.session.active = true;
+                            }
                         }
-                    };    
-                });                
-            };
-            
+                    });
+                }
+            }
+
             // Fill space
             ui.allocate_space(ui.available_size());
 
@@ -128,17 +122,17 @@ impl View for Vergence {
             }
         });
     }
-    
-    fn session(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts) {
+
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
                 self.session = Session::default();
                 self.anaglyph.reset();
             };
-        // ui.add_space(ui.available_width());
-        ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
+            // ui.add_space(ui.available_width());
+            ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
         });
-        
+
         self.anaglyph.draw(ui);
     }
 }
@@ -152,15 +146,15 @@ impl Vergence {
                 ui.label("Left eye");
                 ui.color_edit_button_srgba(&mut self.anaglyph.color.left);
                 ui.add_space(ui.available_width() / 3.);
-                
+
                 ui.color_edit_button_srgba(&mut self.anaglyph.color.right);
                 ui.label("Right eye");
             });
-            
+
             ui.separator();
-            
+
             Frame::dark_canvas(ui.style())
-                .outer_margin(Margin::from(0.0)) 
+                .outer_margin(Margin::from(0.0))
                 // TODO: look into eliminating visible margin
                 // (negative number works but what are the downsides?)
                 .show(ui, |ui| {
@@ -211,11 +205,11 @@ impl Vergence {
 
                     ui.painter().add(left_diamond);
                     ui.painter().add(right_diamond);
-                    
+
                 });
 
             // ui.allocate_space(vec2(ui.available_width() / 3., ui.available_height() / 3.));
-            
+
             ui.horizontal(|ui| {
                 if ui.button("Cancel").clicked() {
                     self.anaglyph = Anaglyph::default();
@@ -241,10 +235,12 @@ impl Vergence {
                         if prev_val == &true && self.session.answer_thresh == true {
                             self.session.answer_thresh = false;
                             self.anaglyph.background_offset += self.session.step;
-                        } if prev_val == &true && self.session.answer_thresh == false {
+                        }
+                        if prev_val == &true && self.session.answer_thresh == false {
                             self.session.answer_thresh = true
-                        } if prev_val == &false {
-                            self.session.answer_thresh = false   
+                        }
+                        if prev_val == &false {
+                            self.session.answer_thresh = false
                         }
                     }
                     None => (),
