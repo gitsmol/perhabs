@@ -70,7 +70,9 @@ impl Default for PerhabsConfig {
             config_path_disk: String::from("./appdata/config.json"),
             config_path_web: String::from("https://www.polyprax.nl/perhabs/appdata/config.json"),
             excconfig_path_disk: String::from("./appdata/config.json"),
-            excconfig_path_web: String::from("https://www.polyprax.nl/perhabs/appdata/config.json"),
+            excconfig_path_web: String::from(
+                "https://www.polyprax.nl/perhabs/appdata/excconfig.json",
+            ),
             sentences_path_disk: String::from("./excdata/sentences/"),
             sentences_path_web: String::from("https://www.polyprax.nl/perhabs/excdata/sentences/"),
             sentences_files: vec![SentenceFile {
@@ -165,9 +167,9 @@ impl ExcConfig {
         let config = ExcConfig::deserialize(&mut de)?;
         Ok(config)
     }
-    pub fn from_web() -> Promise<Result<Response>> {
+
+    pub fn from_web(path: &String) -> Promise<Result<Response>> {
         debug!("Getting Perhabs config: trying web.");
-        let path = PerhabsConfig::default().excconfig_path_web;
         let (sender, promise) = Promise::new();
         let request = ehttp::Request::get(path);
         ehttp::fetch(request, move |response| {
@@ -250,7 +252,6 @@ pub fn default_sentences() -> Vec<String> {
 
 pub fn loading(ui: &mut egui::Ui) {
     ui.horizontal_centered(|ui| {
-        ui.add_space(100.);
         ui.heading("Loading...");
         ui.spinner();
     });

@@ -24,16 +24,16 @@ impl AppWin for Clock {
         "Clock"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
+    fn show(&mut self, ctx: &egui::Context, _: &mut bool, appdata: &AppData, tts: &mut Tts) {
         egui::Window::new(self.name())
-            .open(open)
-            .default_height(500.0)
+            .fixed_size((250.0, 250.))
+            .resizable(false)
             .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
 }
 
 impl View for Clock {
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         let color = if ui.visuals().dark_mode {
             Color32::from_additive_luminance(196)
         } else {

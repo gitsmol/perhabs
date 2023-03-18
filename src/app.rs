@@ -79,6 +79,7 @@ impl Perhabs {
             Some(promise) => {
                 // Is the promise succesfully fulfilled?
                 if let Some(Ok(resource)) = promise.ready() {
+                    debug!("Promise for Perhabs config is ready.");
                     // Deserialize the data we got from the promise
                     let config = serde_json::from_str::<PerhabsConfig>(resource.text().unwrap());
 
@@ -123,12 +124,17 @@ impl Perhabs {
                     res.source = AssetSource::Disk;
                     self.appdata.excconfig = Some(res)
                 }
-                Err(_) => self.appdata.excconfig_promise = Some(ExcConfig::from_web()),
+                Err(_) => {
+                    debug!("No exercise config found on disk. Getting web config.");
+                    let path = &config.excconfig_path_web;
+                    self.appdata.excconfig_promise = Some(ExcConfig::from_web(path))
+                }
             },
             // Yes: we have a promise.
             Some(promise) => {
                 // Is the promise succesfully fulfilled?
                 if let Some(Ok(resource)) = promise.ready() {
+                    debug!("Promise for exercise config is ready.");
                     // Deserialize the data we got from the promise
                     let config = serde_json::from_str::<ExcConfig>(resource.text().unwrap());
 
@@ -136,11 +142,15 @@ impl Perhabs {
                     // If deser fails, store hardcoded defaults.
                     self.appdata.excconfig = match config {
                         Ok(mut res) => {
+                            debug!("Succesfully deserialized exercise config.");
                             res.source = AssetSource::Web;
                             Some(res)
                         }
                         // If deserialization fails, store hardcoded defaults
-                        Err(_) => Some(ExcConfig::default()),
+                        Err(error) => {
+                            debug!("Failed to deserialize exercise config: {}", error);
+                            Some(ExcConfig::default())
+                        }
                     }
                 }
             }

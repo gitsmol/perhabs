@@ -50,8 +50,10 @@ impl Windows {
         let Self { windows, open } = self;
         for window in windows {
             let mut is_open = open.contains(window.name());
-            window.show(ctx, &mut is_open, appdata, tts);
-            set_open(open, window.name(), is_open);
+            if is_open == true {
+                window.show(ctx, &mut is_open, appdata, tts);
+                set_open(open, window.name(), is_open);
+            }
         }
     }
 }
