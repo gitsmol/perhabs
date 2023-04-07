@@ -1,7 +1,9 @@
 #![warn(clippy::all)]
 use crate::{
     asset_loader::AppData,
-    modules::{clock, cog_numbers, cog_words, debug_info, rand_timer, seq_numbers, vergence},
+    modules::{
+        clock, cog_numbers, cog_words, debug_info, multitasker, rand_timer, seq_numbers, vergence,
+    },
 };
 use egui::{Context, Ui};
 use std::collections::BTreeSet;
@@ -20,6 +22,7 @@ impl Default for Windows {
             Box::new(cog_words::CogWords::default()),
             Box::new(cog_numbers::CogNumbers::default()),
             Box::new(vergence::Vergence::default()),
+            Box::new(multitasker::MultiTasker::default()),
             #[cfg(not(target_arch = "wasm32"))]
             Box::new(rand_timer::RandTimer::default()), // WASM doesn't support threading
             Box::new(clock::Clock::default()),
