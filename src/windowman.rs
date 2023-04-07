@@ -1,9 +1,7 @@
 #![warn(clippy::all)]
 use crate::{
     asset_loader::AppData,
-    modules::{
-        clock, cog_numbers, cog_words, debug_info, multitasker, rand_timer, seq_numbers, vergence,
-    },
+    modules::{clock, debug_info, multitasker, rand_timer},
 };
 use egui::{Context, Ui};
 use std::collections::BTreeSet;
@@ -18,10 +16,6 @@ pub struct Windows {
 impl Default for Windows {
     fn default() -> Self {
         Self::from_windows(vec![
-            Box::new(seq_numbers::NumSeq::default()),
-            Box::new(cog_words::CogWords::default()),
-            Box::new(cog_numbers::CogNumbers::default()),
-            Box::new(vergence::Vergence::default()),
             Box::new(multitasker::MultiTasker::default()),
             #[cfg(not(target_arch = "wasm32"))]
             Box::new(rand_timer::RandTimer::default()), // WASM doesn't support threading
@@ -33,7 +27,7 @@ impl Default for Windows {
 
 impl Windows {
     pub fn from_windows(windows: Vec<Box<dyn AppWin>>) -> Self {
-        let mut open = BTreeSet::new();
+        let open = BTreeSet::new();
         // open.insert(rand_timer::RandTimer::default().name().to_owned());
         // open.insert(sequences::Sequences::default().name().to_owned());
         // open.insert(debug_info::DebugInfo::default().name().to_owned());

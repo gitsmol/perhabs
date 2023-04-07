@@ -6,8 +6,10 @@ use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
 use tts::Tts;
 
 use crate::asset_loader::AppData;
-use crate::modules::exercises::anaglyph::Anaglyph;
-use crate::windowman::{AppWin, View};
+use crate::sessionman::SessionPanel;
+use crate::sessions::exercises::anaglyph::Anaglyph;
+use crate::windowman::View;
+
 use perhabs::Direction;
 
 pub struct Session {
@@ -58,42 +60,40 @@ impl Default for Vergence {
     }
 }
 
-impl AppWin for Vergence {
+impl SessionPanel for Vergence {
     fn name(&self) -> &'static str {
         "Vergence"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
-        if open == &true {
-            //determine center of screen to anchor startup window
-            let center = {
-                let mut center = Align2::CENTER_TOP;
-                center[1] = Align::Center;
-                center
-            };
+    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
+        //determine center of screen to anchor startup window
+        let center = {
+            let mut center = Align2::CENTER_TOP;
+            center[1] = Align::Center;
+            center
+        };
 
-            if !self.session.active {
-                egui::Window::new("Vergence")
-                    .collapsible(false)
-                    .resizable(false)
-                    .fixed_size([250., 300.])
-                    .anchor(center, vec2(0., 0.))
-                    .show(ctx, |ui| {
-                        self.ui(ui, appdata, tts);
-                    });
-            }
-
-            if self.session.active {
-                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
-            }
-
-            self.read_keypress(ctx);
+        if !self.session.active {
+            egui::Window::new("Vergence")
+                .collapsible(false)
+                .resizable(false)
+                .fixed_size([250., 300.])
+                .anchor(center, vec2(0., 0.))
+                .show(ctx, |ui| {
+                    self.ui(ui, appdata, tts);
+                });
         }
+
+        if self.session.active {
+            egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
+        }
+
+        self.read_keypress(ctx);
     }
 }
 
 impl View for Vergence {
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
         if self.configuration.calibrating {
             self.calibrate(ui);
             return;
@@ -123,7 +123,7 @@ impl View for Vergence {
         });
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
                 self.session = Session::default();

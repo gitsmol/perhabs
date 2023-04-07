@@ -51,5 +51,5 @@ impl View for DebugInfo {
                 }
             });
     }
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
+    fn session(&mut self, _: &mut egui::Ui, _: &AppData, _: &mut Tts) {}
 }

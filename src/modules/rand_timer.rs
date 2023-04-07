@@ -134,7 +134,7 @@ impl AppWin for RandTimer {
 }
 
 impl View for RandTimer {
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, tts: &mut Tts) {
         // basic configuration UI
         ui.vertical(|ui| {
             ui.add(egui::Slider::new(&mut self.timer_mins, 1..=30).suffix("min"));
@@ -150,7 +150,7 @@ impl View for RandTimer {
         });
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         ui.horizontal(|ui| {
             if ui.button("Stop").clicked() {
                 *self.act.lock().unwrap() = false;

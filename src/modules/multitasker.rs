@@ -1,10 +1,10 @@
 use crate::asset_loader::AppData;
 use crate::windowman::{AppWin, View};
-use egui::{RichText, Ui};
+use egui::RichText;
 use rand::prelude::*;
 
 use perhabs::numvec_to_string;
-use std::time::Duration;
+
 use tts::{self, Tts};
 
 #[derive(PartialEq, Eq)]

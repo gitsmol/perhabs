@@ -1,10 +1,11 @@
 use crate::asset_loader::AppData;
-use crate::windowman::{AppWin, View};
+use crate::sessionman::SessionPanel;
+use crate::windowman::View;
 use egui::RichText;
 use rand::prelude::*;
 
 use perhabs::numvec_to_string;
-use std::time::Duration;
+
 use tts::{self, Tts};
 
 struct Session {
@@ -20,7 +21,6 @@ impl Default for Session {
 struct Configuration {
     seq_length: usize,
     seq_show: bool,
-    keypress_delay: Duration,
 }
 
 struct Answers {
@@ -42,6 +42,7 @@ impl Default for Answers {
 
 /// Sequences
 pub struct CogNumbers {
+    name: String,
     config: Configuration,
     session: Session,
     answers: Answers,
@@ -50,9 +51,9 @@ pub struct CogNumbers {
 impl Default for CogNumbers {
     fn default() -> Self {
         Self {
+            name: String::from("Cognitive numbers"),
             answers: Answers::default(),
             config: Configuration {
-                keypress_delay: Duration::from_secs(2),
                 seq_length: 4,
                 seq_show: false,
             },
@@ -93,13 +94,13 @@ impl CogNumbers {
     }
 }
 
-impl AppWin for CogNumbers {
+impl SessionPanel for CogNumbers {
     fn name(&self) -> &'static str {
-        "Cog Numbers"
+        "CogNumbers"
     }
 
     /// Show the configuration dialog
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
+    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if !self.session.active {
             egui::Window::new(self.name())
                 .default_size((250.0, 250.0))

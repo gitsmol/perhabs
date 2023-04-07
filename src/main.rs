@@ -5,6 +5,8 @@ mod app;
 mod asset_loader;
 mod configs;
 mod modules;
+mod sessionman;
+mod sessions;
 mod windowman;
 
 #[macro_use]

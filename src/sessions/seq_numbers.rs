@@ -1,5 +1,6 @@
 use crate::{
     asset_loader::AppData,
+    sessionman::SessionPanel,
     windowman::{AppWin, View},
 };
 use rand::prelude::*;
@@ -50,21 +51,20 @@ impl Default for NumSeq {
     }
 }
 
-impl AppWin for NumSeq {
+impl SessionPanel for NumSeq {
     fn name(&self) -> &'static str {
         "Number sequences"
     }
 
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
+    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         egui::Window::new(self.name())
-            .open(open)
             .default_height(500.0)
             .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
 }
 
 impl View for NumSeq {
-    fn ui(&mut self, ui: &mut egui::Ui, _appdata: &AppData, tts: &mut Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _appdata: &AppData, _: &mut Tts) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 if ui.button("Generate").clicked() {
@@ -106,5 +106,5 @@ impl View for NumSeq {
             }
         });
     }
-    fn session(&mut self, _ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
+    fn session(&mut self, _ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {}
 }

@@ -3,14 +3,16 @@ In a very loose sense of the word.
 
 ## DONE
 - Random timer on loop ('hot potato')
-- Anaglyph drawing
+- Vergence
 - Cog words
 - Cog numbers
 
 ## IN PROGRESS
-- Porting Vizier to Perhabs
-  - Anaglyph DONE
-  - Tracking
+- Switch from app to session model
+    - Cog Numbers DONE
+    - Cog Words
+    - Vergence
+    - Seq numbers
 
 ## TODO
 - Delay on speaking new sentence (get back to task first)

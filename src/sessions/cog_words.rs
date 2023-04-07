@@ -1,4 +1,5 @@
 use crate::asset_loader::{self, AppData, SentenceFile};
+use crate::sessionman::SessionPanel;
 use crate::windowman::{AppWin, View};
 use egui::RichText;
 use ehttp::{Response, Result};
@@ -178,13 +179,13 @@ impl CogWords {
     }
 }
 
-impl AppWin for CogWords {
+impl SessionPanel for CogWords {
     fn name(&self) -> &'static str {
         "Cog Words"
     }
 
     /// Show the configuration dialog
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
+    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if !self.session.active {
             egui::Window::new(self.name())
                 .default_size((250.0, 250.0))
