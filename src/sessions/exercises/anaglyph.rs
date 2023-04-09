@@ -2,7 +2,7 @@ use eframe::{emath, epaint::RectShape};
 use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
 use ndarray_rand::{rand_distr::Binomial, RandomExt};
-use perhabs::{Direction, PhError};
+use perhabs::Direction;
 use rand::prelude::*;
 use std::iter::zip;
 
@@ -183,7 +183,7 @@ impl Anaglyph {
     /// point are removed from the left and right background arrays.
     ///
     /// The focal point is drawn according to the shape in the focal_mask array.
-    fn draw_pixels(self: &mut Self, eye: Eye, origin: &Pos2) -> Result<Vec<Shape>, PhError> {
+    fn draw_pixels(self: &mut Self, eye: Eye, origin: &Pos2) -> Result<Vec<Shape>, eframe::Error> {
         // Left/right image gets appropriate coloring and the offset value is split between them
         let (color, bg_offset, focal_offset, background) = match eye {
             Eye::Left => (

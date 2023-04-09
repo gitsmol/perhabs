@@ -1,7 +1,6 @@
 use std::fs::{self, DirEntry, File};
 use std::io::{self, BufReader};
 use std::path::{Path, PathBuf};
-use std::{error::Error, fmt};
 
 pub fn dirwalk(dir: &Path) -> io::Result<Vec<PathBuf>> {
     let mut files: Vec<DirEntry> = vec![];
@@ -42,46 +41,4 @@ pub enum Direction {
     Down,
     Left,
     Right,
-}
-
-#[derive(Debug)]
-pub enum PhError {
-    // Errors from external libraries...
-    Io(io::Error),
-    // Errors raised by us...
-    Regular(ErrorKind),
-    Custom(String),
-}
-
-impl Error for PhError {
-    fn description(&self) -> &str {
-        match *self {
-            PhError::Io(ref err) => err.description(),
-            PhError::Regular(ref err) => err.as_str(),
-            PhError::Custom(ref err) => err,
-        }
-    }
-}
-
-impl fmt::Display for PhError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            PhError::Io(ref err) => err.fmt(f),
-            PhError::Regular(ref err) => write!(f, "A regular error occurred {:?}", err),
-            PhError::Custom(ref err) => write!(f, "A custom error occurred {:?}", err),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum ErrorKind {
-    InvalidInput, // etc
-}
-
-impl ErrorKind {
-    fn as_str(&self) -> &str {
-        match *self {
-            ErrorKind::InvalidInput => "Invalid input",
-        }
-    }
 }

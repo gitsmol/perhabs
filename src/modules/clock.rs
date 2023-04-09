@@ -21,7 +21,7 @@ impl Clock {}
 
 impl AppWin for Clock {
     fn name(&self) -> &'static str {
-        "Clock"
+        "\u{1F550} Clock"
     }
 
     fn show(&mut self, ctx: &egui::Context, _: &mut bool, appdata: &AppData, tts: &mut Tts) {

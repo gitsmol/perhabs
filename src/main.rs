@@ -1,9 +1,11 @@
 #![warn(clippy::all, rust_2021_compatibility)]
+#![allow(unused_must_use)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod app;
 mod asset_loader;
 mod configs;
+mod menu;
 mod modules;
 mod sessionman;
 mod sessions;
@@ -19,6 +21,7 @@ fn main() {
     tracing_subscriber::fmt::init();
 
     let native_options = eframe::NativeOptions::default();
+
     eframe::run_native(
         "Perhabs - Cognitive Rehab Suite",
         native_options,

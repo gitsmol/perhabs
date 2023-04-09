@@ -21,6 +21,7 @@ poll-promise = "0.2.0"
 
 #egui stuff
 egui = "0.21"
+egui_extras = "0.21.0"
 eframe = { version = "0.21", features = ["persistence"] }
 
 # native:

@@ -6,7 +6,7 @@ use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
 use tts::Tts;
 
 use crate::asset_loader::AppData;
-use crate::sessionman::SessionPanel;
+use crate::sessionman::Exercise;
 use crate::sessions::exercises::anaglyph::Anaglyph;
 use crate::windowman::View;
 
@@ -60,9 +60,13 @@ impl Default for Vergence {
     }
 }
 
-impl SessionPanel for Vergence {
+impl Exercise for Vergence {
     fn name(&self) -> &'static str {
         "Vergence"
+    }
+
+    fn description(&self) -> &'static str {
+        "Train your eyes to diverge and converge. Requires glasses in two different colors."
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {

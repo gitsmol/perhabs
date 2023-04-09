@@ -1,8 +1,4 @@
-use crate::{
-    asset_loader::AppData,
-    sessionman::SessionPanel,
-    windowman::{AppWin, View},
-};
+use crate::{asset_loader::AppData, sessionman::Exercise, windowman::View};
 use rand::prelude::*;
 use tts::Tts;
 
@@ -51,9 +47,13 @@ impl Default for NumSeq {
     }
 }
 
-impl SessionPanel for NumSeq {
+impl Exercise for NumSeq {
     fn name(&self) -> &'static str {
         "Number sequences"
+    }
+
+    fn description(&self) -> &'static str {
+        "Calculate numbers based on simple rules."
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {

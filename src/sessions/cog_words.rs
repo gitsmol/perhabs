@@ -1,6 +1,6 @@
 use crate::asset_loader::{self, AppData, SentenceFile};
-use crate::sessionman::SessionPanel;
-use crate::windowman::{AppWin, View};
+use crate::sessionman::Exercise;
+use crate::windowman::View;
 use egui::RichText;
 use ehttp::{Response, Result};
 use poll_promise::Promise;
@@ -179,9 +179,13 @@ impl CogWords {
     }
 }
 
-impl SessionPanel for CogWords {
+impl Exercise for CogWords {
     fn name(&self) -> &'static str {
         "Cog Words"
+    }
+
+    fn description(&self) -> &'static str {
+        "Recall and reorder a sequence of words."
     }
 
     /// Show the configuration dialog

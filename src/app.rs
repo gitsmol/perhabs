@@ -1,15 +1,15 @@
 use eframe::epaint::Shadow;
-use egui::{Rounding, Style, Visuals};
+use egui::{vec2, Align, Rounding, Vec2, Visuals};
 
 use crate::{
     asset_loader::{self, AppData, AssetSource, ExcConfig, PerhabsConfig},
-    sessionman::Sessions,
+    sessionman::SessionManager,
     windowman::Windows,
 };
 
 pub struct Perhabs {
     windows: Windows,
-    sessions: Sessions,
+    sessionman: SessionManager,
     appdata: AppData,
     speaker: tts::Tts,
 }
@@ -18,7 +18,7 @@ impl Default for Perhabs {
     fn default() -> Self {
         Self {
             windows: Windows::default(),
-            sessions: Sessions::default(),
+            sessionman: SessionManager::default(),
             appdata: AppData::default(),
 
             #[cfg(target_os = "macos")]
@@ -35,7 +35,7 @@ impl Perhabs {
         // This is also where you can customized the look at feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        let mut visuals = Visuals::default();
+        let mut visuals = Visuals::light();
         visuals.window_rounding = Rounding::same(2.);
         visuals.window_shadow = Shadow::small_light();
         cc.egui_ctx.set_visuals(visuals);
@@ -165,27 +165,51 @@ impl eframe::App for Perhabs {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
+            // Persistent menu bar at the top of the screen
             egui::menu::bar(ui, |ui| {
                 ui.label("Theme");
                 egui::widgets::global_dark_light_mode_switch(ui);
                 ui.label(" | ");
-                ui.label("Tools");
+                ui.label("Tools \u{27A1}");
                 self.windows.labels(ui);
+                // Only show quit when a session is active.
+                if let Some(_) = self.sessionman.open {
+                    ui.add_space(ui.available_width() - 85.);
+                    if ui.button("\u{2386} Quit session").clicked() {
+                        self.sessionman.open = None;
+                    }
+                }
             });
         });
 
-        egui::Window::new("Test").show(ctx, |ui| self.sessions.buttons(ui));
-
+        // Show a loading screen until we have configs. Then show utility windows and session.
         egui::CentralPanel::default().show(ctx, |ui| {
             if self.guarantee_configs() == false {
                 asset_loader::loading(ui);
             } else {
-                self.windows.windows(ctx, &self.appdata, &mut self.speaker)
+                // Show windows
+                self.windows.windows(ctx, &self.appdata, &mut self.speaker);
+
+                // Show the session menu or an active session
+                if let None = self.sessionman.open {
+                    egui::Window::new("Exercise menu")
+                        .anchor(
+                            egui::Align2([Align::Center, Align::TOP]),
+                            Vec2::new(0., 100.),
+                        )
+                        .fixed_size(vec2(350., 300.))
+                        .resizable(false)
+                        .movable(false)
+                        .show(ctx, |ui| {
+                    ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menubar at the top of the screen provides a number of helpful tools.");
+                    ui.add_space(10.);
+                    self.sessionman.buttons(ui);
+                });
+                } else {
+                    self.sessionman
+                        .session_show(ctx, &self.appdata, &mut self.speaker);
+                }
             }
         });
-
-        self.sessions
-            .sessions(ctx, &self.appdata, &mut self.speaker);
     }
 }

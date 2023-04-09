@@ -1,5 +1,5 @@
 use crate::asset_loader::AppData;
-use crate::sessionman::SessionPanel;
+use crate::sessionman::Exercise;
 use crate::windowman::View;
 use egui::RichText;
 use rand::prelude::*;
@@ -42,7 +42,6 @@ impl Default for Answers {
 
 /// Sequences
 pub struct CogNumbers {
-    name: String,
     config: Configuration,
     session: Session,
     answers: Answers,
@@ -51,7 +50,6 @@ pub struct CogNumbers {
 impl Default for CogNumbers {
     fn default() -> Self {
         Self {
-            name: String::from("Cognitive numbers"),
             answers: Answers::default(),
             config: Configuration {
                 seq_length: 4,
@@ -94,9 +92,13 @@ impl CogNumbers {
     }
 }
 
-impl SessionPanel for CogNumbers {
+impl Exercise for CogNumbers {
     fn name(&self) -> &'static str {
         "CogNumbers"
+    }
+
+    fn description(&self) -> &'static str {
+        "Recall and reorder a sequence of numbers."
     }
 
     /// Show the configuration dialog
