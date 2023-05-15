@@ -10,9 +10,14 @@ In a very loose sense of the word.
 ## IN PROGRESS
 - Switch from app to session model
     - Cog Numbers DONE
-    - Cog Words
-    - Vergence
+    - Cog Words DONE
+    - Vergence DONE
     - Seq numbers
+- Line drawing patterns (module)
+        - Reproduction (excercise)
+        - Tilted reproduction (exercise)
+        - Addition (exercise)
+        - Subtraction (exercise)
 
 ## TODO
 - Delay on speaking new sentence (get back to task first)
@@ -31,8 +36,3 @@ In a very loose sense of the word.
     Read X words (flashing by) while also hearing X words. What where the words?
 - Lingo (excercise)
 - Metronome (module)
-- Line drawing patterns (module)
-    - Reproduction (excercise)
-    - Tilted reproduction (exercise)
-    - Addition (exercise)
-    - Subtraction (exercise)

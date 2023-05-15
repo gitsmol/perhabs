@@ -6,10 +6,12 @@ use std::{
 use ehttp::{Response, Result};
 use log::{self, debug};
 use poll_promise::Promise;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+use crate::sessions::spatial_drawing::painters::Puzzle;
 
 /// AppData is loaded when launching Perhabs. Individual modules/windows get app-wide
-/// data and 'public access features' like TTS through a reference to this struct.
+/// data through a reference to this struct.
 pub struct AppData {
     pub config: Option<PerhabsConfig>,
     pub config_promise: Option<Promise<Result<Response>>>,
@@ -32,7 +34,7 @@ impl Default for AppData {
 /// PerhabsConfig contains information about file locations.
 ///
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub enum AssetSource {
     Disk,
     Web,
@@ -110,25 +112,26 @@ impl PerhabsConfig {
 /// ExcerciseConfig
 /// The ExcerciseConfig struct finds the most relevant config source using new().
 ///
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ExcConfig {
-    pub exercises: Vec<Exercise>,
     pub source: AssetSource,
+    pub vergence: Vec<VergenceEx>,
+    pub spatial_drawing: Vec<Puzzle>,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct Exercise {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct VergenceEx {
     pub name: String,
     pub levels: Vec<Level>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Level {
     pub name: String,
     pub params: Parameters,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Parameters {
     pub step: isize,
 }
@@ -137,15 +140,16 @@ impl Default for ExcConfig {
     fn default() -> Self {
         debug!("Getting excercise config: falling back to default.");
         ExcConfig {
-            exercises: vec![
-                Exercise {
+            source: AssetSource::Default,
+            vergence: vec![
+                VergenceEx {
                     name: String::from("Convergence"),
                     levels: vec![Level {
                         name: String::from("Easy"),
                         params: Parameters { step: 1 },
                     }],
                 },
-                Exercise {
+                VergenceEx {
                     name: String::from("Divergence"),
                     levels: vec![Level {
                         name: String::from("Easy"),
@@ -153,7 +157,7 @@ impl Default for ExcConfig {
                     }],
                 },
             ],
-            source: AssetSource::Default,
+            spatial_drawing: vec![Puzzle::new(5)],
         }
     }
 }
@@ -180,7 +184,7 @@ impl ExcConfig {
     }
 }
 
-#[derive(Deserialize, PartialEq, Clone, Debug)]
+#[derive(Deserialize, Serialize, PartialEq, Clone, Debug)]
 pub struct SentenceFile {
     pub filename: String,
     pub language: String,

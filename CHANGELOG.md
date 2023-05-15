@@ -1,4 +1,6 @@
 # Perhabs Changelog
+## 2023-04-09
+Added a main menu. Split tools and sessions.
 
 ## 2023-02-25
 - Built a new way to load app data and excercise data. All loading is done by asset_loader with priority:

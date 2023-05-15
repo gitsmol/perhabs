@@ -1,7 +1,7 @@
 use crate::asset_loader::AppData;
 use crate::sessionman::Exercise;
 use crate::windowman::View;
-use egui::RichText;
+use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
 
 use perhabs::numvec_to_string;
@@ -68,7 +68,7 @@ impl CogNumbers {
         };
     }
 
-    fn pick_numbers(&mut self) -> () {
+    fn pick_sequence(&mut self) -> () {
         let mut seq = vec![];
         if self.config.seq_length > 11 {
             return;
@@ -105,15 +105,20 @@ impl Exercise for CogNumbers {
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if !self.session.active {
             egui::Window::new(self.name())
-                .default_size((250.0, 250.0))
-                .vscroll(false)
-                .resizable(true)
+                .anchor(
+                    egui::Align2([Align::Center, Align::TOP]),
+                    Vec2::new(0., 100.),
+                )
+                .fixed_size(vec2(350., 300.))
+                .resizable(false)
+                .movable(false)
+                .collapsible(false)
                 .show(ctx, |ui| self.ui(ui, appdata, tts));
         }
 
         if self.session.active {
             if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
-                self.pick_numbers();
+                self.pick_sequence();
                 self.say(tts);
             }
             if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
@@ -171,33 +176,51 @@ impl View for CogNumbers {
             }
         });
     }
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
-        ui.horizontal(|ui| {
-            if ui.button("Close").clicked() {
-                self.session = Session::default();
-            };
-        });
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, tts: &mut Tts) {
+        let spacer = ui.available_height() / 30.;
+        if ui.button("Close").clicked() {
+            self.session = Session::default();
+        };
 
         ui.vertical_centered(|ui| {
-            ui.add_space(ui.available_height() / 4.);
+            ui.add_space(spacer * 4.);
 
-            ui.label("Sentence");
+            ui.label("Sequence");
             ui.heading(RichText::new(&self.answers.sequence).size(25.));
-            ui.add_space(20.);
+            ui.add_space(spacer);
 
             ui.label("Reversed");
             ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
-            ui.add_space(20.);
+            ui.add_space(spacer);
 
             ui.label("Alphabetical");
             ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
-            ui.add_space(20.);
+            ui.add_space(spacer);
 
             ui.label("Alphabetical reversed");
             ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
-            ui.add_space(20.);
+            ui.add_space(spacer);
 
-            ui.add_space(50.);
+            ui.add_space(spacer * 2.);
+
+            if ui
+                .add_sized(vec2(spacer * 4., spacer * 2.), egui::Button::new("Repeat"))
+                .clicked()
+            {
+                self.say(tts);
+            };
+
+            ui.add_space(spacer / 4.);
+
+            if ui
+                .add_sized(vec2(spacer * 4., spacer * 2.), egui::Button::new("Next"))
+                .clicked()
+            {
+                self.pick_sequence();
+                self.say(tts);
+            };
+
+            ui.add_space(spacer);
             ui.label("Press space for next sequence. Press return to repeat sequence.");
         });
     }

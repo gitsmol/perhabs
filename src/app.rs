@@ -200,6 +200,7 @@ impl eframe::App for Perhabs {
                         .fixed_size(vec2(350., 300.))
                         .resizable(false)
                         .movable(false)
+                        .collapsible(false)
                         .show(ctx, |ui| {
                     ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menubar at the top of the screen provides a number of helpful tools.");
                     ui.add_space(10.);

@@ -88,7 +88,7 @@ LIST SIX:
 10. Terms of endearment
 11. Items in this room
 12. Drugs that are abused
- 
+
 LIST SEVEN;
 1. Fictional characters
 2. Menu items
@@ -222,7 +222,7 @@ LIST FIFTEEN:
 10. Math terms
 11. Animals in books or movies
 12. Things to do at a party
- 
+
 LIST SIXTEEN:
 1. Kinds of soup
 2. Things found in New York
@@ -250,7 +250,7 @@ LIST SEVENTEEN:
 10. Things you get in the mail
 11. Things you save up to buy
 12. Things you sit/on
- 
+
 LIST EIGHTEEN:
 1. Reasons to make a phone call
 2. Types of weather
@@ -264,4 +264,3 @@ LIST EIGHTEEN:
 10. Things that can get you fired
 11. Hobbies
 12. Holiday Activities
-

@@ -2,13 +2,14 @@ use crate::{
     asset_loader::AppData,
     menu,
     sessions::{
-        cog_numbers::CogNumbers, cog_words::CogWords, seq_numbers::NumSeq, vergence::Vergence,
+        cog_numbers::CogNumbers, cog_words::CogWords, seq_numbers::NumSeq,
+        spatial_drawing::SpatialDrawing, vergence::Vergence,
     },
 };
 
 use tts::Tts;
 
-/// Stores all available exercises. In order to only display one, store its name in open
+/// Stores all available exercises (sessions). In order to only display one, store its name in open
 /// and only display the session matching that str.
 pub struct SessionManager {
     pub sessions: Vec<Box<dyn Exercise>>,
@@ -23,6 +24,7 @@ impl Default for SessionManager {
                 Box::new(CogWords::default()),
                 Box::new(Vergence::default()),
                 Box::new(NumSeq::default()),
+                Box::new(SpatialDrawing::default()),
             ],
             open: None,
         }

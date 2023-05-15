@@ -2,7 +2,7 @@ use chrono::{DateTime, Duration, Local};
 use eframe::emath;
 use eframe::epaint::PathShape;
 use egui::style::Margin;
-use egui::{pos2, vec2, Align, Align2, Frame, Key, Rect, Stroke};
+use egui::{pos2, vec2, Align, Frame, Key, Rect, Stroke, Vec2};
 use tts::Tts;
 
 use crate::asset_loader::AppData;
@@ -70,19 +70,16 @@ impl Exercise for Vergence {
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
-        //determine center of screen to anchor startup window
-        let center = {
-            let mut center = Align2::CENTER_TOP;
-            center[1] = Align::Center;
-            center
-        };
-
         if !self.session.active {
             egui::Window::new("Vergence")
-                .collapsible(false)
+                .anchor(
+                    egui::Align2([Align::Center, Align::TOP]),
+                    Vec2::new(0., 100.),
+                )
+                .fixed_size(vec2(350., 300.))
                 .resizable(false)
-                .fixed_size([250., 300.])
-                .anchor(center, vec2(0., 0.))
+                .movable(false)
+                .collapsible(false)
                 .show(ctx, |ui| {
                     self.ui(ui, appdata, tts);
                 });
@@ -105,7 +102,7 @@ impl View for Vergence {
 
         ui.vertical(|ui| {
             if let Some(excconfig) = &appdata.excconfig {
-                for excercise in &excconfig.exercises {
+                for excercise in &excconfig.vergence {
                     ui.label(format!("{}", excercise.name));
                     ui.horizontal(|ui| {
                         for level in &excercise.levels {
@@ -133,7 +130,6 @@ impl View for Vergence {
                 self.session = Session::default();
                 self.anaglyph.reset();
             };
-            // ui.add_space(ui.available_width());
             ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
         });
 
@@ -212,7 +208,13 @@ impl Vergence {
 
                 });
 
-            // ui.allocate_space(vec2(ui.available_width() / 3., ui.available_height() / 3.));
+            ui.horizontal(|ui| {
+                if ui.button("Swap").clicked() {
+                    let tmp = self.anaglyph.color.left;
+                    self.anaglyph.color.left = self.anaglyph.color.right;
+                    self.anaglyph.color.right = tmp;
+                }
+            });
 
             ui.horizontal(|ui| {
                 if ui.button("Cancel").clicked() {
