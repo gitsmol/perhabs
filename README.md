@@ -22,4 +22,4 @@ Included:
 - Clock
 
 ## Technical
-Perhabs is written in Rust and relies primarily on [egui](https://crates.io/crates/egui) ([demo](https://egui.rs)) for its UI. 
+Perhabs is written in Rust and relies primarily on [egui](https://crates.io/crates/egui) ([demo](https://egui.rs)) for its UI.

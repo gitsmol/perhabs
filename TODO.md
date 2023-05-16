@@ -6,18 +6,11 @@ In a very loose sense of the word.
 - Vergence
 - Cog words
 - Cog numbers
+- Spatial drawing
 
 ## IN PROGRESS
 - Switch from app to session model
-    - Cog Numbers DONE
-    - Cog Words DONE
-    - Vergence DONE
-    - Seq numbers
-- Line drawing patterns (module)
-        - Reproduction (excercise)
-        - Tilted reproduction (exercise)
-        - Addition (exercise)
-        - Subtraction (exercise)
+    - Seq numbers TODO
 
 ## TODO
 - Delay on speaking new sentence (get back to task first)

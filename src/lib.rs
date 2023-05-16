@@ -34,7 +34,7 @@ pub fn read_file(filepath: &PathBuf) -> Result<BufReader<File>, std::io::Error> 
 /// Write a string to a given filepath.
 pub fn write_string_to_file(filepath: &Path, content: String) -> Result<(), io::Error> {
     match OpenOptions::new()
-        .append(true)
+        .append(false)
         .write(true)
         .create(true)
         .open(filepath)

@@ -34,7 +34,7 @@ impl Default for AppData {
 /// PerhabsConfig contains information about file locations.
 ///
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum AssetSource {
     Disk,
     Web,
@@ -112,26 +112,26 @@ impl PerhabsConfig {
 /// ExcerciseConfig
 /// The ExcerciseConfig struct finds the most relevant config source using new().
 ///
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ExcConfig {
     pub source: AssetSource,
     pub vergence: Vec<VergenceEx>,
     pub spatial_drawing: Vec<Puzzle>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct VergenceEx {
     pub name: String,
     pub levels: Vec<Level>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Level {
     pub name: String,
     pub params: Parameters,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Parameters {
     pub step: isize,
 }

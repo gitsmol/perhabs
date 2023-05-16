@@ -1,4 +1,6 @@
-use egui::{emath, Color32, Pos2, Rect, Response, Sense, Ui};
+use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense, Ui};
+
+use crate::asset_loader::AppData;
 
 use super::{SessionStatus, Transformation};
 
@@ -82,5 +84,19 @@ impl super::SpatialDrawing {
         painter.extend(self.puzzle_grid.shapes(&to_screen, 5., Color32::WHITE));
 
         response
+    }
+
+    /// Show the session (fullscreen)
+    pub fn ui_exercise(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts, _: &AppData) {
+        // Show controls at the top
+        self.ui_controls(ui);
+        // Force the columns layout to be square.
+        ui.add_space(ui.available_height() - ui.available_width() / 2.);
+
+        // Left column shows example, right column is where user draws and reviews.
+        ui.columns(2, |cols| {
+            Frame::dark_canvas(cols[0].style()).show(&mut cols[0], |ui| self.ui_example(ui));
+            Frame::dark_canvas(cols[1].style()).show(&mut cols[1], |ui| self.ui_drawing(ui));
+        });
     }
 }

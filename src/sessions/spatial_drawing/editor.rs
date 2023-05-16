@@ -1,4 +1,6 @@
-use egui::{emath, Color32, Pos2, Rect, Response, Sense};
+use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
+
+use crate::asset_loader::AppData;
 
 // All the editor functions go here.
 impl super::SpatialDrawing {
@@ -29,6 +31,19 @@ impl super::SpatialDrawing {
         painter.extend(self.puzzle_grid.shapes(&to_screen, 5., Color32::WHITE));
 
         response
+    }
+
+    /// Edit or create a puzzle and store it.
+    pub fn ui_editor(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts, appdata: &AppData) {
+        // Show controls at the top
+        self.ui_controls(ui);
+        self.ui_editor_controls(ui, appdata);
+
+        // Left column shows example, right column is where user draws and reviews.
+        ui.columns(2, |cols| {
+            Frame::dark_canvas(cols[0].style()).show(&mut cols[0], |ui| self.ui_editable(ui));
+            Frame::dark_canvas(cols[1].style()).show(&mut cols[1], |ui| self.ui_drawing(ui));
+        });
     }
 
     /// Save a drawing.

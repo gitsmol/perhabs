@@ -58,6 +58,15 @@ impl Puzzle {
         self.lines.clear();
     }
 
+    /// Remove last line.
+    pub fn undo(&mut self) {
+        self.lines.pop();
+    }
+
+    pub fn size(&self) -> usize {
+        self.grid_size
+    }
+
     /// Serialize the lines to string.
     pub fn serialize(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(&self.lines)
