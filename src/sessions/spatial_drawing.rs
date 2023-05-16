@@ -6,8 +6,6 @@ mod editor;
 mod exercise;
 pub mod painters;
 mod selector;
-use log::debug;
-use perhabs::write_string_to_file;
 
 use self::painters::{Puzzle, PuzzleGrid};
 
@@ -77,6 +75,7 @@ impl Default for SpatialDrawing {
 }
 
 impl SpatialDrawing {
+    /// The controls shown when editing or doing a puzzle.
     fn ui_controls(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
@@ -116,6 +115,9 @@ impl SpatialDrawing {
         } else {
             ui.add_space(ui.available_height() - ui.available_width() / 2.);
         }
+
+        let size = ui.available_size();
+        ui.label(format!("Shape: {:?}", size));
     }
 
     fn ui_editor_controls(&mut self, ui: &mut egui::Ui, _: &AppData) {

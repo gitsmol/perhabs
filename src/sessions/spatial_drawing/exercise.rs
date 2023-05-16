@@ -90,8 +90,6 @@ impl super::SpatialDrawing {
     pub fn ui_exercise(&mut self, ui: &mut egui::Ui, _: &mut tts::Tts, _: &AppData) {
         // Show controls at the top
         self.ui_controls(ui);
-        // Force the columns layout to be square.
-        ui.add_space(ui.available_height() - ui.available_width() / 2.);
 
         // Left column shows example, right column is where user draws and reviews.
         ui.columns(2, |cols| {
