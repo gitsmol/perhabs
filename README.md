@@ -12,6 +12,8 @@ Included:
 - Working memory:
     - Calculations starting with random inputs
     - Re-ordering numbers or sentences
+- Visuospatial skills:
+    - Drawing an image on its side or mirrored
 
 ### Visual
 - Convergence/divergence
