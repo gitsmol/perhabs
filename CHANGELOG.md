@@ -1,4 +1,7 @@
 # Perhabs Changelog
+## 2023-05-16
+Added spatial drawing puzzles.
+
 ## 2023-04-09
 Added a main menu. Split tools and sessions.
 

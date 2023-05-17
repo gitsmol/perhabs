@@ -16,7 +16,7 @@ pub struct Windows {
 impl Default for Windows {
     fn default() -> Self {
         Self::from_windows(vec![
-            Box::new(multitasker::MultiTasker::default()),
+            // Box::new(multitasker::MultiTasker::default()),
             #[cfg(not(target_arch = "wasm32"))]
             Box::new(rand_timer::RandTimer::default()), // WASM doesn't support threading
             Box::new(clock::Clock::default()),

@@ -40,6 +40,33 @@ impl SessionManager {
         }
     }
 
+    pub fn buttons_cols(&mut self, ui: &mut egui::Ui) {
+        let buttons: f32 = self.sessions.len() as f32;
+        let col_1_range = buttons - (buttons / 2.).floor();
+
+        ui.columns(2, |col| {
+            for i in 0..col_1_range as usize {
+                if let Some(session) = self.sessions.get(i) {
+                    if menu::menu_button(&mut col[0], session.name(), session.description())
+                        .clicked()
+                    {
+                        self.open = Some(session.name());
+                    };
+                };
+            }
+
+            for i in col_1_range as usize..buttons as usize {
+                if let Some(session) = self.sessions.get(i) {
+                    if menu::menu_button(&mut col[1], session.name(), session.description())
+                        .clicked()
+                    {
+                        self.open = Some(session.name());
+                    };
+                };
+            }
+        });
+    }
+
     pub fn session_show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         // What is the currently open session?
         let name = match self.open {

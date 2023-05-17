@@ -37,8 +37,8 @@ impl super::SpatialDrawing {
             response.rect,
         );
 
-        painter.extend(exercise.shapes(&to_screen, 10., Color32::KHAKI));
-        painter.extend(self.puzzle_grid.shapes(&to_screen, 5., Color32::WHITE));
+        painter.extend(exercise.shapes(&to_screen, 6., Color32::KHAKI));
+        painter.extend(self.puzzle_grid.shapes(&to_screen, 3., Color32::WHITE));
 
         response
     }
@@ -129,23 +129,25 @@ impl super::SpatialDrawing {
                         self.puzzle_list(ui, &self.puzzle_edit_list.to_owned());
                     }
 
-                    ui.vertical_centered_justified(|ui| {
-                        Frame::dark_canvas(ui.style()).show(ui, |ui| {
-                            if self.ui_mini(ui, &Puzzle::new(5)).clicked() {
-                                {
-                                    debug!("Starting spatial exercise.");
-                                    self.puzzle = Puzzle::new(5);
-                                    self.state = SessionStatus::Exercising;
-                                };
+                    for i in 5..=7 {
+                        ui.vertical_centered_justified(|ui| {
+                            Frame::dark_canvas(ui.style()).show(ui, |ui| {
+                                if self.ui_mini(ui, &Puzzle::new(i)).clicked() {
+                                    {
+                                        debug!("Starting spatial exercise.");
+                                        self.puzzle = Puzzle::new(i);
+                                        self.state = SessionStatus::Editing;
+                                    };
+                                }
+                            });
+
+                            if ui.button("New").clicked() {
+                                debug!("Adding new drawing.");
+                                self.puzzle = Puzzle::new(i);
+                                self.state = SessionStatus::Editing;
                             }
                         });
-
-                        if ui.button("New").clicked() {
-                            debug!("Adding new drawing.");
-                            self.puzzle = Puzzle::new(5);
-                            self.state = SessionStatus::Editing;
-                        }
-                    });
+                    }
                 });
         });
     }

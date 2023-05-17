@@ -1,4 +1,5 @@
 use crate::{asset_loader::AppData, sessionman::Exercise, windowman::View};
+use egui::{vec2, Align, Vec2};
 use rand::prelude::*;
 use tts::Tts;
 
@@ -58,7 +59,14 @@ impl Exercise for NumSeq {
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         egui::Window::new(self.name())
-            .default_height(500.0)
+            .anchor(
+                egui::Align2([Align::Center, Align::TOP]),
+                Vec2::new(0., 100.),
+            )
+            .fixed_size(vec2(350., 300.))
+            .resizable(false)
+            .movable(false)
+            .collapsible(false)
             .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
 }

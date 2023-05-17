@@ -115,9 +115,6 @@ impl SpatialDrawing {
         } else {
             ui.add_space(ui.available_height() - ui.available_width() / 2.);
         }
-
-        let size = ui.available_size();
-        ui.label(format!("Shape: {:?}", size));
     }
 
     fn ui_editor_controls(&mut self, ui: &mut egui::Ui, _: &AppData) {

@@ -197,14 +197,14 @@ impl eframe::App for Perhabs {
                             egui::Align2([Align::Center, Align::TOP]),
                             Vec2::new(0., 100.),
                         )
-                        .fixed_size(vec2(350., 300.))
+                        .fixed_size(vec2(600., 300.))
                         .resizable(false)
                         .movable(false)
                         .collapsible(false)
                         .show(ctx, |ui| {
                     ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menubar at the top of the screen provides a number of helpful tools.");
                     ui.add_space(10.);
-                    self.sessionman.buttons(ui);
+                    self.sessionman.buttons_cols(ui);
                 });
                 } else {
                     self.sessionman

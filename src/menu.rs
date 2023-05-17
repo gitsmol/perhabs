@@ -48,7 +48,7 @@ pub fn menu_button(
         // Put the label in the right position within the button.
         let label_pos = ui
             .layout()
-            .align_size_within_rect(label_galley.size(), rect)
+            .align_size_within_rect(vec2(50., 50.), rect)
             .center_top();
         // The description goes in the same position but a little lower.
         let description_pos = label_pos + vec2(0., 30.);
