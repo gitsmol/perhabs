@@ -1,4 +1,4 @@
-use crate::{asset_loader::AppData, sessionman::Exercise, windowman::View};
+use crate::{modules::asset_loader::AppData, wm::sessionman::Exercise};
 use egui::{vec2, Align, Vec2};
 use rand::prelude::*;
 use tts::Tts;
@@ -69,9 +69,7 @@ impl Exercise for NumSeq {
             .collapsible(false)
             .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
-}
 
-impl View for NumSeq {
     fn ui(&mut self, ui: &mut egui::Ui, _appdata: &AppData, _: &mut Tts) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
@@ -114,5 +112,4 @@ impl View for NumSeq {
             }
         });
     }
-    fn session(&mut self, _ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {}
 }

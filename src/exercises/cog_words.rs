@@ -1,6 +1,5 @@
-use crate::asset_loader::{self, AppData, SentenceFile};
-use crate::sessionman::Exercise;
-use crate::windowman::View;
+use crate::modules::asset_loader::{self, AppData, SentenceFile};
+use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 use ehttp::{Response, Result};
 use poll_promise::Promise;
@@ -214,9 +213,7 @@ impl Exercise for CogWords {
             egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
         }
     }
-}
 
-impl View for CogWords {
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
         // Show file picker.
         egui::ComboBox::from_label("Select sentences file")

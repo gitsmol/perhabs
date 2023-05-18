@@ -2,9 +2,9 @@ use eframe::epaint::Shadow;
 use egui::{vec2, Align, Rounding, Vec2, Visuals};
 
 use crate::{
-    asset_loader::{self, AppData, AssetSource, ExcConfig, PerhabsConfig},
-    sessionman::SessionManager,
-    windowman::Windows,
+    modules::asset_loader::{self, AppData, AssetSource, ExcConfig, PerhabsConfig},
+    wm::sessionman::SessionManager,
+    wm::windowman::Windows,
 };
 
 pub struct Perhabs {

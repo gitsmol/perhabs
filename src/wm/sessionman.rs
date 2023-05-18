@@ -1,10 +1,10 @@
 use crate::{
-    asset_loader::AppData,
-    menu,
-    sessions::{
+    exercises::{
         cog_numbers::CogNumbers, cog_words::CogWords, seq_numbers::NumSeq,
         spatial_drawing::SpatialDrawing, vergence::Vergence,
     },
+    modules::asset_loader::AppData,
+    modules::widgets,
 };
 
 use tts::Tts;
@@ -34,7 +34,7 @@ impl Default for SessionManager {
 impl SessionManager {
     pub fn buttons(&mut self, ui: &mut egui::Ui) {
         for session in &self.sessions {
-            if menu::menu_button(ui, session.name(), session.description()).clicked() {
+            if widgets::menu_button(ui, session.name(), session.description()).clicked() {
                 self.open = Some(session.name());
             };
         }
@@ -45,9 +45,10 @@ impl SessionManager {
         let col_1_range = buttons - (buttons / 2.).floor();
 
         ui.columns(2, |col| {
+            // Column 1 gets populated with at least half the buttons
             for i in 0..col_1_range as usize {
                 if let Some(session) = self.sessions.get(i) {
-                    if menu::menu_button(&mut col[0], session.name(), session.description())
+                    if widgets::menu_button(&mut col[0], session.name(), session.description())
                         .clicked()
                     {
                         self.open = Some(session.name());
@@ -55,9 +56,10 @@ impl SessionManager {
                 };
             }
 
+            // Column 2 gets populated with the remaining buttons
             for i in col_1_range as usize..buttons as usize {
                 if let Some(session) = self.sessions.get(i) {
-                    if menu::menu_button(&mut col[1], session.name(), session.description())
+                    if widgets::menu_button(&mut col[1], session.name(), session.description())
                         .clicked()
                     {
                         self.open = Some(session.name());
@@ -91,4 +93,8 @@ pub trait Exercise {
 
     /// Show windows, etc
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts);
+
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
+
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
 }

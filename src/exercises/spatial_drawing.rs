@@ -1,6 +1,4 @@
-use std::path::Path;
-
-use crate::{asset_loader::AppData, sessionman::Exercise};
+use crate::{modules::asset_loader::AppData, wm::sessionman::Exercise};
 use egui::{CentralPanel, Color32, Pos2, Stroke};
 mod editor;
 mod exercise;

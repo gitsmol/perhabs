@@ -1,7 +1,7 @@
 #![warn(clippy::all)]
 use crate::{
-    asset_loader::AppData,
-    modules::{clock, debug_info, multitasker, rand_timer},
+    modules::asset_loader::AppData,
+    modules::{clock, debug_info, rand_timer},
 };
 use egui::{Context, Ui};
 use std::collections::BTreeSet;
@@ -57,7 +57,6 @@ impl Windows {
 
 pub trait View {
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
 }
 
 /// Something to view

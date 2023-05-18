@@ -67,22 +67,6 @@ impl Puzzle {
         self.grid_size
     }
 
-    /// Serialize the lines to string.
-    pub fn serialize(&self) -> Result<String, serde_json::Error> {
-        serde_json::to_string(&self.lines)
-    }
-
-    /// Deserialize any number of lines from a static str.
-    pub fn deserialize(&mut self, input: &str) -> Result<(), serde_json::Error> {
-        match serde_json::from_str(input) {
-            Ok(lines) => {
-                self.lines = lines;
-                Ok(())
-            }
-            Err(e) => Err(e),
-        }
-    }
-
     /// Create shapes for all lines according to relative screensize, width and color.
     pub fn shapes(&self, screen: &RectTransform, width: f32, color: Color32) -> Vec<Shape> {
         self.draw_shapes(self.lines.clone(), screen, width, color)

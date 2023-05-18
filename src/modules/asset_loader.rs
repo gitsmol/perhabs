@@ -8,7 +8,7 @@ use log::{self, debug};
 use poll_promise::Promise;
 use serde::{Deserialize, Serialize};
 
-use crate::sessions::spatial_drawing::painters::Puzzle;
+use crate::exercises::spatial_drawing::painters::Puzzle;
 
 /// AppData is loaded when launching Perhabs. Individual modules/windows get app-wide
 /// data through a reference to this struct.
@@ -115,12 +115,12 @@ impl PerhabsConfig {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ExcConfig {
     pub source: AssetSource,
-    pub vergence: Vec<VergenceEx>,
+    pub vergence: Vec<VergenceExc>,
     pub spatial_drawing: Vec<Puzzle>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct VergenceEx {
+pub struct VergenceExc {
     pub name: String,
     pub levels: Vec<Level>,
 }
@@ -128,12 +128,8 @@ pub struct VergenceEx {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Level {
     pub name: String,
-    pub params: Parameters,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Parameters {
     pub step: isize,
+    pub pixel_size: isize,
 }
 
 impl Default for ExcConfig {
@@ -142,18 +138,20 @@ impl Default for ExcConfig {
         ExcConfig {
             source: AssetSource::Default,
             vergence: vec![
-                VergenceEx {
+                VergenceExc {
                     name: String::from("Convergence"),
                     levels: vec![Level {
                         name: String::from("Easy"),
-                        params: Parameters { step: 1 },
+                        step: 1,
+                        pixel_size: 3,
                     }],
                 },
-                VergenceEx {
+                VergenceExc {
                     name: String::from("Divergence"),
                     levels: vec![Level {
                         name: String::from("Easy"),
-                        params: Parameters { step: -1 },
+                        step: -1,
+                        pixel_size: 3,
                     }],
                 },
             ],

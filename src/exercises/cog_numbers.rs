@@ -1,6 +1,5 @@
-use crate::asset_loader::AppData;
-use crate::sessionman::Exercise;
-use crate::windowman::View;
+use crate::modules::asset_loader::AppData;
+use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
 
@@ -127,9 +126,7 @@ impl Exercise for CogNumbers {
             egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
         }
     }
-}
 
-impl View for CogNumbers {
     fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         // normal stuff
         ui.vertical(|ui| {

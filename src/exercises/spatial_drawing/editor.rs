@@ -1,6 +1,6 @@
 use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
 
-use crate::asset_loader::AppData;
+use crate::modules::asset_loader::AppData;
 
 // All the editor functions go here.
 impl super::SpatialDrawing {
@@ -45,10 +45,4 @@ impl super::SpatialDrawing {
             Frame::dark_canvas(cols[1].style()).show(&mut cols[1], |ui| self.ui_drawing(ui));
         });
     }
-
-    /// Save a drawing.
-    pub fn save(&self) {}
-
-    /// Select a drawing.
-    pub fn select(&self) {}
 }

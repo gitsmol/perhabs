@@ -3,13 +3,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
 mod app;
-mod asset_loader;
-mod configs;
-mod menu;
+mod exercises;
 mod modules;
-mod sessionman;
-mod sessions;
-mod windowman;
+mod wm;
 
 #[macro_use]
 extern crate log;

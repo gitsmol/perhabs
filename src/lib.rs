@@ -1,6 +1,13 @@
 use std::fs::{self, DirEntry, File, OpenOptions};
 use std::io::{self, BufReader, Write};
 use std::path::{Path, PathBuf};
+#[derive(PartialEq)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
 
 pub fn dirwalk(dir: &Path) -> io::Result<Vec<PathBuf>> {
     let mut files: Vec<DirEntry> = vec![];
@@ -54,12 +61,4 @@ pub fn numvec_to_string(seq: &Vec<u32>) -> String {
         result += ", ";
     }
     result.trim_end_matches(", ").to_string()
-}
-
-#[derive(PartialEq)]
-pub enum Direction {
-    Up,
-    Down,
-    Left,
-    Right,
 }

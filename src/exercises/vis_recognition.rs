@@ -7,10 +7,13 @@ use tts::Tts;
 
 use crate::asset_loader::AppData;
 use crate::sessionman::Exercise;
-use crate::sessions::exercises::anaglyph::Anaglyph;
 use crate::windowman::View;
 
 use perhabs::Direction;
+
+use self::anaglyph::Anaglyph;
+
+mod anaglyph;
 
 pub struct Session {
     pub active: bool,
@@ -62,11 +65,11 @@ impl Default for Vergence {
 
 impl Exercise for Vergence {
     fn name(&self) -> &'static str {
-        "Vergence"
+        "Visual recognition and memory"
     }
 
     fn description(&self) -> &'static str {
-        "Train your eyes to diverge and converge. Requires glasses in two different colors."
+        "Quickly recognize a visual pattern and reproduce it."
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
@@ -107,11 +110,13 @@ impl View for Vergence {
                     ui.horizontal(|ui| {
                         for level in &excercise.levels {
                             if ui.button(&level.name).clicked() {
-                                self.session.step = level.params.step;
+                                self.session.step = level.step;
+                                self.anaglyph.pixel_size = level.pixel_size;
                                 self.session.active = true;
                             }
                         }
                     });
+                    ui.add_space(10.);
                 }
             }
 

@@ -1,6 +1,6 @@
 use crate::{
-    asset_loader::AppData,
-    windowman::{AppWin, View},
+    modules::asset_loader::AppData,
+    wm::windowman::{AppWin, View},
 };
 use chrono::{Local, Timelike};
 use eframe::epaint::{self, CircleShape};
@@ -49,7 +49,7 @@ impl View for Clock {
                 emath::RectTransform::from_to(Rect::from_x_y_ranges(0.0..=1.0, -1.0..=1.0), rect);
 
             let circ_center = to_screen * pos2(0.5, 0.);
-            let radius = 100.;
+            let radius = ui.available_width() * 0.45;
             let circleshape = CircleShape::stroke(circ_center, radius, Stroke::new(2., color));
             let circle = epaint::Shape::Circle(circleshape);
             ui.painter().add(circle);
@@ -61,9 +61,9 @@ impl View for Clock {
             ui.painter().extend(hands);
         });
     }
-    fn session(&mut self, _: &mut egui::Ui, _: &AppData, _: &mut Tts) {}
 }
 
+/// Draw the markings on the clock
 fn draw_marks(center: Pos2, radius: f32, color: Color32) -> Vec<epaint::Shape> {
     let angle = |period, time: f32| TAU * (time.rem_euclid(period) / period) as f32 - TAU / 4.0;
     let coord = |angle: f32, radius: f32| {

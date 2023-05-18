@@ -1,5 +1,5 @@
-use crate::asset_loader::AppData;
-use crate::windowman::{AppWin, View};
+use crate::modules::asset_loader::AppData;
+use crate::wm::sessionman::Exercise;
 use egui::RichText;
 use rand::prelude::*;
 
@@ -187,13 +187,17 @@ impl MultiTasker {
     }
 }
 
-impl AppWin for MultiTasker {
+impl Exercise for MultiTasker {
     fn name(&self) -> &'static str {
         "Multitasker"
     }
 
+    fn description(&self) -> &'static str {
+        "No description."
+    }
+
     /// Show the configuration dialog
-    fn show(&mut self, ctx: &egui::Context, _: &mut bool, appdata: &AppData, tts: &mut Tts) {
+    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if self.session {
             // always repaint while in session
             ctx.request_repaint();
@@ -223,9 +227,7 @@ impl AppWin for MultiTasker {
                 .show(ctx, |ui| self.ui(ui, appdata, tts));
         }
     }
-}
 
-impl View for MultiTasker {
     fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         // normal stuff
         ui.vertical(|ui| {

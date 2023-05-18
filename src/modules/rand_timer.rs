@@ -1,5 +1,5 @@
-use crate::asset_loader::AppData;
-use crate::windowman::{AppWin, View};
+use crate::modules::asset_loader::AppData;
+use crate::wm::windowman::{AppWin, View};
 use egui::RichText;
 use rand::prelude::*;
 use std::sync::{mpsc, Arc, Mutex};
@@ -102,6 +102,23 @@ impl RandTimer {
         });
         self.session_thread = Some(outer);
     }
+
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
+        ui.horizontal(|ui| {
+            if ui.button("Stop").clicked() {
+                *self.act.lock().unwrap() = false;
+                self.session_active = false;
+                debug!("Session mutex unlocked and set to false.");
+            }
+        });
+
+        ui.vertical_centered(|ui| {
+            ui.add_space(ui.available_height() / 4.);
+            ui.label("Time remaining");
+            ui.heading(RichText::new(format!("{}", &self.remaining_secs)).size(25.));
+            ui.add_space(20.);
+        });
+    }
 }
 
 impl AppWin for RandTimer {
@@ -147,23 +164,6 @@ impl View for RandTimer {
                     self.run(tts)
                 }
             });
-        });
-    }
-
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
-        ui.horizontal(|ui| {
-            if ui.button("Stop").clicked() {
-                *self.act.lock().unwrap() = false;
-                self.session_active = false;
-                debug!("Session mutex unlocked and set to false.");
-            }
-        });
-
-        ui.vertical_centered(|ui| {
-            ui.add_space(ui.available_height() / 4.);
-            ui.label("Time remaining");
-            ui.heading(RichText::new(format!("{}", &self.remaining_secs)).size(25.));
-            ui.add_space(20.);
         });
     }
 }

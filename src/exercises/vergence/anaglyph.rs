@@ -72,7 +72,7 @@ impl Default for Debug {
 /// relative to the background. The brain interprets this as the object being closer.
 pub struct Anaglyph {
     pub background_offset: isize,
-    pixel_size: isize,
+    pub pixel_size: isize,
     pub grid_size: usize,
     focal_offset: isize, // The offset creates the illusion of depth
     pub focal_size_rel: f32,

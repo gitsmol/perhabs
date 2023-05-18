@@ -4,8 +4,8 @@ use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
 use perhabs::write_string_to_file;
 
 use crate::{
-    asset_loader::AppData,
-    sessions::spatial_drawing::{painters::PuzzleGrid, SessionStatus},
+    exercises::spatial_drawing::{painters::PuzzleGrid, SessionStatus},
+    modules::asset_loader::AppData,
 };
 
 use super::painters::Puzzle;

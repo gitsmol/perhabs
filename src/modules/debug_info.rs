@@ -1,35 +1,27 @@
+use chrono::Duration;
 use tts::Tts;
 
 use crate::{
-    asset_loader::AppData,
-    windowman::{AppWin, View},
+    modules::asset_loader::AppData,
+    wm::windowman::{AppWin, View},
 };
 
-pub struct DebugInfo {}
+use super::timer::Timer;
+
+pub struct DebugInfo {
+    timer: Timer,
+}
 
 impl Default for DebugInfo {
     fn default() -> Self {
-        Self {}
+        Self {
+            timer: Timer::new(Duration::seconds(0)),
+        }
     }
 }
 
-impl DebugInfo {}
-
-impl AppWin for DebugInfo {
-    fn name(&self) -> &'static str {
-        "Debugging info"
-    }
-
-    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
-        egui::Window::new(self.name())
-            .open(open)
-            .default_height(500.0)
-            .show(ctx, |ui| self.ui(ui, appdata, tts));
-    }
-}
-
-impl View for DebugInfo {
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _tts: &mut Tts) {
+impl DebugInfo {
+    fn asset_loader_debug(&self, ui: &mut egui::Ui, appdata: &AppData) {
         egui::Grid::new("my_grid")
             .num_columns(2)
             .spacing([40.0, 4.0])
@@ -51,5 +43,23 @@ impl View for DebugInfo {
                 }
             });
     }
-    fn session(&mut self, _: &mut egui::Ui, _: &AppData, _: &mut Tts) {}
+}
+
+impl AppWin for DebugInfo {
+    fn name(&self) -> &'static str {
+        "Debugging info"
+    }
+
+    fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
+        egui::Window::new(self.name())
+            .open(open)
+            .default_height(500.0)
+            .show(ctx, |ui| self.ui(ui, appdata, tts));
+    }
+}
+
+impl View for DebugInfo {
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _tts: &mut Tts) {
+        self.asset_loader_debug(ui, appdata);
+    }
 }

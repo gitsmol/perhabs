@@ -2,48 +2,122 @@
   "source": "Disk",
   "vergence": [
     {
-      "name": "Divergence",
+      "name": "Divergence (tiny)",
       "levels": [
         {
           "name": "Easy",
-          "params": {
-            "step": 1
-          }
+          "step": 1,
+          "pixel_size": 1
         },
         {
           "name": "Medium",
-          "params": {
-            "step": 2
-          }
+          "step": 2,
+          "pixel_size": 1
         },
         {
           "name": "Hard",
-          "params": {
-            "step": 3
-          }
+          "step": 3,
+          "pixel_size": 1
         }
       ]
     },
     {
-      "name": "Convergence",
+      "name": "Convergence (tiny)",
       "levels": [
         {
           "name": "Easy",
-          "params": {
-            "step": -1
-          }
+          "step": -1,
+          "pixel_size": 1
         },
         {
           "name": "Medium",
-          "params": {
-            "step": -2
-          }
+          "step": -2,
+          "pixel_size": 1
         },
         {
           "name": "Hard",
-          "params": {
-            "step": -3
-          }
+          "step": -3,
+          "pixel_size": 1
+        }
+      ]
+    },
+    {
+      "name": "Divergence (small)",
+      "levels": [
+        {
+          "name": "Easy",
+          "step": 1,
+          "pixel_size": 2
+        },
+        {
+          "name": "Medium",
+          "step": 2,
+          "pixel_size": 2
+        },
+        {
+          "name": "Hard",
+          "step": 3,
+          "pixel_size": 2
+        }
+      ]
+    },
+    {
+      "name": "Convergence (small)",
+      "levels": [
+        {
+          "name": "Easy",
+          "step": -1,
+          "pixel_size": 2
+        },
+        {
+          "name": "Medium",
+          "step": -2,
+          "pixel_size": 2
+        },
+        {
+          "name": "Hard",
+          "step": -3,
+          "pixel_size": 2
+        }
+      ]
+    },
+    {
+      "name": "Divergence (large)",
+      "levels": [
+        {
+          "name": "Easy",
+          "step": 1,
+          "pixel_size": 3
+        },
+        {
+          "name": "Medium",
+          "step": 2,
+          "pixel_size": 3
+        },
+        {
+          "name": "Hard",
+          "step": 3,
+          "pixel_size": 3
+        }
+      ]
+    },
+    {
+      "name": "Convergence (large)",
+      "levels": [
+        {
+          "name": "Easy",
+          "step": -1,
+          "pixel_size": 3
+        },
+        {
+          "name": "Medium",
+          "step": -2,
+          "pixel_size": 3
+        },
+        {
+          "name": "Hard",
+          "step": -3,
+          "pixel_size": 3
         }
       ]
     }
