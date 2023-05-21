@@ -1,7 +1,7 @@
 #![warn(clippy::all)]
 use crate::{
     modules::asset_loader::AppData,
-    modules::{clock, debug_info, rand_timer},
+    modules::{clock, debug_info, metronome, rand_timer},
 };
 use egui::{Context, Ui};
 use std::collections::BTreeSet;
@@ -21,6 +21,7 @@ impl Default for Windows {
             Box::new(rand_timer::RandTimer::default()), // WASM doesn't support threading
             Box::new(clock::Clock::default()),
             Box::new(debug_info::DebugInfo::default()),
+            Box::new(metronome::Metronome::default()),
         ])
     }
 }

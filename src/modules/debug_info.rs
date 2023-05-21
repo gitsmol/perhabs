@@ -1,4 +1,3 @@
-use chrono::Duration;
 use tts::Tts;
 
 use crate::{
@@ -15,7 +14,7 @@ pub struct DebugInfo {
 impl Default for DebugInfo {
     fn default() -> Self {
         Self {
-            timer: Timer::new(Duration::seconds(0)),
+            timer: Timer::new(),
         }
     }
 }
