@@ -19,7 +19,8 @@ pub struct Session {
     pub start_time: DateTime<Local>,
     pub duration: Duration,
     pub results: Vec<bool>,
-    pub answer_thresh: bool,
+    pub answer_thresh_success: bool,
+    pub answer_thresh_fail: bool,
     pub step: isize,
 }
 
@@ -30,7 +31,8 @@ impl Default for Session {
             start_time: Local::now(),
             duration: Duration::seconds(0),
             results: vec![],
-            answer_thresh: false,
+            answer_thresh_success: false,
+            answer_thresh_fail: false,
             step: 0,
         }
     }
@@ -100,11 +102,16 @@ impl Exercise for Vergence {
             return;
         }
 
-        ui.vertical(|ui| {
-            if let Some(excconfig) = &appdata.excconfig {
-                for excercise in &excconfig.vergence {
-                    ui.label(format!("{}", excercise.name));
-                    ui.horizontal(|ui| {
+        ui.label("This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.");
+        ui.separator();
+
+        egui::Grid::new("vergence_selector_grid")
+            .num_columns(4)
+            .show(ui, |ui| {
+                if let Some(excconfig) = &appdata.excconfig {
+                    for excercise in &excconfig.vergence {
+                        ui.label(format!("{}", excercise.name));
+
                         for level in &excercise.levels {
                             if ui.button(&level.name).clicked() {
                                 self.session.step = level.step;
@@ -112,20 +119,19 @@ impl Exercise for Vergence {
                                 self.session.active = true;
                             }
                         }
-                    });
-                    ui.add_space(10.);
+
+                        ui.end_row();
+                    }
                 }
-            }
+            });
 
-            // Fill space
-            ui.allocate_space(ui.available_size());
+        // Fill space
+        ui.allocate_space(ui.available_size());
 
-            if ui.button("Calibrate").clicked() {
-                self.configuration.calibrating = true
-            }
-        });
+        if ui.button("Calibrate").clicked() {
+            self.configuration.calibrating = true
+        }
     }
-
     fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
@@ -238,17 +244,19 @@ impl Vergence {
             // If the previous answer was not correct, set the answer threshold to true.
             if a == self.anaglyph.focal_position {
                 self.session.results.push(true);
+                // Any correct answer invalidates the failure streak.
+                self.session.answer_thresh_fail = false;
                 match self.session.results.last() {
                     Some(prev_val) => {
-                        if prev_val == &true && self.session.answer_thresh == true {
-                            self.session.answer_thresh = false;
+                        if prev_val == &true && self.session.answer_thresh_success == true {
+                            self.session.answer_thresh_success = false;
                             self.anaglyph.background_offset += self.session.step;
                         }
-                        if prev_val == &true && self.session.answer_thresh == false {
-                            self.session.answer_thresh = true
+                        if prev_val == &true && self.session.answer_thresh_success == false {
+                            self.session.answer_thresh_success = true
                         }
                         if prev_val == &false {
-                            self.session.answer_thresh = false
+                            self.session.answer_thresh_success = false
                         }
                     }
                     None => (),
@@ -261,13 +269,15 @@ impl Vergence {
             // If the previous answer was correct, set the answer_threshhold to true.
             if a != self.anaglyph.focal_position {
                 self.session.results.push(false);
+                // Any failure invalidates the success streak.
+                self.session.answer_thresh_success = false;
                 match self.session.results.last() {
                     Some(prev_val) => {
-                        if prev_val == &false && self.session.answer_thresh == true {
-                            self.session.answer_thresh = false;
+                        if prev_val == &false && self.session.answer_thresh_fail == true {
+                            self.session.answer_thresh_fail = false;
                             self.anaglyph.background_offset = 0;
                         } else {
-                            self.session.answer_thresh = true
+                            self.session.answer_thresh_fail = true
                         }
                     }
                     None => (),
