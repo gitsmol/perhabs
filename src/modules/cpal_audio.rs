@@ -146,7 +146,7 @@ fn next_value(audio_ctx: &mut AudioContext, rx: &Receiver<Voice>) -> f32 {
     // Produce a sinusoid of maximum amplitude.
     audio_ctx.clock = (audio_ctx.clock + 1.0) % audio_ctx.samplerate;
     if let Ok(voice) = rx.try_recv() {
-        println!("Received voice.");
+        debug!("Received voice.");
         audio_ctx.add_voice(voice);
     }
 
