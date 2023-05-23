@@ -23,7 +23,7 @@ impl super::SpatialDrawing {
     }
 
     /// Shows an editable exercise
-    fn ui_mini(&self, ui: &mut egui::Ui, exercise: &Puzzle) -> Response {
+    fn ui_mini(&mut self, ui: &mut egui::Ui, puzzle: &Puzzle) -> Response {
         // Setup
         let (mut response, painter) =
             ui.allocate_painter(ui.available_size_before_wrap(), Sense::click());
@@ -37,8 +37,11 @@ impl super::SpatialDrawing {
             response.rect,
         );
 
-        painter.extend(exercise.shapes(&to_screen, 6., Color32::KHAKI));
-        painter.extend(self.puzzle_grid.shapes(&to_screen, 3., Color32::WHITE));
+        painter.extend(puzzle.shapes(&to_screen, 6., Color32::KHAKI));
+        painter.extend(
+            self.puzzle_grid
+                .shapes(puzzle.size(), &to_screen, 3., Color32::WHITE),
+        );
 
         response
     }
@@ -58,9 +61,8 @@ impl super::SpatialDrawing {
         self.state = SessionStatus::Editing;
     }
 
+    /// Add the puzzles in memory to the current excercise config and write to file.
     pub fn export_puzzles_to_json(&mut self, path: &str, appdata: &AppData) {
-        // Create a vec containing all puzzles, both from the existing excconfig
-        // and puzzels that were created in the editor and stored in memory (in puzzle_list)
         if let Some(excconfig) = &appdata.excconfig {
             let mut new_excconfig = excconfig.clone();
             new_excconfig
@@ -127,10 +129,12 @@ impl super::SpatialDrawing {
                     ui.end_row();
                     if self.puzzle_edit_list.len() > 0 {
                         self.puzzle_list(ui, &self.puzzle_edit_list.to_owned());
+                        ui.end_row();
                     }
 
                     for i in 5..=7 {
                         ui.vertical_centered_justified(|ui| {
+                            ui.label(format!("Add a {i} by {i} puzzle.", i = i));
                             Frame::dark_canvas(ui.style()).show(ui, |ui| {
                                 if self.ui_mini(ui, &Puzzle::new(i)).clicked() {
                                     {
@@ -140,12 +144,6 @@ impl super::SpatialDrawing {
                                     };
                                 }
                             });
-
-                            if ui.button("New").clicked() {
-                                debug!("Adding new drawing.");
-                                self.puzzle = Puzzle::new(i);
-                                self.state = SessionStatus::Editing;
-                            }
                         });
                     }
                 });

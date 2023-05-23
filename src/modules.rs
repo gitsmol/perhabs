@@ -5,5 +5,6 @@ pub mod debug_info;
 pub mod metronome;
 pub mod multitasker;
 pub mod rand_timer;
+pub mod sentences;
 pub mod timer;
 pub mod widgets;

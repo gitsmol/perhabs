@@ -1,7 +1,7 @@
 use crate::{
     exercises::{
-        cog_numbers::CogNumbers, cog_words::CogWords, seq_numbers::NumSeq,
-        spatial_drawing::SpatialDrawing, vergence::Vergence,
+        cog_numbers::CogNumbers, cog_words::CogWords, episodic_memory::EpisodicMemory,
+        seq_numbers::NumSeq, spatial_drawing::SpatialDrawing, vergence::Vergence,
     },
     modules::asset_loader::AppData,
     modules::widgets,
@@ -10,7 +10,7 @@ use crate::{
 use tts::Tts;
 
 /// Stores all available exercises (sessions). In order to only display one, store its name in open
-/// and only display the session matching that str.
+/// and only display the session matching that static str.
 pub struct SessionManager {
     pub sessions: Vec<Box<dyn Exercise>>,
     pub open: Option<&'static str>,
@@ -22,8 +22,9 @@ impl Default for SessionManager {
             sessions: vec![
                 Box::new(CogNumbers::default()),
                 Box::new(CogWords::default()),
-                Box::new(Vergence::default()),
                 Box::new(NumSeq::default()),
+                Box::new(EpisodicMemory::default()),
+                Box::new(Vergence::default()),
                 Box::new(SpatialDrawing::default()),
             ],
             open: None,

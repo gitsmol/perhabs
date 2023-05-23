@@ -20,7 +20,10 @@ impl super::SpatialDrawing {
         if response.clicked() {
             if let Some(pointer_pos) = response.interact_pointer_pos() {
                 let canvas_pos = from_screen * pointer_pos;
-                if let Some(pos) = self.puzzle_grid.match_coords(canvas_pos) {
+                if let Some(pos) = self
+                    .puzzle_grid
+                    .match_coords(self.puzzle.size(), canvas_pos)
+                {
                     debug!("Adding to line edit: {:?}", pos);
                     self.puzzle.edit(*pos);
                 }
@@ -28,7 +31,10 @@ impl super::SpatialDrawing {
         }
 
         painter.extend(self.puzzle.shapes(&to_screen, 10., Color32::KHAKI));
-        painter.extend(self.puzzle_grid.shapes(&to_screen, 5., Color32::WHITE));
+        painter.extend(
+            self.puzzle_grid
+                .shapes(self.puzzle.size(), &to_screen, 5., Color32::WHITE),
+        );
 
         response
     }

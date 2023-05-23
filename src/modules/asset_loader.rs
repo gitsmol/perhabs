@@ -62,6 +62,9 @@ pub struct PerhabsConfig {
     pub sentences_path_disk: String,
     pub sentences_path_web: String,
     pub sentences_files: Vec<SentenceFile>,
+    pub episodic_memory_path_web: String,
+    pub episodic_memory_path_disk: String,
+    pub episodic_memory_files: Vec<SentenceFile>,
     pub source: AssetSource,
 }
 
@@ -79,6 +82,14 @@ impl Default for PerhabsConfig {
             sentences_path_web: String::from("https://www.polyprax.nl/perhabs/excdata/sentences/"),
             sentences_files: vec![SentenceFile {
                 filename: String::from("sentences_EN.txt"),
+                language: String::from("English"),
+            }],
+            episodic_memory_path_disk: String::from("./excdata/episodic_memory/"),
+            episodic_memory_path_web: String::from(
+                "https://www.polyprax.nl/perhabs/excdata/episodic_memory/",
+            ),
+            episodic_memory_files: vec![SentenceFile {
+                filename: String::from("episodic_memory_EN.txt"),
                 language: String::from("English"),
             }],
             source: AssetSource::Default,

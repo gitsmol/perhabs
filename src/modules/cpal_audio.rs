@@ -143,7 +143,6 @@ where
 }
 
 fn next_value(audio_ctx: &mut AudioContext, rx: &Receiver<Voice>) -> f32 {
-    // Produce a sinusoid of maximum amplitude.
     audio_ctx.clock = (audio_ctx.clock + 1.0) % audio_ctx.samplerate;
     if let Ok(voice) = rx.try_recv() {
         debug!("Received voice.");
@@ -172,6 +171,8 @@ fn next_value(audio_ctx: &mut AudioContext, rx: &Receiver<Voice>) -> f32 {
             // Attack is first
             frame => frame as f32 / voice.attack as f32,
         };
+
+        // Produce a sinusoid
         value += (audio_ctx.clock * voice.freq * 3.141592 / audio_ctx.samplerate).sin() * amp;
     }
     value

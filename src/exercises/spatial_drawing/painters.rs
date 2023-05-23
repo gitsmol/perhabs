@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use egui::{emath::RectTransform, epaint::CircleShape, pos2, Color32, Pos2, Shape, Stroke};
 use log::debug;
 use serde::{Deserialize, Serialize};
@@ -178,16 +180,23 @@ impl Puzzle {
     }
 }
 
-/// A struct containing the positions of circles guiding a drawing exercise.
+/// A struct containing a hashmap of the positions of circles guiding a drawing exercise.
 /// The coordinates to the circles are stored in two nested vectors in X, Y order.
+/// The hashmap starts out empty. The positions for a given key (grid size) are calculated
+/// on demand and thereafter read from the hashmap.
 pub struct PuzzleGrid {
-    pub positions: Vec<Vec<Pos2>>,
+    positions: HashMap<usize, Vec<Vec<Pos2>>>,
 }
 
 impl PuzzleGrid {
     /// Create guide circles on an evenly spaced grid of given size.
     pub fn new(grid_size: usize) -> Self {
-        debug!("Initializing GuideCircles");
+        Self {
+            positions: HashMap::new(),
+        }
+    }
+
+    fn gen_positions(&self, grid_size: usize) -> Vec<Vec<Pos2>> {
         let mut rows_pos = vec![];
         let mut cols_pos = vec![];
 
@@ -212,16 +221,30 @@ impl PuzzleGrid {
                 cols_pos = vec![];
             }
         }
-        Self {
-            positions: rows_pos,
+        rows_pos
+    }
+
+    fn get_positions(&mut self, grid_size: usize) -> Vec<Vec<Pos2>> {
+        // Can we find the positions for the given grid size?
+        match self.positions.get(&grid_size) {
+            // Yes, calculate shapes.
+            Some(positions) => positions.to_owned(),
+            // No, calculate positions first, then retry.
+            None => {
+                debug!("Calculating PuzzleGrid positions for size {}", grid_size);
+                self.positions
+                    .insert(grid_size, self.gen_positions(grid_size));
+                self.get_positions(grid_size)
+            }
         }
     }
 
     /// Retrieve the (normalized) coordinates of a circle's center.
-    pub fn get_pos(&self, column: usize, row: usize) -> Option<&Pos2> {
-        if let Some(row) = self.positions.get(row) {
+    pub fn get_coordinate(&mut self, grid_size: usize, column: usize, row: usize) -> Option<Pos2> {
+        let positions = self.get_positions(grid_size);
+        if let Some(row) = positions.get(row) {
             if let Some(coord) = row.get(column) {
-                return Some(coord);
+                return Some(coord.to_owned());
             }
         }
         None
@@ -229,14 +252,16 @@ impl PuzzleGrid {
 
     /// Check if a given coordinate matches a guide circle and
     /// return a reference to that circle's position.
-    pub fn match_coords(&self, coord: Pos2) -> Option<&Pos2> {
-        // Set 1% tolerance (ie how big is the clickable square)
-        let tolerance = 0.01;
-        for row in &self.positions {
-            for pos in row {
-                if coord.x - tolerance < pos.x && coord.x + tolerance > pos.x {
-                    if coord.y - tolerance < pos.y && coord.y + tolerance > pos.y {
-                        return Some(pos);
+    pub fn match_coords(&self, grid_size: usize, coord: Pos2) -> Option<&Pos2> {
+        if let Some(positions) = self.positions.get(&grid_size) {
+            // Set 1% tolerance (ie how big is the clickable square)
+            let tolerance = 0.01;
+            for row in positions {
+                for pos in row {
+                    if coord.x - tolerance < pos.x && coord.x + tolerance > pos.x {
+                        if coord.y - tolerance < pos.y && coord.y + tolerance > pos.y {
+                            return Some(pos);
+                        }
                     }
                 }
             }
@@ -244,16 +269,37 @@ impl PuzzleGrid {
         None
     }
 
-    /// Return shapes for the guide circles, to be used with egui::Painter.
-    pub fn shapes(&self, screen: &RectTransform, size: f32, color: Color32) -> Vec<Shape> {
-        let mut shapes = vec![];
-        for row in &self.positions {
-            for pos in row {
-                let pos_on_screen = screen * pos.to_owned();
-                let circle = egui::Shape::Circle(CircleShape::filled(pos_on_screen, size, color));
-                shapes.push(circle);
+    /// Calculate shapes for the given grid size. If the given grid size is not already
+    /// stored in the positions hashmap, add the positions and recurse into this function
+    pub fn shapes(
+        &mut self,
+        grid_size: usize,
+        screen: &RectTransform,
+        size: f32,
+        color: Color32,
+    ) -> Vec<Shape> {
+        // Can we find the positions for the given grid size?
+        match self.positions.get(&grid_size) {
+            // Yes, calculate shapes.
+            Some(positions) => {
+                let mut shapes = vec![];
+                for row in positions {
+                    for pos in row {
+                        let pos_on_screen = screen * pos.to_owned();
+                        let circle =
+                            egui::Shape::Circle(CircleShape::filled(pos_on_screen, size, color));
+                        shapes.push(circle);
+                    }
+                }
+                shapes
+            }
+            // No, calculate positions first, then retry.
+            None => {
+                debug!("Calculating PuzzleGrid positions for size {}", grid_size);
+                self.positions
+                    .insert(grid_size, self.gen_positions(grid_size));
+                self.shapes(grid_size, screen, size, color)
             }
         }
-        shapes
     }
 }

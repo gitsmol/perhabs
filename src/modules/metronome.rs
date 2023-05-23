@@ -36,7 +36,7 @@ impl Metronome {
     fn metronome_loop(&mut self) {
         if self.beat_timer.is_finished() {
             self.voice_tx.send(self.voice);
-            let bpm_millis: i64 = (60 / self.bpm) * 1000;
+            let bpm_millis: i64 = ((60.0 / self.bpm as f32) * 1000.0) as i64;
             self.beat_timer.set(Duration::milliseconds(bpm_millis));
         }
     }
