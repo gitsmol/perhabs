@@ -1,3 +1,4 @@
+use egui::{vec2, Color32};
 use tts::Tts;
 
 use crate::{
@@ -5,17 +6,13 @@ use crate::{
     wm::windowman::{AppWin, View},
 };
 
-use super::timer::Timer;
+use super::{timer::Timer, widgets};
 
-pub struct DebugInfo {
-    timer: Timer,
-}
+pub struct DebugInfo {}
 
 impl Default for DebugInfo {
     fn default() -> Self {
-        Self {
-            timer: Timer::new(),
-        }
+        Self {}
     }
 }
 
@@ -53,6 +50,7 @@ impl AppWin for DebugInfo {
         egui::Window::new(self.name())
             .open(open)
             .default_height(500.0)
+            .fixed_size(vec2(500., 500.))
             .show(ctx, |ui| self.ui(ui, appdata, tts));
     }
 }
@@ -60,5 +58,17 @@ impl AppWin for DebugInfo {
 impl View for DebugInfo {
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _tts: &mut Tts) {
         self.asset_loader_debug(ui, appdata);
+
+        ui.horizontal(|ui| {
+            for i in 0..5 {
+                widgets::circle_with_data(
+                    ui,
+                    &String::from(format!("{}", i)),
+                    &String::from("Description"),
+                    100.,
+                    Color32::DARK_BLUE,
+                );
+            }
+        });
     }
 }

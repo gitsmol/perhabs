@@ -100,6 +100,10 @@ impl Exercise for CogNumbers {
         "Recall and reorder a sequence of numbers."
     }
 
+    fn reset(&mut self) {
+        *self = CogNumbers::default();
+    }
+
     /// Show the configuration dialog
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if !self.session.active {

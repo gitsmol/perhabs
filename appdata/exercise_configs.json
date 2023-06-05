@@ -122,6 +122,44 @@
       ]
     }
   ],
+  "visual_recognition": [
+    {
+      "name": "Easy (big)",
+      "num_arrows": 3,
+      "arrow_size": 3,
+      "answer_timeout": 1000
+    },
+    {
+      "name": "Medium (big)",
+      "num_arrows": 4,
+      "arrow_size": 3,
+      "answer_timeout": 750
+    },
+    {
+      "name": "Hard (big)",
+      "num_arrows": 5,
+      "arrow_size": 3,
+      "answer_timeout": 500
+    },
+    {
+      "name": "Easy (small)",
+      "num_arrows": 3,
+      "arrow_size": 2,
+      "answer_timeout": 1000
+    },
+    {
+      "name": "Medium (small)",
+      "num_arrows": 4,
+      "arrow_size": 2,
+      "answer_timeout": 750
+    },
+    {
+      "name": "Hard (small)",
+      "num_arrows": 5,
+      "arrow_size": 2,
+      "answer_timeout": 500
+    }
+  ],
   "spatial_drawing": [
     {
       "grid_size": 5,

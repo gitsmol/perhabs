@@ -1,10 +1,9 @@
 {
-  "config_path_disk": "./appdata/config.json",
-  "config_path_web": "https://www.polyprax.nl/perhabs/appdata/config.json",
-  "excconfig_path_disk": "./appdata/exercise_configs.json",
-  "excconfig_path_web": "https://www.polyprax.nl/perhabs/appdata/exercise_configs.json",
-  "sentences_path_disk": "./excdata/episodic_memory/",
-  "sentences_path_web": "https://www.polyprax.nl/perhabs/excdata/episodic_memory/",
+  "disk_root": "./",
+  "web_root": "https://www.polyprax.nl/perhabs/",
+  "config_path": "appdata/config.json",
+  "excconfig_path": "appdata/exercise_configs.json",
+  "sentences_path": "excdata/sentences/",
   "sentences_files": [
     {
       "language": "English",
@@ -15,12 +14,15 @@
       "filename": "sentences_NL.txt"
     }
   ],
-  "episodic_memory_path_disk": "./excdata/episodic_memory/",
-  "episodic_memory_path_web": "https://www.polyprax.nl/perhabs/excdata/episodic_memory/",
+  "episodic_memory_path": "excdata/episodic_memory/",
   "episodic_memory_files": [
     {
       "language": "English",
       "filename": "episodic_memory_EN.txt"
+    },
+    {
+      "language": "Nederlands",
+      "filename": "episodic_memory_NL.txt"
     }
   ],
   "source": "Unknown"

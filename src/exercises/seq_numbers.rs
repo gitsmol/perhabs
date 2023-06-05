@@ -57,6 +57,10 @@ impl Exercise for NumSeq {
         "Calculate numbers based on simple rules."
     }
 
+    fn reset(&mut self) {
+        *self = NumSeq::default();
+    }
+
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         egui::Window::new(self.name())
             .anchor(
@@ -111,5 +115,9 @@ impl Exercise for NumSeq {
                 ui.heading(format!("{:?}", &self.sequence));
             }
         });
+    }
+
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+        todo!()
     }
 }

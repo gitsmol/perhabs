@@ -1,8 +1,14 @@
 use eframe::epaint::Shadow;
-use egui::{vec2, Align, Rounding, Vec2, Visuals};
+use egui::{vec2, Align, Rounding, ScrollArea, Vec2, Visuals};
 
 use crate::{
-    modules::asset_loader::{self, AppData, AssetSource, ExcConfig, PerhabsConfig},
+    modules::{
+        asset_loader::{
+            exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
+            AppData, AssetSource,
+        },
+        widgets,
+    },
     wm::sessionman::SessionManager,
     wm::windowman::Windows,
 };
@@ -118,15 +124,18 @@ impl Perhabs {
             // No: try to get a config from disk.
             // If that fails, put a promise in place for the next loop of this function
             // If that fails, create a config from the hardcoded defaults.
-            None => match ExcConfig::from_disk(&config.excconfig_path_disk) {
+            None => match ExerciseConfigCollection::from_disk(&format!(
+                "{}{}",
+                &config.disk_root, &config.excconfig_path,
+            )) {
                 Ok(mut res) => {
                     res.source = AssetSource::Disk;
                     self.appdata.excconfig = Some(res)
                 }
                 Err(_) => {
                     debug!("No exercise config found on disk. Getting web config.");
-                    let path = &config.excconfig_path_web;
-                    self.appdata.excconfig_promise = Some(ExcConfig::from_web(path))
+                    let path = format!("{}{}", &config.web_root, &config.excconfig_path);
+                    self.appdata.excconfig_promise = Some(ExerciseConfigCollection::from_web(&path))
                 }
             },
             // Yes: we have a promise.
@@ -135,7 +144,8 @@ impl Perhabs {
                 if let Some(Ok(resource)) = promise.ready() {
                     debug!("Promise for exercise config is ready.");
                     // Deserialize the data we got from the promise
-                    let config = serde_json::from_str::<ExcConfig>(resource.text().unwrap());
+                    let config =
+                        serde_json::from_str::<ExerciseConfigCollection>(resource.text().unwrap());
 
                     // Store data in config, depending on the success deserialization.
                     // If deser fails, store hardcoded defaults.
@@ -148,7 +158,7 @@ impl Perhabs {
                         // If deserialization fails, store hardcoded defaults
                         Err(error) => {
                             debug!("Failed to deserialize exercise config: {}", error);
-                            Some(ExcConfig::default())
+                            Some(ExerciseConfigCollection::default())
                         }
                     }
                 }
@@ -158,6 +168,29 @@ impl Perhabs {
         // Eventually we return false so whatever requested this guarantee
         // knows there is no config (yet).
         false
+    }
+
+    fn menu(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        let spacer = ui.available_size() / 20.;
+
+        egui::Window::new("Exercise menu")
+            .anchor(
+                egui::Align2([Align::Center, Align::TOP]),
+                Vec2::new(0., 2.0 * spacer.y),
+            )
+            .fixed_size(vec2(600., 400.))
+            .resizable(false)
+            .movable(false)
+            .collapsible(false)
+            .show(ctx, |ui| {
+                self.sessionman.buttons_cols(ui);
+            });
+    }
+
+    fn menu_smallscreen(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
+        ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menubar at the top of the screen provides a number of helpful tools.");
+        ui.add_space(10.);
+        ScrollArea::new([false, true]).show(ui, |ui| self.sessionman.buttons(ui));
     }
 }
 
@@ -173,10 +206,16 @@ impl eframe::App for Perhabs {
                 ui.label("Tools \u{27A1}");
                 self.windows.labels(ui);
                 // Only show quit when a session is active.
-                if let Some(_) = self.sessionman.open {
+                if let Some(session_name) = self.sessionman.open {
                     ui.add_space(ui.available_width() - 85.);
                     if ui.button("\u{2386} Quit session").clicked() {
                         self.sessionman.open = None;
+                        // Reset the session on close
+                        for session in &mut self.sessionman.sessions {
+                            if session.name() == session_name {
+                                session.reset();
+                            }
+                        }
                     }
                 }
             });
@@ -185,27 +224,26 @@ impl eframe::App for Perhabs {
         // Show a loading screen until we have configs. Then show utility windows and session.
         egui::CentralPanel::default().show(ctx, |ui| {
             if self.guarantee_configs() == false {
-                asset_loader::loading(ui);
+                widgets::loading(ui);
             } else {
                 // Show windows
                 self.windows.windows(ctx, &self.appdata, &mut self.speaker);
 
                 // Show the session menu or an active session
                 if let None = self.sessionman.open {
-                    egui::Window::new("Exercise menu")
-                        .anchor(
-                            egui::Align2([Align::Center, Align::TOP]),
-                            Vec2::new(0., 100.),
-                        )
-                        .fixed_size(vec2(600., 300.))
-                        .resizable(false)
-                        .movable(false)
-                        .collapsible(false)
-                        .show(ctx, |ui| {
-                    ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menubar at the top of the screen provides a number of helpful tools.");
-                    ui.add_space(10.);
-                    self.sessionman.buttons_cols(ui);
-                });
+                    let menu_width = {
+                        if ui.available_width() < 600. {
+                            ui.available_width()
+                        } else {
+                            600.
+                        }
+                    };
+
+                    if menu_width < 600. {
+                        self.menu_smallscreen(ctx, ui)
+                    } else {
+                        self.menu(ctx, ui);
+                    };
                 } else {
                     self.sessionman
                         .session_show(ctx, &self.appdata, &mut self.speaker);

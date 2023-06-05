@@ -73,6 +73,10 @@ impl Exercise for Vergence {
         "Train your eyes to diverge and converge. Requires glasses in two different colors."
     }
 
+    fn reset(&mut self) {
+        *self = Vergence::default();
+    }
+
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if !self.session.active {
             egui::Window::new("Vergence")

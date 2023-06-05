@@ -5,7 +5,7 @@ mod exercise;
 pub mod painters;
 mod selector;
 
-use self::painters::{Puzzle, PuzzleGrid};
+use self::painters::{PuzzleGrid, SpatialPuzzle};
 
 #[derive(PartialEq, Eq)]
 enum Transformation {
@@ -49,8 +49,8 @@ impl std::fmt::Display for SessionStatus {
 pub struct SpatialDrawing {
     state: SessionStatus,
     puzzle_grid: PuzzleGrid,
-    puzzle_edit_list: Vec<Puzzle>,
-    puzzle: Puzzle,
+    puzzle_edit_list: Vec<SpatialPuzzle>,
+    puzzle: SpatialPuzzle,
     puzzle_transform: Transformation,
     user_drawing: Vec<Vec<Pos2>>,
     stroke: Stroke,
@@ -63,7 +63,7 @@ impl Default for SpatialDrawing {
             state: SessionStatus::Selecting,
             puzzle_grid: PuzzleGrid::new(5),
             puzzle_edit_list: vec![],
-            puzzle: Puzzle::new(5),
+            puzzle: SpatialPuzzle::new(5),
             puzzle_transform: Transformation::RightTilt,
             user_drawing: Default::default(),
             stroke: Stroke::new(5.0, Color32::from_rgb(25, 200, 100)),
@@ -141,6 +141,10 @@ impl Exercise for SpatialDrawing {
         "Draw a shape mirrored or on its side."
     }
 
+    fn reset(&mut self) {
+        *self = SpatialDrawing::default();
+    }
+
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {
         match self.state {
             SessionStatus::Selecting => {
@@ -156,5 +160,13 @@ impl Exercise for SpatialDrawing {
                 CentralPanel::default().show(ctx, |ui| self.ui_exercise(ui, tts, appdata))
             }
         };
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
+        todo!()
+    }
+
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
+        todo!()
     }
 }

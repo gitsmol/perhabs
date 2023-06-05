@@ -8,7 +8,7 @@ use crate::{
     modules::asset_loader::AppData,
 };
 
-use super::painters::Puzzle;
+use super::painters::SpatialPuzzle;
 
 // All the selector functions go here.
 impl super::SpatialDrawing {
@@ -23,7 +23,7 @@ impl super::SpatialDrawing {
     }
 
     /// Shows an editable exercise
-    fn ui_mini(&mut self, ui: &mut egui::Ui, puzzle: &Puzzle) -> Response {
+    fn ui_mini(&mut self, ui: &mut egui::Ui, puzzle: &SpatialPuzzle) -> Response {
         // Setup
         let (mut response, painter) =
             ui.allocate_painter(ui.available_size_before_wrap(), Sense::click());
@@ -47,7 +47,7 @@ impl super::SpatialDrawing {
     }
 
     /// Pick a puzzle and start exercise.
-    fn pick_puzzle(&mut self, puzzle: &Puzzle) {
+    fn pick_puzzle(&mut self, puzzle: &SpatialPuzzle) {
         debug!("Starting spatial puzzle.");
         self.puzzle = puzzle.to_owned();
         self.state = SessionStatus::Exercising;
@@ -55,7 +55,7 @@ impl super::SpatialDrawing {
     }
 
     /// Pick a puzzle and edit it.
-    fn edit_puzzle(&mut self, puzzle: &Puzzle) {
+    fn edit_puzzle(&mut self, puzzle: &SpatialPuzzle) {
         debug!("Editing spatial puzzle.");
         self.puzzle = puzzle.to_owned();
         self.state = SessionStatus::Editing;
@@ -80,7 +80,7 @@ impl super::SpatialDrawing {
         }
     }
 
-    fn puzzle_list(&mut self, ui: &mut egui::Ui, list: &Vec<Puzzle>) {
+    fn puzzle_list(&mut self, ui: &mut egui::Ui, list: &Vec<SpatialPuzzle>) {
         let mut i = 0;
 
         for puzzle in list {
@@ -136,10 +136,10 @@ impl super::SpatialDrawing {
                         ui.vertical_centered_justified(|ui| {
                             ui.label(format!("Add a {i} by {i} puzzle.", i = i));
                             Frame::dark_canvas(ui.style()).show(ui, |ui| {
-                                if self.ui_mini(ui, &Puzzle::new(i)).clicked() {
+                                if self.ui_mini(ui, &SpatialPuzzle::new(i)).clicked() {
                                     {
                                         debug!("Starting spatial exercise.");
-                                        self.puzzle = Puzzle::new(i);
+                                        self.puzzle = SpatialPuzzle::new(i);
                                         self.state = SessionStatus::Editing;
                                     };
                                 }

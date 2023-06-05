@@ -196,6 +196,10 @@ impl Exercise for MultiTasker {
         "No description."
     }
 
+    fn reset(&mut self) {
+        *self = MultiTasker::default();
+    }
+
     /// Show the configuration dialog
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if self.session {

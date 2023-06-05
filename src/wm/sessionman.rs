@@ -2,6 +2,7 @@ use crate::{
     exercises::{
         cog_numbers::CogNumbers, cog_words::CogWords, episodic_memory::EpisodicMemory,
         seq_numbers::NumSeq, spatial_drawing::SpatialDrawing, vergence::Vergence,
+        visual_recognition::VisRecognition,
     },
     modules::asset_loader::AppData,
     modules::widgets,
@@ -24,8 +25,9 @@ impl Default for SessionManager {
                 Box::new(CogWords::default()),
                 Box::new(NumSeq::default()),
                 Box::new(EpisodicMemory::default()),
-                Box::new(Vergence::default()),
                 Box::new(SpatialDrawing::default()),
+                Box::new(Vergence::default()),
+                Box::new(VisRecognition::default()),
             ],
             open: None,
         }
@@ -42,8 +44,8 @@ impl SessionManager {
     }
 
     pub fn buttons_cols(&mut self, ui: &mut egui::Ui) {
-        let buttons: f32 = self.sessions.len() as f32;
-        let col_1_range = buttons - (buttons / 2.).floor();
+        let buttons_total: f32 = self.sessions.len() as f32;
+        let col_1_range = buttons_total - (buttons_total / 2.).floor();
 
         ui.columns(2, |col| {
             // Column 1 gets populated with at least half the buttons
@@ -58,7 +60,7 @@ impl SessionManager {
             }
 
             // Column 2 gets populated with the remaining buttons
-            for i in col_1_range as usize..buttons as usize {
+            for i in col_1_range as usize..buttons_total as usize {
                 if let Some(session) = self.sessions.get(i) {
                     if widgets::menu_button(&mut col[1], session.name(), session.description())
                         .clicked()
@@ -85,17 +87,20 @@ impl SessionManager {
     }
 }
 
-/// Something to view
+/// An Exercise has a menu and a session window. It opens/closes by its name. A description is nice.
 pub trait Exercise {
-    /// `&'static` so we can also use it as a key to store open/close state.
+    // `&'static` so we can also use it as a key to store open/close state.
     fn name(&self) -> &'static str;
 
     fn description(&self) -> &'static str;
 
-    /// Show windows, etc
+    // Show windows, etc
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts);
 
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
 
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {}
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
+
+    // To make sure we can clean up when quitting session.
+    fn reset(&mut self);
 }

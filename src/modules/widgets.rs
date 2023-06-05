@@ -1,5 +1,101 @@
-use egui::{vec2, widget_text::WidgetTextGalley, TextStyle, WidgetText};
+use egui::{
+    emath::{RectTransform, Rot2},
+    epaint::TextShape,
+    pos2,
+    text::{self, Fonts, LayoutJob},
+    vec2,
+    widget_text::WidgetTextGalley,
+    Color32, FontId, Galley, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, Vec2,
+    WidgetText,
+};
+use perhabs::Direction;
 
+pub fn loading_screen(ui: &mut egui::Ui) {
+    // Show loading screen while waiting for contents of file
+    ui.horizontal(|ui| {
+        ui.label("Loading file...");
+        ui.spinner();
+    });
+}
+
+pub fn loading(ui: &mut egui::Ui) {
+    ui.horizontal_centered(|ui| {
+        ui.heading("Loading...");
+        ui.spinner();
+    });
+}
+
+/// Vertical loading bar, quite narrow.
+pub fn loading_bar_vertical(ui: &mut egui::Ui, progress: f32, fill: Color32) -> Response {
+    let desired_size = vec2(ui.spacing().item_spacing.x, ui.available_height());
+    let (outer_rect, response) =
+        ui.allocate_exact_size(desired_size, Sense::focusable_noninteractive());
+    let painter = ui.painter();
+    let bg_fill = ui.style().visuals.widgets.active.bg_fill;
+    let rounding = outer_rect.height() * 0.7;
+
+    painter.rect(outer_rect, rounding, bg_fill, Stroke::NONE);
+
+    let inner_height = outer_rect.size().y * progress;
+    let inner_rect = Rect::from_min_size(
+        outer_rect.left_bottom() - vec2(0., inner_height),
+        vec2(outer_rect.size().x, inner_height),
+    );
+
+    painter.rect(
+        inner_rect,
+        rounding,
+        fill,
+        Stroke::new(1.0, fill.gamma_multiply(1.2)),
+    );
+
+    response
+}
+
+/// Circle to present a number
+pub fn circle_with_data(
+    ui: &mut egui::Ui,
+    data: &String,
+    label: &String,
+    size: f32,
+    stroke_color: Color32,
+) {
+    // Set up positioning etc
+    let (_, rect) = ui.allocate_space(vec2(size, size));
+    let painter = ui.painter();
+    let radius = rect.height().min(rect.width()) * 0.4;
+    let stroke_width = radius * 0.1;
+
+    // Paint circle
+    painter.circle(
+        rect.center(),
+        radius,
+        Color32::TRANSPARENT,
+        Stroke::new(stroke_width, stroke_color),
+    );
+
+    // Paint data
+    let data_wt: WidgetText = data.into();
+    let data_galley = data_wt.into_galley(ui, None, rect.width(), TextStyle::Heading);
+    let data_galley_size = data_galley.size();
+    data_galley.paint_with_visuals(
+        ui.painter(),
+        rect.center() - (data_galley_size * 0.5),
+        ui.style().noninteractive(),
+    );
+
+    // Paint label
+    let label_wt: WidgetText = label.into();
+    let label_galley = label_wt.into_galley(ui, None, rect.width(), TextStyle::Small);
+    let label_galley_size = label_galley.size();
+    label_galley.paint_with_visuals(
+        ui.painter(),
+        rect.center() - (label_galley_size * 0.5 - vec2(0., radius * 0.5)),
+        ui.style().noninteractive(),
+    );
+}
+
+/// Large menu button
 pub fn menu_button(
     ui: &mut egui::Ui,
     label_source: &str,
@@ -59,4 +155,47 @@ pub fn menu_button(
     // All done! Return the interaction response so the user can check what happened
     // (hovered, clicked, ...) and maybe show a tooltip:
     response
+}
+
+/// Return an arrow shaped Mesh suitable for egui::Painter.
+pub fn arrow_shape(
+    pos: Pos2,
+    arrow_size: f32,
+    direction: &Direction,
+    to_screen: RectTransform,
+    color: Color32,
+) -> Shape {
+    // Define some basic measures. M = measure, H = half measure.
+    let m = arrow_size / 3. * 0.02;
+    let h = m / 2.;
+
+    // Create a mesh
+    let mut arrow = Mesh::default();
+
+    // Calculate arrowhead triangle positions and add to mesh.
+    let right_arrow = vec![
+        to_screen * pos2(pos.x + m, pos.y), // The tip
+        to_screen * pos2(pos.x, pos.y + m), // Right
+        to_screen * pos2(pos.x, pos.y - m), // Left
+    ];
+    for pos in right_arrow.iter() {
+        arrow.colored_vertex(pos.to_owned(), color);
+    }
+    arrow.add_triangle(0, 1, 2);
+
+    // Add the rectangular arrow tail.
+    let tail_top_left = to_screen * (pos + vec2(-m, -h));
+    let tail_bottom_right = to_screen * (pos + vec2(0., h));
+    let r = Rect::from_two_pos(tail_top_left, tail_bottom_right);
+    arrow.add_colored_rect(r, color);
+
+    // Rotate the arrow in the right direction. The default points to the right.
+    match direction {
+        Direction::Up => arrow.rotate(Rot2::from_angle(-1.570796), to_screen * pos),
+        Direction::Down => arrow.rotate(Rot2::from_angle(1.570796), to_screen * pos),
+        Direction::Left => arrow.rotate(Rot2::from_angle(3.141593), to_screen * pos),
+        Direction::Right => (),
+    }
+
+    Shape::Mesh(arrow)
 }

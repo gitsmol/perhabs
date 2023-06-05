@@ -1,7 +1,7 @@
 use std::fs::{self, DirEntry, File, OpenOptions};
 use std::io::{self, BufReader, Write};
 use std::path::{Path, PathBuf};
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum Direction {
     Up,
     Down,

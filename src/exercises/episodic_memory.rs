@@ -1,7 +1,8 @@
+use crate::modules::asset_loader::sentences::Sentences;
 use crate::modules::asset_loader::{self, AppData};
-use crate::modules::sentences::Sentences;
+use crate::modules::widgets::{loading_bar_vertical, loading_screen, menu_button};
 use crate::wm::sessionman::Exercise;
-use egui::{vec2, Align, RichText, Vec2};
+use egui::{vec2, Align, Color32, RichText, TextEdit, Vec2};
 use tts::{self, Tts};
 
 /// Sequences
@@ -68,9 +69,12 @@ impl EpisodicMemory {
                     None => return false,
                 };
                 if let Some(config) = &appdata.config {
-                    let diskpath = format!("{}{}", config.episodic_memory_path_disk, file.filename);
+                    let diskpath = format!(
+                        "{}{}{}",
+                        config.disk_root, config.episodic_memory_path, file.filename
+                    );
                     // Try to load contents of selected file from disk
-                    match asset_loader::get_sentences_disk(diskpath) {
+                    match asset_loader::sentences::get_sentences_disk(diskpath) {
                         // Found contents: store in self and shuffle
                         Ok(file) => {
                             self.sentences.contents = Some(file);
@@ -78,9 +82,12 @@ impl EpisodicMemory {
                         }
                         // Can't load from disk: create a promise to load from web
                         Err(_) => {
-                            let webpath =
-                                format!("{}{}", config.episodic_memory_path_disk, file.filename);
-                            self.sentences.promise = Some(asset_loader::get_sentences_web(webpath));
+                            let webpath = format!(
+                                "{}{}{}",
+                                config.web_root, config.episodic_memory_path, file.filename
+                            );
+                            self.sentences.promise =
+                                Some(asset_loader::sentences::get_sentences_web(webpath));
                         }
                     };
                 } else {
@@ -95,11 +102,12 @@ impl EpisodicMemory {
                     let contents = resource.text().unwrap();
 
                     // Store contents of sentences file
-                    self.sentences.contents = match asset_loader::read_sentences_promise(contents) {
-                        Ok(res) => Some(res),
-                        // If deserialization fails, store hardcoded defaults
-                        Err(_) => Some(asset_loader::default_sentences()),
-                    };
+                    self.sentences.contents =
+                        match asset_loader::sentences::read_sentences_promise(contents) {
+                            Ok(res) => Some(res),
+                            // If deserialization fails, store hardcoded defaults
+                            Err(_) => Some(asset_loader::sentences::default_sentences()),
+                        };
 
                     // Finally, shuffle the downloaded/default contents
                     self.sentences.shuffle_contents()
@@ -121,6 +129,10 @@ impl Exercise for EpisodicMemory {
         "Challenge yourself to remember things you've seen, heard and done."
     }
 
+    fn reset(&mut self) {
+        *self = EpisodicMemory::default();
+    }
+
     /// Show the configuration dialog
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
         if !self.session {
@@ -137,62 +149,33 @@ impl Exercise for EpisodicMemory {
         }
 
         if self.session {
-            // if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
-            //     self.next_question();
-            //     self.say(tts);
-            // }
-            // if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-            //     self.say(tts);
-            // }
             egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
         }
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
-        // Show file picker.
-        egui::ComboBox::from_label("Select sentences file")
-            .selected_text(match &self.sentences.selected_file {
-                Some(file) => file.language.clone(),
-                None => String::from("No language selected."),
-            })
-            .show_ui(ui, |ui| {
-                if let Some(config) = &appdata.config {
-                    for file in &config.episodic_memory_files {
-                        if ui
-                            .selectable_value(
-                                &mut self.sentences.selected_file,
-                                Some(file.to_owned()),
-                                &file.language,
-                            )
-                            .changed()
-                        {
-                            // If the selected value changes set the contents to none.
-                            // This triggers the contents guarantee and fetches the appropriate file.
-                            self.sentences.contents = None;
-                        };
-                    }
-                }
-            });
-
-        // Load contents of selected file
-        if let Some(_) = self.sentences.selected_file {
-            if self.contents_guarantee(appdata) == false {
-                // Show loading screen while waiting for contents of file
-                ui.horizontal(|ui| {
-                    ui.label("Loading file...");
-                    ui.spinner();
-                });
-
-                return;
-            } else {
-                // Show session button only when we have a file loaded.
-                if ui.button("Start session").clicked() {
+        if let Some(config) = &appdata.config {
+            for file in &config.episodic_memory_files {
+                if menu_button(ui, file.language.as_str(), "").clicked() {
+                    self.sentences.selected_file = Some(file.to_owned());
+                    // If the selected value changes set the contents to none.
+                    // This triggers the contents guarantee and fetches the appropriate file.
+                    self.sentences.contents = None;
                     self.session = true;
-                }
+                };
             }
         }
     }
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, tts: &mut Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
+        // Loading screen if we are still loading data
+        if self.contents_guarantee(appdata) == false {
+            loading_screen(ui);
+            return;
+        }
+
+        //
+        // The Session UI
+        //
         let spacer = ui.available_height() / 30.;
 
         ui.horizontal(|ui| {
@@ -208,22 +191,35 @@ impl Exercise for EpisodicMemory {
                 if let Some(question) = contents.last() {
                     ui.heading(RichText::new(question).size(25.));
                     ui.add_space(spacer * 2.);
-                    ui.text_edit_multiline(&mut self.answer);
-                    ui.label("Write down as much as you can remember about the question.");
-                    ui.label(match self.answer.len() {
-                        l if l < 100 => "Try to write down some more.",
-                        l if l > 100 => "Good job. Can you think of more details?",
-                        l if l > 150 => "Excellent work!",
-                        _ => "",
+
+                    // Calculate the percentage score for the vert loading bar.
+                    let calc_perc_score = |text: &String| {
+                        let perc = text.len() as f32 / 200.;
+                        if perc > 1.0 {
+                            1.0
+                        } else {
+                            perc
+                        }
+                    };
+
+                    ui.horizontal(|ui| {
+                        ui.add_space(ui.available_width() * 0.5 - 150.);
+                        ui.add_sized(vec2(300., 100.), TextEdit::multiline(&mut self.answer));
+                        loading_bar_vertical(
+                            ui,
+                            calc_perc_score(&self.answer),
+                            Color32::LIGHT_BLUE,
+                        );
                     });
 
-                    ui.add_space(spacer * 2.);
-                    if ui
-                        .add_sized(vec2(spacer * 4., spacer * 2.), egui::Button::new("Repeat"))
-                        .clicked()
-                    {
-                        self.say(tts);
-                    };
+                    ui.add_space(spacer);
+                    ui.label("Write down as much as you can remember.");
+                    ui.label(match self.answer.len() {
+                        l if l < 100 => "Try to fill the progress bar by writing.",
+                        l if l > 100 && l <= 150 => "Well done. Can you think of more details?",
+                        l if l > 150 => "Great job!",
+                        _ => "",
+                    });
 
                     ui.add_space(spacer / 4.);
                     if ui
@@ -231,11 +227,7 @@ impl Exercise for EpisodicMemory {
                         .clicked()
                     {
                         self.next_question();
-                        self.say(tts);
                     };
-
-                    ui.add_space(spacer);
-                    ui.label("Press space for next sequence. Press return to repeat sequence.");
                 }
             }
         });

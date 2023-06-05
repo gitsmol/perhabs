@@ -8,14 +8,14 @@ use serde::{Deserialize, Serialize};
 /// The puzzle can be completely cleared. Lines can be added one by one by
 /// inputting points (pos2) using edit.
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Puzzle {
+pub struct SpatialPuzzle {
     grid_size: usize,
     lines: Vec<[Pos2; 2]>,
     #[serde(skip)]
     edit_line: Option<Pos2>,
 }
 
-impl Puzzle {
+impl SpatialPuzzle {
     /// Create a new puzzle. The grid size is not used for any calculations
     /// but needs to be stored with the puzzle so any visual representations
     /// match the grid size the puzzle was made for.

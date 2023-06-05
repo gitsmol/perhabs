@@ -1,5 +1,5 @@
+use crate::modules::asset_loader::sentences::Sentences;
 use crate::modules::asset_loader::{self, AppData};
-use crate::modules::sentences::Sentences;
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 
@@ -101,9 +101,12 @@ impl CogWords {
                     None => return false,
                 };
                 if let Some(config) = &appdata.config {
-                    let diskpath = format!("{}{}", config.sentences_path_disk, file.filename);
+                    let diskpath = format!(
+                        "{}{}{}",
+                        config.disk_root, config.sentences_path, file.filename
+                    );
                     // Try to load contents of selected file from disk
-                    match asset_loader::get_sentences_disk(diskpath) {
+                    match asset_loader::sentences::get_sentences_disk(diskpath) {
                         // Found contents: store in self and shuffle
                         Ok(file) => {
                             self.sentences.contents = Some(file);
@@ -111,8 +114,12 @@ impl CogWords {
                         }
                         // Can't load from disk: create a promise to load from web
                         Err(_) => {
-                            let webpath = format!("{}{}", config.sentences_path_web, file.filename);
-                            self.sentences.promise = Some(asset_loader::get_sentences_web(webpath));
+                            let webpath = format!(
+                                "{}{}{}",
+                                config.web_root, config.sentences_path, file.filename
+                            );
+                            self.sentences.promise =
+                                Some(asset_loader::sentences::get_sentences_web(webpath));
                         }
                     };
                 } else {
@@ -127,11 +134,12 @@ impl CogWords {
                     let contents = resource.text().unwrap();
 
                     // Store contents of sentences file
-                    self.sentences.contents = match asset_loader::read_sentences_promise(contents) {
-                        Ok(res) => Some(res),
-                        // If deserialization fails, store hardcoded defaults
-                        Err(_) => Some(asset_loader::default_sentences()),
-                    };
+                    self.sentences.contents =
+                        match asset_loader::sentences::read_sentences_promise(contents) {
+                            Ok(res) => Some(res),
+                            // If deserialization fails, store hardcoded defaults
+                            Err(_) => Some(asset_loader::sentences::default_sentences()),
+                        };
 
                     // Finally, shuffle the downloaded/default contents
                     self.sentences.shuffle_contents()
@@ -151,6 +159,10 @@ impl Exercise for CogWords {
 
     fn description(&self) -> &'static str {
         "Recall and reorder a sequence of words."
+    }
+
+    fn reset(&mut self) {
+        *self = CogWords::default();
     }
 
     /// Show the configuration dialog
