@@ -1,11 +1,10 @@
 use std::path::Path;
 
 use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
-use perhabs::write_string_to_file;
 
 use crate::{
     exercises::spatial_drawing::{painters::PuzzleGrid, SessionStatus},
-    modules::asset_loader::AppData,
+    modules::asset_loader::{write_string_to_file, AppData},
 };
 
 use super::painters::SpatialPuzzle;

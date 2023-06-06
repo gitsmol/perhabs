@@ -8,7 +8,7 @@ use tts::Tts;
 use crate::modules::asset_loader::AppData;
 use crate::wm::sessionman::Exercise;
 
-use perhabs::Direction;
+use crate::exercises::Direction;
 
 use self::anaglyph::Anaglyph;
 

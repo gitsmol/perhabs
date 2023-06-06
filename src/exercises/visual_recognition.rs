@@ -1,3 +1,4 @@
+use crate::exercises::Direction;
 use crate::{
     modules::{
         asset_loader::{
@@ -12,7 +13,6 @@ use crate::{
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2};
-use perhabs::Direction;
 use rand::seq::SliceRandom;
 use std::iter::zip;
 

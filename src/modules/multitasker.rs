@@ -1,9 +1,7 @@
-use crate::modules::asset_loader::AppData;
 use crate::wm::sessionman::Exercise;
+use crate::{exercises::numvec_to_string, modules::asset_loader::AppData};
 use egui::RichText;
 use rand::prelude::*;
-
-use perhabs::numvec_to_string;
 
 use tts::{self, Tts};
 

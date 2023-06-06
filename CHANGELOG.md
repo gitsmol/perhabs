@@ -1,4 +1,9 @@
 # Perhabs Changelog
+## 2023-06-06
+Added visual saccades (scannign for arrow)
+Added visual recognition (recall arrow directions)
+Lots of code cleanup and refactoring to decouple
+
 ## 2023-05-16
 Added spatial drawing puzzles.
 

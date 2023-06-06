@@ -1,10 +1,10 @@
+use crate::exercises::Direction;
 use egui::{
     emath::{RectTransform, Rot2},
     pos2, vec2,
     widget_text::WidgetTextGalley,
     Color32, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, WidgetText,
 };
-use perhabs::Direction;
 
 pub fn loading_screen(ui: &mut egui::Ui) {
     // Show loading screen while waiting for contents of file

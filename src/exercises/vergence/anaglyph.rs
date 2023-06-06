@@ -1,8 +1,8 @@
+use crate::exercises::Direction;
 use eframe::{emath, epaint::RectShape};
 use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
 use ndarray_rand::{rand_distr::Binomial, RandomExt};
-use perhabs::Direction;
 use rand::prelude::*;
 use std::iter::zip;
 

@@ -3,9 +3,9 @@ use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
 
-use perhabs::numvec_to_string;
-
 use tts::{self, Tts};
+
+use super::numvec_to_string;
 
 struct Session {
     active: bool,

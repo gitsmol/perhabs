@@ -1,4 +1,10 @@
-use ehttp::{Response, Result};
+use std::{
+    fs::{File, OpenOptions},
+    io::{self, BufReader, Write},
+    path::{Path, PathBuf},
+};
+
+use ehttp::Response;
 use poll_promise::Promise;
 use serde::{Deserialize, Serialize};
 
@@ -13,9 +19,9 @@ pub mod sentences;
 /// data through a reference to this struct.
 pub struct AppData {
     pub config: Option<PerhabsConfig>,
-    pub config_promise: Option<Promise<Result<Response>>>,
+    pub config_promise: Option<Promise<ehttp::Result<Response>>>,
     pub excconfig: Option<ExerciseConfigCollection>,
-    pub excconfig_promise: Option<Promise<Result<Response>>>,
+    pub excconfig_promise: Option<Promise<ehttp::Result<Response>>>,
 }
 
 impl Default for AppData {
@@ -45,5 +51,32 @@ impl AssetSource {
             AssetSource::Default => String::from("Default"),
             AssetSource::Unknown => String::from("Unknown"),
         }
+    }
+}
+
+/// Write a string to a given filepath.
+pub fn write_string_to_file(filepath: &Path, content: String) -> Result<(), io::Error> {
+    match OpenOptions::new()
+        .append(false)
+        .write(true)
+        .create(true)
+        .open(filepath)
+    {
+        Ok(mut file) => match file.write_all(content.as_bytes()) {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        },
+        Err(e) => Err(e),
+    }
+}
+
+/// Read a file from disk.
+pub fn read_file(filepath: &PathBuf) -> Result<BufReader<File>, std::io::Error> {
+    match File::open(filepath) {
+        Ok(file) => {
+            let lines = BufReader::new(file);
+            Ok(lines)
+        }
+        Err(e) => Err(e),
     }
 }

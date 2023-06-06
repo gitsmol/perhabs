@@ -1,3 +1,4 @@
+use crate::exercises::Direction;
 use crate::{
     modules::{
         asset_loader::{
@@ -12,7 +13,6 @@ use crate::{
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Pos2, Rect, Sense, Vec2};
-use perhabs::Direction;
 use rand::{seq::SliceRandom, Rng};
 
 use super::SessionStatus;
@@ -264,7 +264,7 @@ impl VisSaccades {
 
 impl Exercise for VisSaccades {
     fn name(&self) -> &'static str {
-        "Tracking (Saccades)"
+        "Scanning (Saccades)"
     }
 
     fn description(&self) -> &'static str {
