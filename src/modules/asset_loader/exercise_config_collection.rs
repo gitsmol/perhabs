@@ -1,5 +1,7 @@
-use crate::exercises::spatial_drawing::painters::SpatialPuzzle;
-use crate::exercises::visual_recognition::VisRecognitionExercise;
+use crate::{
+    exercises::spatial_drawing::painters::SpatialPuzzle,
+    modules::asset_loader::exercise_config::vergence::Level,
+};
 use ehttp::{Response, Result};
 use poll_promise::Promise;
 use serde::{Deserialize, Serialize};
@@ -9,7 +11,13 @@ use std::{
     io::{self, BufReader},
 };
 
-use super::AssetSource;
+use super::{
+    exercise_config::{
+        vergence::VergenceExercise, visual_recognition::VisRecognitionExercise,
+        visual_saccades::VisSaccadesExercise,
+    },
+    AssetSource,
+};
 
 /// ExcerciseConfigCollection
 /// The ExcerciseConfigCollection struct finds the most relevant config source using new().
@@ -20,19 +28,7 @@ pub struct ExerciseConfigCollection {
     pub vergence: Vec<VergenceExercise>,
     pub spatial_drawing: Vec<SpatialPuzzle>,
     pub visual_recognition: Vec<VisRecognitionExercise>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct VergenceExercise {
-    pub name: String,
-    pub levels: Vec<Level>,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct Level {
-    pub name: String,
-    pub step: isize,
-    pub pixel_size: isize,
+    pub visual_saccades: Vec<VisSaccadesExercise>,
 }
 
 impl Default for ExerciseConfigCollection {
@@ -60,6 +56,7 @@ impl Default for ExerciseConfigCollection {
             ],
             spatial_drawing: vec![SpatialPuzzle::new(5)],
             visual_recognition: vec![VisRecognitionExercise::default()],
+            visual_saccades: vec![VisSaccadesExercise::default()],
         }
     }
 }

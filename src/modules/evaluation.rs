@@ -41,6 +41,7 @@ impl<T> Evaluation<T> {
     }
 
     /// How much time did we take?
+    /// Returns None if not finished.
     pub fn time_taken(&self) -> Option<Duration> {
         if let Some(end_time) = self.end_time {
             Some(end_time - self.start_time)
@@ -50,6 +51,9 @@ impl<T> Evaluation<T> {
     }
 
     /// How much time did we take?
+    /// Returns a formatted string:
+    /// 1 minute and 9 seconds = "1:09"
+    /// Returns string "NaN" if not yet finished.
     pub fn time_taken_as_string(&self) -> String {
         if let Some(duration) = self.time_taken() {
             String::from(format!(
@@ -58,7 +62,7 @@ impl<T> Evaluation<T> {
                 duration.num_seconds()
             ))
         } else {
-            String::from("Not finished.")
+            String::from("NaN")
         }
     }
 
@@ -67,11 +71,21 @@ impl<T> Evaluation<T> {
         self.results.len()
     }
 
+    /// Number of seconds taken per rep.
+    /// Returns None if not finished.
+    pub fn average_secs_per_rep(&self) -> Option<f32> {
+        match self.time_taken() {
+            Some(duration) => Some(duration.num_seconds() as f32 / self.reps_done() as f32),
+            None => None,
+        }
+    }
+
     /// How many reps are remaining?
     pub fn reps_remaining(&self) -> usize {
         self.repetitions - self.results.len()
     }
 
+    /// Return a vec of all results.
     pub fn show_results(&self) -> &Vec<T> {
         &self.results
     }

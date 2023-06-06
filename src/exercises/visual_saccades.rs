@@ -1,35 +1,61 @@
-use crate::{modules::asset_loader::AppData, wm::sessionman::Exercise};
-use egui::{
-    emath::{self, RectTransform},
-    epaint::RectShape,
-    pos2, Color32, Frame, Pos2, Rect, Rounding, Sense, Shape, Stroke,
+use crate::{
+    modules::{
+        asset_loader::{
+            exercise_config::{visual_saccades::VisSaccadesExercise, ExerciseConfig},
+            AppData,
+        },
+        evaluation::Evaluation,
+        timer::Timer,
+        widgets::{self, menu_button},
+    },
+    wm::sessionman::Exercise,
 };
+use chrono::Duration;
+use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Pos2, Rect, Sense, Vec2};
 use perhabs::Direction;
 use rand::{seq::SliceRandom, Rng};
 
+use super::SessionStatus;
+
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct VisSaccades {
-    session: bool,
+    session_status: SessionStatus,
     arrow_pos: Option<Pos2>,
-    arrow_direction: Direction,
+    answer: Option<Direction>, // The right answer is the direction of the arrow
+    response: Option<Direction>, // The given response is a direction
+    exercise_params: VisSaccadesExercise,
+    answer_timeout_timer: Timer,
+    evaluation: Evaluation<f32>,
 }
 
 impl Default for VisSaccades {
     fn default() -> Self {
         Self {
-            session: false,
+            session_status: SessionStatus::None,
+            exercise_params: VisSaccadesExercise::default(),
             arrow_pos: None,
-            arrow_direction: Direction::Up,
+            answer: None,
+            response: None,
+            answer_timeout_timer: Timer::new(),
+            evaluation: Evaluation::new(Duration::seconds(5), 5),
         }
     }
 }
 
 impl VisSaccades {
+    /// Basic controls during a session
     fn ui_controls(&mut self, ui: &mut egui::Ui) {
-        if ui.button("New").clicked() {
-            self.new_arrow_pos();
-        }
-        ui.label(format!("Pos: {:?}", self.arrow_pos));
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                // Reset the whole exercise.
+                *self = VisSaccades::default();
+            };
+            ui.label(format!(
+                "Time: {}",
+                self.evaluation.time_remaining().to_string()
+            ));
+            ui.label(format!("Reps: {}", self.evaluation.reps_remaining()));
+        });
     }
 
     fn arrow_painter(&self, ui: &mut egui::Ui) {
@@ -44,90 +70,195 @@ impl VisSaccades {
         );
 
         if let Some(pos) = self.arrow_pos {
-            let shapes = self.arrow_shape(pos, to_screen);
-            painter.extend(shapes);
+            if let Some(direction) = &self.answer {
+                let shape = widgets::arrow_shape(
+                    pos,
+                    self.exercise_params.arrow_size as f32,
+                    direction,
+                    to_screen,
+                    Color32::GREEN,
+                );
+                painter.add(shape);
+            }
         }
     }
 
+    /// Randomly position an arrow pointing in a random direction.
     fn new_arrow_pos(&mut self) {
+        let mut rng = rand::thread_rng();
+
         if let Some(direction) = vec![
             Direction::Left,
             Direction::Right,
             Direction::Up,
             Direction::Down,
         ]
-        .choose(&mut rand::thread_rng())
+        .choose(&mut rng)
         {
-            self.arrow_direction = *direction;
+            self.answer = Some(*direction);
         }
 
-        let mut rng = rand::thread_rng();
         let x: f32 = rng.gen_range(0.01..0.95);
         let y: f32 = rng.gen_range(0.01..0.95);
         self.arrow_pos = Some(pos2(x, y));
     }
 
-    fn calc_arrow_pos(&mut self) {
-        self.arrow_pos = Some(pos2(0.5, 0.5));
+    /// Keeps track of answer, response, result progression.
+    /// This exercise is only every in Response mode:
+    /// - constantly display new arrows until timeout or user input
+    /// - record responses:
+    ///   - correct response = result 1.0
+    ///   - incorrect or no response = result 0.0
+
+    fn progressor(&mut self, ctx: &egui::Context) {
+        // Repaint regularly to update timers!
+        // 60 fps = 100ms per frame
+        // NB this also sets bounds on the timer precision.
+        ctx.request_repaint_after(std::time::Duration::from_millis(100));
+
+        // When the evaluation time is up or number of reps is reached, stop immediately.
+        if self.evaluation.is_finished() {
+            self.session_status = SessionStatus::Finished;
+        }
+
+        match self.session_status {
+            // This exercise is always in response mode.
+            SessionStatus::Response => {
+                // Setup and display answer
+                // If no arrow is visible, create new arrow and set answer timeout timer
+                if let None = self.answer {
+                    self.new_arrow_pos();
+                    self.answer_timeout_timer
+                        .set(Duration::milliseconds(self.exercise_params.answer_timeout));
+                }
+
+                // Continously allow response input
+                self.read_keypress(ctx);
+
+                // After the answer timeout is up, delete the arrow and evaluate response.
+                // This will trigger a new arrow with timeout.
+                if self.answer_timeout_timer.is_finished() {
+                    self.next();
+                }
+            }
+            // None and Finished don't trigger progression.
+            _ => (),
+        };
     }
 
-    /// Return a vec containing shapes suitable for egui::Painter.
-    /// The shapes make up an arrow.
-    fn arrow_shape(&self, pos: Pos2, to_screen: RectTransform) -> Vec<Shape> {
-        let measure = 0.02;
-        let half = measure / 2.;
-        // The arrowhead first
-        let arrowhead_points = match self.arrow_direction {
-            Direction::Up => vec![
-                to_screen * pos2(pos.x, pos.y),                  // The tip
-                to_screen * pos2(pos.x + half, pos.y + measure), // Right
-                to_screen * pos2(pos.x - half, pos.y + measure), // Left
-            ],
-            Direction::Down => vec![
-                to_screen * pos2(pos.x, pos.y),                  // The tip
-                to_screen * pos2(pos.x + half, pos.y - measure), // Right
-                to_screen * pos2(pos.x - half, pos.y - measure), // Left
-            ],
-            Direction::Left => vec![
-                to_screen * pos2(pos.x, pos.y),
-                to_screen * pos2(pos.x - measure, pos.y + half),
-                to_screen * pos2(pos.x, pos.y + measure),
-            ],
-            Direction::Right => vec![
-                to_screen * pos2(pos.x, pos.y),
-                to_screen * pos2(pos.x + measure, pos.y + half),
-                to_screen * pos2(pos.x, pos.y + measure),
-            ],
-        };
-        let arrowhead = Shape::convex_polygon(arrowhead_points, Color32::KHAKI, Stroke::NONE);
+    fn next(&mut self) {
+        self.evaluation.add_result(self.evaluate_response());
+        self.answer = None;
+        self.response = None;
+    }
 
-        // Now the tail of the arrow
-        let arrow_tail_points = match self.arrow_direction {
-            Direction::Up => Rect::from_two_pos(
-                to_screen * pos2(pos.x - 0.005, pos.y + 0.01),
-                to_screen * pos2(pos.x + 0.005, pos.y + 0.035),
-            ),
-            Direction::Down => Rect::from_two_pos(
-                to_screen * pos2(pos.x - 0.01, pos.y + 0.02),
-                to_screen * pos2(pos.x + 0.01, pos.y + 0.04),
-            ),
-            Direction::Left => Rect::from_two_pos(
-                to_screen * pos2(pos.x - 0.01, pos.y + 0.02),
-                to_screen * pos2(pos.x + 0.01, pos.y + 0.04),
-            ),
-            Direction::Right => Rect::from_two_pos(
-                to_screen * pos2(pos.x - 0.01, pos.y + 0.02),
-                to_screen * pos2(pos.x + 0.01, pos.y + 0.04),
-            ),
+    /// Determine correctness of response.
+    /// Correct = 1.0
+    /// Incorrect = 0.0
+    fn evaluate_response(&self) -> f32 {
+        // Only return 1.0 (correct) if current response matches current answer.
+        if let Some(direction) = self.response {
+            if let Some(answer) = self.answer {
+                if direction == answer {
+                    return 1.0;
+                }
+            }
+        }
+
+        // default
+        0.0
+    }
+
+    /// Read arrow keys and register response.
+    fn read_keypress(&mut self, ctx: &egui::Context) {
+        let mut eval = |response: Direction| {
+            self.response = Some(response);
+            self.next();
         };
 
-        let arrow_tail = Shape::Rect(RectShape::filled(
-            arrow_tail_points,
-            Rounding::none(),
-            Color32::KHAKI,
-        ));
+        if ctx.input(|i| i.key_pressed(Key::ArrowUp)) {
+            eval(Direction::Up)
+        };
+        if ctx.input(|i| i.key_pressed(Key::ArrowDown)) {
+            eval(Direction::Down)
+        };
+        if ctx.input(|i| i.key_pressed(Key::ArrowLeft)) {
+            eval(Direction::Left)
+        };
+        if ctx.input(|i| i.key_pressed(Key::ArrowRight)) {
+            eval(Direction::Right)
+        };
+    }
 
-        vec![arrowhead, arrow_tail]
+    /// Return the average of all scores.
+    fn calculate_total_average_score(&self) -> f32 {
+        // Calculate average score.
+        let mut total_score = 0.0;
+        for r in self.evaluation.show_results() {
+            total_score += r;
+        }
+        total_score / self.evaluation.show_results().len() as f32
+    }
+
+    /// Review the evaluation.
+    fn finished_screen(&mut self, ui: &mut egui::Ui) {
+        // Format total average score.
+        let total_score = self.calculate_total_average_score();
+        let total_score_color = match total_score {
+            x if x > 0.8 => Color32::GREEN,
+            x if x > 0.5 => Color32::BLUE,
+            _ => Color32::from_rgb(255, 165, 0),
+        };
+        let total_score_formatted = format!("{:.0}%", total_score * 100.0);
+
+        ui.horizontal(|ui| {
+            widgets::circle_with_data(
+                ui,
+                &self.evaluation.reps_done().to_string(),
+                &String::from("Reps done"),
+                100.,
+                Color32::BLUE,
+            );
+            widgets::circle_with_data(
+                ui,
+                &self.evaluation.time_taken_as_string(),
+                &String::from("Time taken"),
+                100.,
+                Color32::BLUE,
+            );
+            if let Some(average_secs) = &self.evaluation.average_secs_per_rep() {
+                widgets::circle_with_data(
+                    ui,
+                    &format!("{}s", average_secs),
+                    &String::from("Avg response"),
+                    100.,
+                    Color32::BLUE,
+                );
+            }
+            widgets::circle_with_data(
+                ui,
+                &total_score_formatted,
+                &String::from("Average score"),
+                100.,
+                total_score_color,
+            );
+        });
+
+        // Scroll through results
+        egui::ScrollArea::new([true, true])
+            .max_height(300.)
+            .show(ui, |ui| {
+                ui.collapsing("Results", |ui| {
+                    for r in self.evaluation.show_results() {
+                        ui.label(format!("{}", r));
+                    }
+                });
+            });
+
+        // Close
+        if ui.button("Close").clicked() {
+            *self = VisSaccades::default();
+        }
     }
 }
 
@@ -140,10 +271,75 @@ impl Exercise for VisSaccades {
         "Quickly scan the screen and respond."
     }
 
+    fn reset(&mut self) {
+        *self = VisSaccades::default();
+    }
+
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            self.ui_controls(ui);
-            Frame::dark_canvas(ui.style()).show(ui, |ui| self.arrow_painter(ui));
-        });
+        let menu_window = egui::Window::new(self.name())
+            .anchor(
+                egui::Align2([Align::Center, Align::TOP]),
+                Vec2::new(0., 100.),
+            )
+            .fixed_size(vec2(500., 300.))
+            .resizable(false)
+            .movable(false)
+            .collapsible(false);
+
+        match self.session_status {
+            // Default shows the menu
+            SessionStatus::None => {
+                menu_window.show(ctx, |ui| self.ui(ui, appdata, tts));
+            }
+            // After an evaluation show the review
+            SessionStatus::Finished => {
+                menu_window.show(ctx, |ui| self.finished_screen(ui));
+            }
+            // Any other status means we are in session.
+            _ => {
+                // Keep track of progression of session
+                self.progressor(ctx);
+                // Show session panel
+                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
+            }
+        }
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
+        let mut func = |exercise: &VisSaccadesExercise| {
+            self.exercise_params = exercise.to_owned();
+            self.session_status = SessionStatus::Response;
+            self.evaluation.start();
+        };
+
+        if let Some(config) = &appdata.excconfig {
+            let buttons_total: f32 = config.visual_saccades.len() as f32;
+            let col_1_range = buttons_total - (buttons_total / 2.).floor();
+
+            ui.columns(2, |col| {
+                // Column 1 gets populated with at least half the buttons
+                for i in 0..col_1_range as usize {
+                    if let Some(exercise) = config.visual_saccades.get(i) {
+                        if menu_button(&mut col[0], exercise.name(), "").clicked() {
+                            func(exercise);
+                        };
+                    };
+                }
+
+                // Column 2 gets populated with the remaining buttons
+                for i in col_1_range as usize..buttons_total as usize {
+                    if let Some(exercise) = config.visual_saccades.get(i) {
+                        if menu_button(&mut col[1], exercise.name(), "").clicked() {
+                            func(exercise);
+                        };
+                    };
+                }
+            });
+        };
+    }
+
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
+        self.ui_controls(ui);
+        Frame::dark_canvas(ui.style()).show(ui, |ui| self.arrow_painter(ui));
     }
 }

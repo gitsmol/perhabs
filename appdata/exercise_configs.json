@@ -160,6 +160,38 @@
       "answer_timeout": 500
     }
   ],
+  "visual_saccades": [
+    {
+      "name": "Easy (big)",
+      "arrow_size": 3,
+      "answer_timeout": 1000
+    },
+    {
+      "name": "Medium (big)",
+      "arrow_size": 3,
+      "answer_timeout": 750
+    },
+    {
+      "name": "Hard (big)",
+      "arrow_size": 3,
+      "answer_timeout": 500
+    },
+    {
+      "name": "Easy (small)",
+      "arrow_size": 2,
+      "answer_timeout": 1000
+    },
+    {
+      "name": "Medium (small)",
+      "arrow_size": 2,
+      "answer_timeout": 750
+    },
+    {
+      "name": "Hard (small)",
+      "arrow_size": 2,
+      "answer_timeout": 500
+    }
+  ],
   "spatial_drawing": [
     {
       "grid_size": 5,

@@ -1,8 +1,9 @@
-use std::iter::zip;
-
 use crate::{
     modules::{
-        asset_loader::{exercise_config::ExerciseConfig, AppData},
+        asset_loader::{
+            exercise_config::visual_recognition::VisRecognitionExercise,
+            exercise_config::ExerciseConfig, AppData,
+        },
         evaluation::Evaluation,
         timer::Timer,
         widgets::{self, menu_button},
@@ -10,48 +11,12 @@ use crate::{
     wm::sessionman::Exercise,
 };
 use chrono::Duration;
-use egui::{
-    emath::{self},
-    pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2,
-};
+use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2};
 use perhabs::Direction;
 use rand::seq::SliceRandom;
-use serde::{Deserialize, Serialize};
+use std::iter::zip;
 
-#[derive(Debug, PartialEq)]
-enum SessionStatus {
-    None,
-    Answer,
-    Response,
-    Result,
-    Finished,
-}
-
-/// Params for a visual recognition exercise.
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct VisRecognitionExercise {
-    name: String,
-    num_arrows: usize,
-    arrow_size: usize,
-    answer_timeout: i64, // The number of milliseconds the answer is shown
-}
-
-impl Default for VisRecognitionExercise {
-    fn default() -> Self {
-        Self {
-            name: String::from("default"),
-            num_arrows: 3,
-            arrow_size: 3,
-            answer_timeout: 500, // The number of milliseconds the answer is shown
-        }
-    }
-}
-
-impl ExerciseConfig for VisRecognitionExercise {
-    fn name(&self) -> &str {
-        self.name.as_str()
-    }
-}
+use super::SessionStatus;
 
 /// Visual exercise to train quick recognition and retention of shapes.
 /// Draws a number of arrows in the middle of the screen. The arrows remain visible
@@ -206,7 +171,10 @@ impl VisRecognition {
 
     /// Keeps track of answer, response, result progression.
     fn progressor(&mut self, ctx: &egui::Context) {
-        ctx.request_repaint_after(std::time::Duration::from_millis(50));
+        // Repaint regularly to update timers!
+        // 60 fps = 100ms per frame
+        // NB this also sets bounds on the timer precision.
+        ctx.request_repaint_after(std::time::Duration::from_millis(100));
 
         // When the evaluation time is up or number of reps is reached, stop immediately.
         if self.evaluation.is_finished() {

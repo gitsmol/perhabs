@@ -1,12 +1,8 @@
 use egui::{
     emath::{RectTransform, Rot2},
-    epaint::TextShape,
-    pos2,
-    text::{self, Fonts, LayoutJob},
-    vec2,
+    pos2, vec2,
     widget_text::WidgetTextGalley,
-    Color32, FontId, Galley, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, Vec2,
-    WidgetText,
+    Color32, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, WidgetText,
 };
 use perhabs::Direction;
 

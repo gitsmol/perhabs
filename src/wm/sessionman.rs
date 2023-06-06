@@ -2,7 +2,7 @@ use crate::{
     exercises::{
         cog_numbers::CogNumbers, cog_words::CogWords, episodic_memory::EpisodicMemory,
         seq_numbers::NumSeq, spatial_drawing::SpatialDrawing, vergence::Vergence,
-        visual_recognition::VisRecognition,
+        visual_recognition::VisRecognition, visual_saccades::VisSaccades,
     },
     modules::asset_loader::AppData,
     modules::widgets,
@@ -28,6 +28,7 @@ impl Default for SessionManager {
                 Box::new(SpatialDrawing::default()),
                 Box::new(Vergence::default()),
                 Box::new(VisRecognition::default()),
+                Box::new(VisSaccades::default()),
             ],
             open: None,
         }

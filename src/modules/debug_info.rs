@@ -6,7 +6,7 @@ use crate::{
     wm::windowman::{AppWin, View},
 };
 
-use super::{timer::Timer, widgets};
+use super::widgets;
 
 pub struct DebugInfo {}
 
