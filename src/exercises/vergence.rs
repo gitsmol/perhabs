@@ -2,13 +2,14 @@ use chrono::Duration;
 use eframe::emath;
 use eframe::epaint::PathShape;
 use egui::style::Margin;
-use egui::{pos2, vec2, Align, Color32, Frame, Key, Rect, Stroke, Vec2};
+use egui::{pos2, vec2, Align, Frame, Key, Rect, Stroke, Vec2};
 use tts::Tts;
 
 use crate::exercises::Direction;
 use crate::modules::asset_loader::AppData;
 use crate::modules::evaluation::Evaluation;
-use crate::modules::widgets;
+use crate::widgets;
+use crate::widgets::evaluation::eval_config_widgets;
 use crate::wm::sessionman::Exercise;
 
 use self::anaglyph::Anaglyph;
@@ -138,19 +139,6 @@ impl Vergence {
             self.evaluate_answer(answer);
         }
     }
-
-    /// Return the average of all scores.
-    fn calculate_total_average_score(&self) -> f32 {
-        // Calculate average score.
-        let mut total_score = 0.0;
-        for r in self.evaluation.show_results() {
-            match r {
-                true => total_score += 1.0,
-                false => (),
-            }
-        }
-        total_score / self.evaluation.show_results().len() as f32
-    }
 }
 
 // ***********
@@ -181,58 +169,12 @@ impl Vergence {
 
     /// Review the evaluation.
     fn finished_screen(&mut self, ui: &mut egui::Ui) {
-        // Format total average score.
-        let total_score = self.calculate_total_average_score();
-        let total_score_color = match total_score {
-            x if x > 0.8 => Color32::GREEN,
-            x if x > 0.5 => Color32::BLUE,
-            _ => Color32::from_rgb(255, 165, 0),
-        };
-        let total_score_formatted = format!("{:.0}%", total_score * 100.0);
-
-        ui.horizontal(|ui| {
-            widgets::circle_with_data(
-                ui,
-                &self.evaluation.reps_done().to_string(),
-                &String::from("Reps done"),
-                100.,
-                Color32::BLUE,
-            );
-            widgets::circle_with_data(
-                ui,
-                &self.evaluation.time_taken_as_string(),
-                &String::from("Time taken"),
-                100.,
-                Color32::BLUE,
-            );
-            if let Some(average_secs) = &self.evaluation.average_secs_per_rep() {
-                widgets::circle_with_data(
-                    ui,
-                    &format!("{:.2}s", average_secs),
-                    &String::from("Avg response"),
-                    100.,
-                    Color32::BLUE,
-                );
-            }
-            widgets::circle_with_data(
-                ui,
-                &total_score_formatted,
-                &String::from("Average score"),
-                100.,
-                total_score_color,
-            );
-        });
-
-        // Scroll through results
-        egui::ScrollArea::new([true, true])
-            .max_height(300.)
-            .show(ui, |ui| {
-                ui.collapsing("Results", |ui| {
-                    for r in self.evaluation.show_results() {
-                        ui.label(format!("{}", r));
-                    }
-                });
-            });
+        widgets::evaluation::post_eval_widgets(
+            ui,
+            self.evaluation.average_score(),
+            self.evaluation.reps_done(),
+            self.evaluation.time_taken_as_string(),
+        );
 
         // Close
         if ui.button("Close").clicked() {
@@ -395,7 +337,7 @@ impl Exercise for Vergence {
         ui.separator();
 
         // Display the evaluation config
-        widgets::eval_config_widgets(
+        eval_config_widgets(
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,

@@ -5,6 +5,7 @@
 mod app;
 pub mod exercises;
 pub mod modules;
+pub mod widgets;
 pub mod wm;
 
 #[macro_use]

@@ -117,7 +117,7 @@ impl Exercise for NumSeq {
         });
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         todo!()
     }
 }

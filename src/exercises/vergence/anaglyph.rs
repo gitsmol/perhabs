@@ -99,9 +99,6 @@ impl Default for Anaglyph {
 }
 
 impl Anaglyph {
-    pub fn reset(&mut self) {
-        self.background_offset = 0;
-    }
     /// - Generate random arrays of 1's and 0's for left and right backgrounds.
     /// - Calculate a diamond shape for the focal glyphs.
     /// - Remove the 'background' to the focal glyphs to create depth illusion (occlusion).

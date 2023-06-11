@@ -2,13 +2,11 @@ use eframe::epaint::Shadow;
 use egui::{vec2, Align, Rounding, ScrollArea, Vec2, Visuals};
 
 use crate::{
-    modules::{
-        asset_loader::{
-            exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
-            AppData, AssetSource,
-        },
-        widgets,
+    modules::asset_loader::{
+        exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
+        AppData, AssetSource,
     },
+    widgets,
     wm::sessionman::SessionManager,
     wm::windowman::Windows,
 };

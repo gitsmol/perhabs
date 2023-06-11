@@ -8,4 +8,3 @@ pub mod multitasker;
 pub mod rand_timer;
 pub mod time_formatting;
 pub mod timer;
-pub mod widgets;

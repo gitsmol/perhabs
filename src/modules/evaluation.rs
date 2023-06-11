@@ -157,3 +157,58 @@ impl<T> Evaluation<T> {
         self.repetitions - self.results.len()
     }
 }
+
+// ***********
+// Calculating scores
+// ***********
+
+impl Evaluation<bool> {
+    pub fn average_score(&self) -> f32 {
+        // Calculate average score.
+        let mut total_score = 0.0;
+        for r in self.show_results() {
+            match r {
+                true => total_score += 1.0,
+                false => (),
+            }
+        }
+        total_score / self.show_results().len() as f32
+    }
+}
+
+impl Evaluation<f32> {
+    pub fn average_score(&self) -> f32 {
+        // Calculate average score.
+        let mut total_score = 0.0;
+        for r in self.show_results() {
+            total_score += r;
+        }
+        total_score / self.show_results().len() as f32
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::modules::evaluation::Evaluation;
+    use chrono::Duration;
+
+    #[test]
+    fn average_score_f32() {
+        let mut evaluation: Evaluation<f32> = Evaluation::new(Duration::seconds(10), 10);
+        evaluation.add_result(0.3);
+        evaluation.add_result(1.0);
+        evaluation.add_result(0.5);
+        let score = evaluation.average_score();
+        assert_eq!(score, 0.59999996);
+    }
+
+    #[test]
+    fn average_score_bool() {
+        let mut evaluation: Evaluation<bool> = Evaluation::new(Duration::seconds(10), 10);
+        evaluation.add_result(true);
+        evaluation.add_result(false);
+        evaluation.add_result(false);
+        let score = evaluation.average_score();
+        assert_eq!(score, 0.33333334);
+    }
+}

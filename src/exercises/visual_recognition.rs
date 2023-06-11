@@ -1,4 +1,6 @@
 use crate::exercises::Direction;
+use crate::widgets::evaluation::eval_config_widgets;
+use crate::widgets::{self, menu_button};
 use crate::{
     modules::{
         asset_loader::{
@@ -7,7 +9,6 @@ use crate::{
         },
         evaluation::Evaluation,
         timer::Timer,
-        widgets::{self, menu_button},
     },
     wm::sessionman::Exercise,
 };
@@ -211,16 +212,6 @@ impl VisRecognition {
             _ => (),
         };
     }
-
-    /// Return the average of all scores.
-    fn calculate_total_average_score(&self) -> f32 {
-        // Calculate average score.
-        let mut total_score = 0.0;
-        for r in self.evaluation.show_results() {
-            total_score += r;
-        }
-        total_score / self.evaluation.show_results().len() as f32
-    }
 }
 
 // ***********
@@ -248,54 +239,16 @@ impl VisRecognition {
 
     /// Review the evaluation.
     fn finished_screen(&mut self, ui: &mut egui::Ui) {
-        // Format total average score.
-        let total_score = self.calculate_total_average_score();
-        let total_score_color = match total_score {
-            x if x > 0.8 => Color32::GREEN,
-            x if x > 0.5 => Color32::BLUE,
-            _ => Color32::from_rgb(255, 165, 0),
-        };
-        let total_score_formatted = format!("{:.0}%", total_score * 100.0);
-
-        ui.horizontal(|ui| {
-            widgets::circle_with_data(
-                ui,
-                &self.evaluation.reps_done().to_string(),
-                &String::from("Reps done"),
-                100.,
-                Color32::BLUE,
-            );
-            widgets::circle_with_data(
-                ui,
-                &self.evaluation.time_taken_as_string(),
-                &String::from("Time taken"),
-                100.,
-                Color32::BLUE,
-            );
-
-            widgets::circle_with_data(
-                ui,
-                &total_score_formatted,
-                &String::from("Average score"),
-                100.,
-                total_score_color,
-            );
-        });
-
-        // Scroll through results
-        egui::ScrollArea::new([true, true])
-            .max_height(300.)
-            .show(ui, |ui| {
-                ui.collapsing("Results", |ui| {
-                    for r in self.evaluation.show_results() {
-                        ui.label(format!("{}", r));
-                    }
-                });
-            });
+        widgets::evaluation::post_eval_widgets(
+            ui,
+            self.evaluation.average_score(),
+            self.evaluation.reps_done(),
+            self.evaluation.time_taken_as_string(),
+        );
 
         // Close
         if ui.button("Close").clicked() {
-            *self = VisRecognition::default();
+            self.reset();
         }
     }
 }
@@ -345,7 +298,7 @@ impl Exercise for VisRecognition {
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
         // Display the evaluation config
-        widgets::eval_config_widgets(
+        eval_config_widgets(
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
@@ -394,20 +347,5 @@ impl Exercise for VisRecognition {
         } else {
             Frame::dark_canvas(ui.style()).show(ui, |ui| self.arrow_painter(ui));
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::exercises::visual_recognition::VisRecognition;
-
-    #[test]
-    fn calculate_total_score() {
-        let mut exercise = VisRecognition::default();
-        exercise.evaluation.add_result(0.3);
-        exercise.evaluation.add_result(1.0);
-        exercise.evaluation.add_result(0.5);
-        let score = exercise.calculate_total_average_score();
-        assert_eq!(score, 0.59999996);
     }
 }
