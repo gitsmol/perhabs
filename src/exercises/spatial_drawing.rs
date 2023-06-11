@@ -61,7 +61,7 @@ impl Default for SpatialDrawing {
     fn default() -> Self {
         Self {
             state: SessionStatus::Selecting,
-            puzzle_grid: PuzzleGrid::new(5),
+            puzzle_grid: PuzzleGrid::new(),
             puzzle_edit_list: vec![],
             puzzle: SpatialPuzzle::new(5),
             puzzle_transform: Transformation::RightTilt,
@@ -162,11 +162,7 @@ impl Exercise for SpatialDrawing {
         };
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
-        todo!()
-    }
+    fn ui(&mut self, _: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {}
 
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
-        todo!()
-    }
+    fn session(&mut self, _: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {}
 }

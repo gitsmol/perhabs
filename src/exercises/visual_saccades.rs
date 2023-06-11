@@ -37,27 +37,15 @@ impl Default for VisSaccades {
             answer: None,
             response: None,
             answer_timeout_timer: Timer::new(),
-            evaluation: Evaluation::new(Duration::seconds(5), 5),
+            evaluation: Evaluation::new(Duration::seconds(60), 60),
         }
     }
 }
 
+// ***********
+// Internals: painting, calculations etc
+// ***********
 impl VisSaccades {
-    /// Basic controls during a session
-    fn ui_controls(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            if ui.button("Close").clicked() {
-                // Reset the whole exercise.
-                *self = VisSaccades::default();
-            };
-            ui.label(format!(
-                "Time: {}",
-                self.evaluation.time_remaining().to_string()
-            ));
-            ui.label(format!("Reps: {}", self.evaluation.reps_remaining()));
-        });
-    }
-
     fn arrow_painter(&self, ui: &mut egui::Ui) {
         // Set up
         let (response, painter) = ui.allocate_painter(
@@ -109,7 +97,6 @@ impl VisSaccades {
     /// - record responses:
     ///   - correct response = result 1.0
     ///   - incorrect or no response = result 0.0
-
     fn progressor(&mut self, ctx: &egui::Context) {
         // Repaint regularly to update timers!
         // 60 fps = 100ms per frame
@@ -199,6 +186,30 @@ impl VisSaccades {
         }
         total_score / self.evaluation.show_results().len() as f32
     }
+}
+
+// ***********
+// UI
+// ***********
+impl VisSaccades {
+    /// Basic controls during a session
+    fn ui_controls(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                // Reset the whole exercise.
+                self.reset();
+            };
+            ui.label(format!(
+                "Time remaining: {}:{:02}",
+                self.evaluation.time_remaining().num_minutes(),
+                self.evaluation.time_remaining().num_seconds()
+            ));
+            ui.label(format!(
+                "Reps remaining: {}",
+                self.evaluation.reps_remaining()
+            ));
+        });
+    }
 
     /// Review the evaluation.
     fn finished_screen(&mut self, ui: &mut egui::Ui) {
@@ -229,7 +240,7 @@ impl VisSaccades {
             if let Some(average_secs) = &self.evaluation.average_secs_per_rep() {
                 widgets::circle_with_data(
                     ui,
-                    &format!("{}s", average_secs),
+                    &format!("{:.2}s", average_secs),
                     &String::from("Avg response"),
                     100.,
                     Color32::BLUE,
@@ -305,7 +316,15 @@ impl Exercise for VisSaccades {
         }
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
+        // Display the evaluation config
+        widgets::eval_config_widgets(
+            ui,
+            &mut self.evaluation.duration,
+            &mut self.evaluation.repetitions,
+        );
+
+        // Display all exercise configs
         let mut func = |exercise: &VisSaccadesExercise| {
             self.exercise_params = exercise.to_owned();
             self.session_status = SessionStatus::Response;
@@ -320,7 +339,7 @@ impl Exercise for VisSaccades {
                 // Column 1 gets populated with at least half the buttons
                 for i in 0..col_1_range as usize {
                     if let Some(exercise) = config.visual_saccades.get(i) {
-                        if menu_button(&mut col[0], exercise.name(), "").clicked() {
+                        if menu_button(&mut col[0], None, exercise.name(), "").clicked() {
                             func(exercise);
                         };
                     };
@@ -329,7 +348,7 @@ impl Exercise for VisSaccades {
                 // Column 2 gets populated with the remaining buttons
                 for i in col_1_range as usize..buttons_total as usize {
                     if let Some(exercise) = config.visual_saccades.get(i) {
-                        if menu_button(&mut col[1], exercise.name(), "").clicked() {
+                        if menu_button(&mut col[1], None, exercise.name(), "").clicked() {
                             func(exercise);
                         };
                     };
@@ -338,7 +357,7 @@ impl Exercise for VisSaccades {
         };
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut tts::Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {
         self.ui_controls(ui);
         Frame::dark_canvas(ui.style()).show(ui, |ui| self.arrow_painter(ui));
     }

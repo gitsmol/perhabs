@@ -1,12 +1,10 @@
-use egui::{vec2, Color32};
+use egui::vec2;
 use tts::Tts;
 
 use crate::{
     modules::asset_loader::AppData,
     wm::windowman::{AppWin, View},
 };
-
-use super::widgets;
 
 pub struct DebugInfo {}
 
@@ -47,6 +45,7 @@ impl AppWin for DebugInfo {
     }
 
     fn show(&mut self, ctx: &egui::Context, open: &mut bool, appdata: &AppData, tts: &mut Tts) {
+        ctx.request_repaint_after(std::time::Duration::from_millis(200));
         egui::Window::new(self.name())
             .open(open)
             .default_height(500.0)
@@ -58,17 +57,5 @@ impl AppWin for DebugInfo {
 impl View for DebugInfo {
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _tts: &mut Tts) {
         self.asset_loader_debug(ui, appdata);
-
-        ui.horizontal(|ui| {
-            for i in 0..5 {
-                widgets::circle_with_data(
-                    ui,
-                    &String::from(format!("{}", i)),
-                    &String::from("Description"),
-                    100.,
-                    Color32::DARK_BLUE,
-                );
-            }
-        });
     }
 }

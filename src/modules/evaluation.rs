@@ -1,15 +1,28 @@
 use super::timer::Timer;
 use chrono::{Duration, Local};
 
-/// Manage a performance evaluation by keeping track of time and/or reps
-/// and storing results.
+/// Manage a performance evaluation by keeping track of time and reps and
+/// storing results.
+///
+/// Note: comparing two Evaluation structs only compares the duration and
+/// repetitions fields.
 pub struct Evaluation<T> {
     start_time: chrono::DateTime<Local>,
     end_time: Option<chrono::DateTime<Local>>,
-    duration: Duration,
-    repetitions: usize,
+    pub duration: Duration,
+    pub repetitions: usize,
     timer: Timer,
     results: Vec<T>,
+}
+
+impl<T> PartialEq for Evaluation<T> {
+    fn eq(&self, other: &Self) -> bool {
+        if self.duration == other.duration && self.repetitions == other.repetitions {
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl<T> Evaluation<T> {
@@ -24,10 +37,25 @@ impl<T> Evaluation<T> {
         }
     }
 
+    // ***********
+    // Controls
+    // ***********
+
     /// Start evaluation
     pub fn start(&mut self) {
+        self.end_time = None;
         self.start_time = chrono::Local::now();
         self.timer.set(self.duration);
+    }
+
+    /// Set duration from number of seconds.
+    pub fn set_duration_secs(&mut self, secs: i64) {
+        self.duration = Duration::seconds(secs);
+    }
+
+    /// Set required number of repetitions.
+    pub fn set_reps(&mut self, reps: usize) {
+        self.repetitions = reps;
     }
 
     /// Add result of type T
@@ -35,9 +63,57 @@ impl<T> Evaluation<T> {
         self.results.push(result);
     }
 
+    /// Return a vec of all results.
+    pub fn show_results(&self) -> &Vec<T> {
+        &self.results
+    }
+
+    /// Are we done?
+    pub fn is_finished(&mut self) -> bool {
+        if let Some(_) = self.end_time {
+            return true;
+        }
+        // Amount of reps done?
+        if self.results.len() >= self.repetitions {
+            self.end_time = Some(chrono::Local::now());
+            return true;
+        };
+        // Time up?
+        if self.timer.is_finished() {
+            self.end_time = Some(chrono::Local::now());
+            return true;
+        };
+        // default: we are not finished
+        false
+    }
+
+    // ***********
+    // Reporting
+    // ***********
+
+    /// Format a duration:
+    /// 1 minute and 9 seconds = "1:09"
+    fn format_min_secs(&self, duration: &Duration) -> String {
+        let mins = duration.num_minutes();
+        let secs = duration.num_seconds() - (mins * 60);
+        format!("{}:{:02}", mins, secs)
+    }
+
     /// What is the remaining duration?
-    pub fn time_remaining(&self) -> Duration {
-        self.timer.remaining()
+    pub fn time_remaining(&mut self) -> Duration {
+        if self.is_finished() {
+            Duration::zero()
+        } else {
+            self.timer.remaining()
+        }
+    }
+
+    /// How much time did we take?
+    /// Returns a formatted string:
+    /// 1 minute and 9 seconds = "1:09"
+    /// Returns string "NaN" if not yet finished.
+    pub fn time_remaining_as_string(&self) -> String {
+        self.format_min_secs(&self.timer.remaining())
     }
 
     /// How much time did we take?
@@ -56,11 +132,7 @@ impl<T> Evaluation<T> {
     /// Returns string "NaN" if not yet finished.
     pub fn time_taken_as_string(&self) -> String {
         if let Some(duration) = self.time_taken() {
-            String::from(format!(
-                "{}:{:02}",
-                duration.num_minutes(),
-                duration.num_seconds()
-            ))
+            self.format_min_secs(&duration)
         } else {
             String::from("NaN")
         }
@@ -83,26 +155,5 @@ impl<T> Evaluation<T> {
     /// How many reps are remaining?
     pub fn reps_remaining(&self) -> usize {
         self.repetitions - self.results.len()
-    }
-
-    /// Return a vec of all results.
-    pub fn show_results(&self) -> &Vec<T> {
-        &self.results
-    }
-
-    /// Are we done?
-    pub fn is_finished(&mut self) -> bool {
-        // Amount of reps done?
-        if self.results.len() >= self.repetitions {
-            self.end_time = Some(chrono::Local::now());
-            return true;
-        };
-        // Time up?
-        if self.timer.is_finished() {
-            self.end_time = Some(chrono::Local::now());
-            return true;
-        };
-        // default: we are not finished
-        false
     }
 }

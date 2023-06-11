@@ -1,7 +1,7 @@
 use std::{
-    fs::{File, OpenOptions},
-    io::{self, BufReader, Write},
-    path::{Path, PathBuf},
+    fs::OpenOptions,
+    io::{self, Write},
+    path::Path,
 };
 
 use ehttp::Response;
@@ -66,17 +66,6 @@ pub fn write_string_to_file(filepath: &Path, content: String) -> Result<(), io::
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         },
-        Err(e) => Err(e),
-    }
-}
-
-/// Read a file from disk.
-pub fn read_file(filepath: &PathBuf) -> Result<BufReader<File>, std::io::Error> {
-    match File::open(filepath) {
-        Ok(file) => {
-            let lines = BufReader::new(file);
-            Ok(lines)
-        }
         Err(e) => Err(e),
     }
 }

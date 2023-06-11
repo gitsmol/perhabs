@@ -156,7 +156,7 @@ impl Exercise for EpisodicMemory {
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
         if let Some(config) = &appdata.config {
             for file in &config.episodic_memory_files {
-                if menu_button(ui, file.language.as_str(), "").clicked() {
+                if menu_button(ui, None, file.language.as_str(), "").clicked() {
                     self.sentences.selected_file = Some(file.to_owned());
                     // If the selected value changes set the contents to none.
                     // This triggers the contents guarantee and fetches the appropriate file.

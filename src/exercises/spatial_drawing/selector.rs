@@ -50,7 +50,7 @@ impl super::SpatialDrawing {
         debug!("Starting spatial puzzle.");
         self.puzzle = puzzle.to_owned();
         self.state = SessionStatus::Exercising;
-        self.puzzle_grid = PuzzleGrid::new(puzzle.size())
+        self.puzzle_grid = PuzzleGrid::new()
     }
 
     /// Pick a puzzle and edit it.

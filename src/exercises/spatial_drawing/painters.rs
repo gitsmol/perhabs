@@ -190,7 +190,7 @@ pub struct PuzzleGrid {
 
 impl PuzzleGrid {
     /// Create guide circles on an evenly spaced grid of given size.
-    pub fn new(grid_size: usize) -> Self {
+    pub fn new() -> Self {
         Self {
             positions: HashMap::new(),
         }

@@ -38,7 +38,7 @@ impl Default for SessionManager {
 impl SessionManager {
     pub fn buttons(&mut self, ui: &mut egui::Ui) {
         for session in &self.sessions {
-            if widgets::menu_button(ui, session.name(), session.description()).clicked() {
+            if widgets::menu_button(ui, None, session.name(), session.description()).clicked() {
                 self.open = Some(session.name());
             };
         }
@@ -52,8 +52,13 @@ impl SessionManager {
             // Column 1 gets populated with at least half the buttons
             for i in 0..col_1_range as usize {
                 if let Some(session) = self.sessions.get(i) {
-                    if widgets::menu_button(&mut col[0], session.name(), session.description())
-                        .clicked()
+                    if widgets::menu_button(
+                        &mut col[0],
+                        None,
+                        session.name(),
+                        session.description(),
+                    )
+                    .clicked()
                     {
                         self.open = Some(session.name());
                     };
@@ -63,8 +68,13 @@ impl SessionManager {
             // Column 2 gets populated with the remaining buttons
             for i in col_1_range as usize..buttons_total as usize {
                 if let Some(session) = self.sessions.get(i) {
-                    if widgets::menu_button(&mut col[1], session.name(), session.description())
-                        .clicked()
+                    if widgets::menu_button(
+                        &mut col[1],
+                        None,
+                        session.name(),
+                        session.description(),
+                    )
+                    .clicked()
                     {
                         self.open = Some(session.name());
                     };

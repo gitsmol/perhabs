@@ -40,27 +40,15 @@ impl Default for VisRecognition {
             answer: vec![],
             timer: Timer::new(),
             response: vec![],
-            evaluation: Evaluation::new(Duration::seconds(10), 3),
+            evaluation: Evaluation::new(Duration::seconds(60), 60),
         }
     }
 }
 
+// ***********
+// Internals: painting, calculations etc
+// ***********
 impl VisRecognition {
-    /// Basic controls during a session
-    fn ui_controls(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            if ui.button("Close").clicked() {
-                // Reset the whole exercise.
-                *self = VisRecognition::default();
-            };
-            ui.label(format!(
-                "Time: {}",
-                self.evaluation.time_remaining().to_string()
-            ));
-            ui.label(format!("Reps: {}", self.evaluation.reps_remaining()));
-        });
-    }
-
     /// Paints the arrow shapes
     fn arrow_painter(&self, ui: &mut egui::Ui) {
         // Determine size of drawing surface and aspect ratio
@@ -233,6 +221,30 @@ impl VisRecognition {
         }
         total_score / self.evaluation.show_results().len() as f32
     }
+}
+
+// ***********
+// UI
+// ***********
+impl VisRecognition {
+    /// Basic controls during a session
+    fn ui_controls(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                // Reset the whole exercise.
+                self.reset();
+            };
+            ui.label(format!(
+                "Time remaining: {}:{:02}",
+                self.evaluation.time_remaining().num_minutes(),
+                self.evaluation.time_remaining().num_seconds()
+            ));
+            ui.label(format!(
+                "Reps remaining: {}",
+                self.evaluation.reps_remaining()
+            ));
+        });
+    }
 
     /// Review the evaluation.
     fn finished_screen(&mut self, ui: &mut egui::Ui) {
@@ -332,6 +344,14 @@ impl Exercise for VisRecognition {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
+        // Display the evaluation config
+        widgets::eval_config_widgets(
+            ui,
+            &mut self.evaluation.duration,
+            &mut self.evaluation.repetitions,
+        );
+
+        // Display all exercise configs
         let mut func = |exercise: &VisRecognitionExercise| {
             self.exercise_params = exercise.to_owned();
             self.session_status = SessionStatus::Answer;
@@ -346,7 +366,7 @@ impl Exercise for VisRecognition {
                 // Column 1 gets populated with at least half the buttons
                 for i in 0..col_1_range as usize {
                     if let Some(exercise) = config.visual_recognition.get(i) {
-                        if menu_button(&mut col[0], exercise.name(), "").clicked() {
+                        if menu_button(&mut col[0], None, exercise.name(), "").clicked() {
                             func(exercise);
                         };
                     };
@@ -355,7 +375,7 @@ impl Exercise for VisRecognition {
                 // Column 2 gets populated with the remaining buttons
                 for i in col_1_range as usize..buttons_total as usize {
                     if let Some(exercise) = config.visual_recognition.get(i) {
-                        if menu_button(&mut col[1], exercise.name(), "").clicked() {
+                        if menu_button(&mut col[1], None, exercise.name(), "").clicked() {
                             func(exercise);
                         };
                     };

@@ -37,6 +37,11 @@ impl Timer {
         self.duration = duration;
     }
 
+    /// Stop a running timer
+    pub fn reset(&mut self) {
+        self.end_time = None;
+    }
+
     /// Returns true when timer is finished.
     pub fn is_finished(&self) -> bool {
         let now = Local::now().time();
@@ -56,9 +61,22 @@ impl Timer {
     pub fn remaining(&self) -> Duration {
         if let Some(end_time) = self.end_time {
             let now = Local::now().time();
-            end_time - now
+            if end_time > now {
+                return end_time - now;
+            }
+        }
+        // return zero by default
+        chrono::Duration::zero()
+    }
+
+    /// Return the time passed since starting the timer.
+    /// Returns the full duration of the timer if the timer is finished.
+    pub fn time_passed(&self) -> Duration {
+        if self.is_finished() {
+            self.duration
         } else {
-            chrono::Duration::zero()
+            let now = Local::now().time();
+            now - self.start_time
         }
     }
 }

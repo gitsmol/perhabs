@@ -1,155 +1,249 @@
-use chrono::{DateTime, Duration, Local};
+use chrono::Duration;
 use eframe::emath;
 use eframe::epaint::PathShape;
 use egui::style::Margin;
-use egui::{pos2, vec2, Align, Frame, Key, Rect, Stroke, Vec2};
+use egui::{pos2, vec2, Align, Color32, Frame, Key, Rect, Stroke, Vec2};
 use tts::Tts;
 
+use crate::exercises::Direction;
 use crate::modules::asset_loader::AppData;
+use crate::modules::evaluation::Evaluation;
+use crate::modules::widgets;
 use crate::wm::sessionman::Exercise;
 
-use crate::exercises::Direction;
-
 use self::anaglyph::Anaglyph;
-
 mod anaglyph;
 
-pub struct Session {
-    pub active: bool,
-    pub start_time: DateTime<Local>,
-    pub duration: Duration,
-    pub results: Vec<bool>,
-    pub answer_thresh_success: bool,
-    pub answer_thresh_fail: bool,
-    pub step: isize,
+struct Session {
+    active: bool,
+    answer_thresh_success: bool,
+    answer_thresh_fail: bool,
 }
 
 impl Default for Session {
     fn default() -> Self {
         Self {
             active: false,
-            start_time: Local::now(),
-            duration: Duration::seconds(0),
-            results: vec![],
             answer_thresh_success: false,
             answer_thresh_fail: false,
-            step: 0,
         }
     }
 }
 
-struct Configuration {
-    calibrating: bool,
-}
-
-impl Default for Configuration {
-    fn default() -> Self {
-        Self { calibrating: false }
-    }
-}
 /// Exercise to train binocular convergence/divergence usign anaglyph images.
 pub struct Vergence {
     anaglyph: Anaglyph,
+    calibrating: bool,
+    evaluation: Evaluation<bool>,
     session: Session,
-    configuration: Configuration,
+    step: isize,
 }
 
 impl Default for Vergence {
     fn default() -> Self {
         Self {
             anaglyph: Anaglyph::default(),
+            calibrating: false,
+            evaluation: Evaluation::new(Duration::seconds(60), 60),
             session: Session::default(),
-            configuration: Configuration::default(),
+            step: 0,
         }
     }
 }
 
-impl Exercise for Vergence {
-    fn name(&self) -> &'static str {
-        "Vergence"
-    }
-
-    fn description(&self) -> &'static str {
-        "Train your eyes to diverge and converge. Requires glasses in two different colors."
-    }
-
-    fn reset(&mut self) {
-        *self = Vergence::default();
-    }
-
-    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
-        if !self.session.active {
-            egui::Window::new("Vergence")
-                .anchor(
-                    egui::Align2([Align::Center, Align::TOP]),
-                    Vec2::new(0., 100.),
-                )
-                .fixed_size(vec2(350., 300.))
-                .resizable(false)
-                .movable(false)
-                .collapsible(false)
-                .show(ctx, |ui| {
-                    self.ui(ui, appdata, tts);
-                });
-        }
-
-        if self.session.active {
-            egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
-        }
-
-        self.read_keypress(ctx);
-    }
-
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
-        if self.configuration.calibrating {
-            self.calibrate(ui);
-            return;
-        }
-
-        ui.label("This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.");
-        ui.separator();
-
-        egui::Grid::new("vergence_selector_grid")
-            .num_columns(4)
-            .show(ui, |ui| {
-                if let Some(excconfig) = &appdata.excconfig {
-                    for excercise in &excconfig.vergence {
-                        ui.label(format!("{}", excercise.name));
-
-                        for level in &excercise.levels {
-                            if ui.button(&level.name).clicked() {
-                                self.session.step = level.step;
-                                self.anaglyph.pixel_size = level.pixel_size;
-                                self.session.active = true;
-                            }
-                        }
-
-                        ui.end_row();
+// ***********
+// Internals: painting, calculations etc
+// ***********
+impl Vergence {
+    /// Evaluate given answer
+    fn evaluate_answer(&mut self, a: Direction) {
+        // If the answer is correct, add true to the results vec.
+        // If the previous answer was also correct (indicated by the answer threshold),
+        // increase the difficulty of the exercise.
+        // If the previous answer was not correct, set the answer threshold to true.
+        if a == self.anaglyph.focal_position {
+            // Add result to evaluation
+            self.evaluation.add_result(true);
+            // Any correct answer invalidates the failure streak.
+            self.session.answer_thresh_fail = false;
+            match self.evaluation.show_results().last() {
+                Some(prev_val) => {
+                    if prev_val == &true && self.session.answer_thresh_success == true {
+                        self.session.answer_thresh_success = false;
+                        self.anaglyph.background_offset += self.step;
+                    }
+                    if prev_val == &true && self.session.answer_thresh_success == false {
+                        self.session.answer_thresh_success = true
+                    }
+                    if prev_val == &false {
+                        self.session.answer_thresh_success = false
                     }
                 }
-            });
+                None => (),
+            }
+        }
 
-        // Fill space
-        ui.allocate_space(ui.available_size());
+        // If the answer is incorrect, add false to the results vec.
+        // If the previous answer was also incorrect (indicated by the answer threshold),
+        // reset the difficulty of the exercise and set the answer_threshold to false.
+        // If the previous answer was correct, set the answer_threshhold to true.
+        if a != self.anaglyph.focal_position {
+            // Add result to evaluation
+            self.evaluation.add_result(false);
+            // Any failure invalidates the success streak.
+            self.session.answer_thresh_success = false;
+            match self.evaluation.show_results().last() {
+                Some(prev_val) => {
+                    if prev_val == &false && self.session.answer_thresh_fail == true {
+                        self.session.answer_thresh_fail = false;
+                        self.anaglyph.background_offset = 0;
+                    } else {
+                        self.session.answer_thresh_fail = true
+                    }
+                }
+                None => (),
+            }
+        }
+        // create arrays for a new anaglyph
+        self.anaglyph.initialize();
+    }
 
-        if ui.button("Calibrate").clicked() {
-            self.configuration.calibrating = true
+    fn read_keypress(&mut self, ctx: &egui::Context) -> Option<Direction> {
+        if ctx.input(|i| i.key_pressed(Key::ArrowUp)) {
+            return Some(Direction::Up);
+        };
+        if ctx.input(|i| i.key_pressed(Key::ArrowDown)) {
+            return Some(Direction::Down);
+        };
+        if ctx.input(|i| i.key_pressed(Key::ArrowLeft)) {
+            return Some(Direction::Left);
+        };
+        if ctx.input(|i| i.key_pressed(Key::ArrowRight)) {
+            return Some(Direction::Right);
+        };
+        None
+    }
+
+    /// Keeps track of answer, response, result progression.
+    /// Record responses as f32:
+    ///   - correct response = result 1.0
+    ///   - incorrect or no response = result 0.0
+    fn progressor(&mut self, ctx: &egui::Context) {
+        // Repaint regularly to update timers!
+        // 60 fps = 100ms per frame
+        // NB this also sets bounds on the timer precision.
+        ctx.request_repaint_after(std::time::Duration::from_millis(100));
+
+        if let Some(answer) = self.read_keypress(ctx) {
+            self.evaluate_answer(answer);
         }
     }
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
-        ui.horizontal(|ui| {
-            if ui.button("Close").clicked() {
-                self.session = Session::default();
-                self.anaglyph.reset();
-            };
-            ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
-        });
 
-        self.anaglyph.draw(ui);
+    /// Return the average of all scores.
+    fn calculate_total_average_score(&self) -> f32 {
+        // Calculate average score.
+        let mut total_score = 0.0;
+        for r in self.evaluation.show_results() {
+            match r {
+                true => total_score += 1.0,
+                false => (),
+            }
+        }
+        total_score / self.evaluation.show_results().len() as f32
     }
 }
 
+// ***********
+// UI
+// ***********
 impl Vergence {
+    /// Basic controls during a session
+    fn ui_controls(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                // Reset the whole exercise.
+                self.reset();
+            };
+            ui.label(format!(
+                "Time remaining: {}:{:02}",
+                self.evaluation.time_remaining().num_minutes(),
+                self.evaluation.time_remaining().num_seconds()
+            ));
+            ui.label(format!(
+                "Reps remaining: {}",
+                self.evaluation.reps_remaining()
+            ));
+
+            ui.add_space(ui.available_width() - 100.0);
+            ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
+        });
+    }
+
+    /// Review the evaluation.
+    fn finished_screen(&mut self, ui: &mut egui::Ui) {
+        // Format total average score.
+        let total_score = self.calculate_total_average_score();
+        let total_score_color = match total_score {
+            x if x > 0.8 => Color32::GREEN,
+            x if x > 0.5 => Color32::BLUE,
+            _ => Color32::from_rgb(255, 165, 0),
+        };
+        let total_score_formatted = format!("{:.0}%", total_score * 100.0);
+
+        ui.horizontal(|ui| {
+            widgets::circle_with_data(
+                ui,
+                &self.evaluation.reps_done().to_string(),
+                &String::from("Reps done"),
+                100.,
+                Color32::BLUE,
+            );
+            widgets::circle_with_data(
+                ui,
+                &self.evaluation.time_taken_as_string(),
+                &String::from("Time taken"),
+                100.,
+                Color32::BLUE,
+            );
+            if let Some(average_secs) = &self.evaluation.average_secs_per_rep() {
+                widgets::circle_with_data(
+                    ui,
+                    &format!("{:.2}s", average_secs),
+                    &String::from("Avg response"),
+                    100.,
+                    Color32::BLUE,
+                );
+            }
+            widgets::circle_with_data(
+                ui,
+                &total_score_formatted,
+                &String::from("Average score"),
+                100.,
+                total_score_color,
+            );
+        });
+
+        // Scroll through results
+        egui::ScrollArea::new([true, true])
+            .max_height(300.)
+            .show(ui, |ui| {
+                ui.collapsing("Results", |ui| {
+                    for r in self.evaluation.show_results() {
+                        ui.label(format!("{}", r));
+                    }
+                });
+            });
+
+        // Close
+        if ui.button("Close").clicked() {
+            self.reset();
+        }
+    }
+
+    /// Shows a menu to calibrate the colors used in the anaglyph painting.
+    /// Different glasses for viewing anaglyphs exist, user must be able to
+    /// set colors for optimal effect.
+    /// TODO: there is currently no option to permanently save calibration data.
     fn calibrate(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.label("Calibrate the colors for your anaglyph glasses so each color is clearly visible to one eye, but hardly visible to the other. When properly calibrated the two diamonds may appear as one when seen through the glasses.");
@@ -231,77 +325,116 @@ impl Vergence {
             ui.horizontal(|ui| {
                 if ui.button("Cancel").clicked() {
                     self.anaglyph = Anaglyph::default();
-                    self.configuration.calibrating = false
+                    self.calibrating = false
                 }
                 if ui.button("Save and close").clicked() {
-                    self.configuration.calibrating = false
+                    self.calibrating = false
                 }
             });
         });
     }
+}
 
-    fn read_keypress(&mut self, ctx: &egui::Context) {
-        let mut eval = |a: Direction| {
-            // If the answer is correct, add true to the results vec.
-            // If the previous answer was also correct (indicated by the answer threshold),
-            // increase the difficulty of the exercise.
-            // If the previous answer was not correct, set the answer threshold to true.
-            if a == self.anaglyph.focal_position {
-                self.session.results.push(true);
-                // Any correct answer invalidates the failure streak.
-                self.session.answer_thresh_fail = false;
-                match self.session.results.last() {
-                    Some(prev_val) => {
-                        if prev_val == &true && self.session.answer_thresh_success == true {
-                            self.session.answer_thresh_success = false;
-                            self.anaglyph.background_offset += self.session.step;
-                        }
-                        if prev_val == &true && self.session.answer_thresh_success == false {
-                            self.session.answer_thresh_success = true
-                        }
-                        if prev_val == &false {
-                            self.session.answer_thresh_success = false
-                        }
-                    }
-                    None => (),
+impl Exercise for Vergence {
+    fn name(&self) -> &'static str {
+        "Vergence"
+    }
+
+    fn description(&self) -> &'static str {
+        "Train your eyes to diverge and converge. Requires glasses in two different colors."
+    }
+
+    fn reset(&mut self) {
+        // Remember color calibrations
+        let tmp_color = self.anaglyph.color.clone();
+        *self = Vergence::default();
+        self.anaglyph.color = tmp_color;
+    }
+
+    fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
+        let menu_window = egui::Window::new("Vergence")
+            .anchor(
+                egui::Align2([Align::Center, Align::TOP]),
+                Vec2::new(0., 100.),
+            )
+            .fixed_size(vec2(350., 300.))
+            .resizable(false)
+            .movable(false)
+            .collapsible(false);
+
+        // There are three possible states:
+        // - Finished session shows the evaluation scores
+        // - Active session shows anaglyphs and keeps track of progression
+        // - No session shows the exercise menu
+        match self.session.active {
+            true => match self.evaluation.is_finished() {
+                true => {
+                    menu_window.show(ctx, |ui| self.finished_screen(ui));
                 }
-            }
-
-            // If the answer is incorrect, add false to the results vec.
-            // If the previous answer was also incorrect (indicated by the answer threshold),
-            // reset the difficulty of the exercise and set the answer_threshold to false.
-            // If the previous answer was correct, set the answer_threshhold to true.
-            if a != self.anaglyph.focal_position {
-                self.session.results.push(false);
-                // Any failure invalidates the success streak.
-                self.session.answer_thresh_success = false;
-                match self.session.results.last() {
-                    Some(prev_val) => {
-                        if prev_val == &false && self.session.answer_thresh_fail == true {
-                            self.session.answer_thresh_fail = false;
-                            self.anaglyph.background_offset = 0;
-                        } else {
-                            self.session.answer_thresh_fail = true
-                        }
-                    }
-                    None => (),
+                false => {
+                    egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
+                    self.progressor(ctx);
                 }
+            },
+            false => {
+                menu_window.show(ctx, |ui| {
+                    self.ui(ui, appdata, tts);
+                });
             }
-            // create arrays for a new anaglyph
-            self.anaglyph.initialize();
         };
+    }
 
-        if ctx.input(|i| i.key_pressed(Key::ArrowUp)) {
-            eval(Direction::Up)
-        };
-        if ctx.input(|i| i.key_pressed(Key::ArrowDown)) {
-            eval(Direction::Down)
-        };
-        if ctx.input(|i| i.key_pressed(Key::ArrowLeft)) {
-            eval(Direction::Left)
-        };
-        if ctx.input(|i| i.key_pressed(Key::ArrowRight)) {
-            eval(Direction::Right)
-        };
+    /// The exercise menu
+    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
+        if self.calibrating {
+            self.calibrate(ui);
+            return;
+        }
+
+        ui.label("This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.");
+        ui.separator();
+
+        // Display the evaluation config
+        widgets::eval_config_widgets(
+            ui,
+            &mut self.evaluation.duration,
+            &mut self.evaluation.repetitions,
+        );
+
+        // Display exercise configs
+        egui::Grid::new("vergence_selector_grid")
+            .num_columns(4)
+            .show(ui, |ui| {
+                if let Some(excconfig) = &appdata.excconfig {
+                    for excercise in &excconfig.vergence {
+                        ui.label(format!("{}", excercise.name));
+
+                        for level in &excercise.levels {
+                            if ui.button(&level.name).clicked() {
+                                self.step = level.step;
+                                self.anaglyph.pixel_size = level.pixel_size;
+                                self.session.active = true;
+                                self.evaluation.start();
+                            }
+                        }
+
+                        ui.end_row();
+                    }
+                }
+            });
+
+        // Fill space
+        ui.allocate_space(ui.available_size());
+
+        if ui.button("Calibrate").clicked() {
+            self.calibrating = true
+        }
+    }
+
+    /// The session window showing anaglyphs
+    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
+        self.ui_controls(ui);
+
+        self.anaglyph.draw(ui);
     }
 }
