@@ -1,4 +1,8 @@
 # Perhabs Changelog
+## 2023-06-11
+Added post evaluation widgets
+Added evaluation config widgets (duration, reps)
+
 ## 2023-06-06
 Added visual saccades (scannign for arrow)
 Added visual recognition (recall arrow directions)
