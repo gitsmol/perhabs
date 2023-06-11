@@ -2,6 +2,7 @@ use std::sync::mpsc::Receiver;
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use cpal::{Sample, Stream};
+use log::debug;
 // wasm stuff only
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;

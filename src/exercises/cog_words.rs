@@ -1,5 +1,5 @@
-use crate::modules::asset_loader::sentences::Sentences;
-use crate::modules::asset_loader::{self, AppData};
+use crate::asset_loader::sentences::Sentences;
+use crate::asset_loader::{self, AppData};
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 
@@ -154,7 +154,7 @@ impl CogWords {
 
 impl Exercise for CogWords {
     fn name(&self) -> &'static str {
-        "Cog Words"
+        "Cognitive Words"
     }
 
     fn description(&self) -> &'static str {

@@ -1,16 +1,12 @@
+use crate::asset_loader::exercise_config::{
+    visual_recognition::VisRecognitionExercise, ExerciseConfig,
+};
 use crate::exercises::Direction;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::{self, menu_button};
 use crate::{
-    modules::{
-        asset_loader::{
-            exercise_config::visual_recognition::VisRecognitionExercise,
-            exercise_config::ExerciseConfig, AppData,
-        },
-        evaluation::Evaluation,
-        timer::Timer,
-    },
     wm::sessionman::Exercise,
+    {asset_loader::AppData, evaluation::Evaluation, timer::Timer},
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2};

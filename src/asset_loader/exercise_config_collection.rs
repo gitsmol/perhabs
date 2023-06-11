@@ -1,8 +1,9 @@
 use crate::{
+    asset_loader::exercise_config::vergence::Level,
     exercises::spatial_drawing::painters::SpatialPuzzle,
-    modules::asset_loader::exercise_config::vergence::Level,
 };
 use ehttp::{Response, Result};
+use log::debug;
 use poll_promise::Promise;
 use serde::{Deserialize, Serialize};
 

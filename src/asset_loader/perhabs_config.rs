@@ -1,4 +1,5 @@
 use ehttp::Response;
+use log::debug;
 use poll_promise::Promise;
 use serde::Deserialize;
 use std::{

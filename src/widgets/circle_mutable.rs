@@ -4,7 +4,7 @@ use chrono::Duration;
 use egui::*;
 use num::{Integer, ToPrimitive};
 
-use crate::modules::time_formatting;
+use crate::time_formatting;
 
 /// Circle to display and alter a duration.
 /// Senses both clicks and drags.
@@ -15,7 +15,7 @@ use crate::modules::time_formatting;
 /// until reaching the remaining percentage. These points are connected to the center of
 /// the circle. That way this second circle forms a convex polygon obscuring part of
 /// the first circle to indicate a percentage that isn't 'done'.
-pub fn circle_input_integer<T: Integer + ToPrimitive + Copy>(
+pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
     ui: &mut egui::Ui,
     value: &mut T,
     change_by: &T,
@@ -57,7 +57,7 @@ pub fn circle_input_integer<T: Integer + ToPrimitive + Copy>(
         };
         // Calculate duration as a percentage of min-max
         // There is some awkard type conversion involved here for the benefit
-        // of this function being 'generic' for the trait Integer.
+        // of this function relying on the Integer trait.
         let percentage_remaining = {
             if let Some(range) = (*max - *min).to_f32() {
                 if let Some(mut float) = value.to_f32() {
@@ -164,7 +164,7 @@ pub fn circle_input_integer<T: Integer + ToPrimitive + Copy>(
 /// until reaching the remaining percentage. These points are connected to the center of
 /// the circle. That way this second circle forms a convex polygon obscuring part of
 /// the first circle to indicate a percentage that isn't 'done'.
-pub fn circle_input_duration(
+pub fn circle_mut_duration(
     ui: &mut egui::Ui,
     duration: &mut Duration,
     change_by: &Duration,

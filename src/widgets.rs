@@ -129,17 +129,16 @@ pub fn menu_button(
         )
     });
 
-    // Some type conversions and setting up text.
-    let text_size = desired_size[0] * 0.8;
-    let label_wt: WidgetText = label_source.into();
-    let label_galley = label_wt.into_galley(ui, None, text_size, TextStyle::Body);
-    let description_wt: WidgetText = description_source.into();
-    let description_galley: WidgetTextGalley =
-        description_wt.into_galley(ui, Some(true), text_size, TextStyle::Body);
-
-    // 4. Paint!
     // Make sure we need to paint:
     if ui.is_rect_visible(rect) {
+        // Some type conversions and setting up text.
+        let text_size = desired_size[0] * 0.8;
+        let label_wt: WidgetText = label_source.into();
+        let label_galley = label_wt.into_galley(ui, None, text_size, TextStyle::Body);
+        let description_wt: WidgetText = description_source.into();
+        let description_galley: WidgetTextGalley =
+            description_wt.into_galley(ui, Some(true), text_size, TextStyle::Body);
+
         let visuals = ui.style().interact(&response);
 
         // All coordinates are in absolute screen coordinates so we use `rect` to place the elements.
@@ -157,21 +156,20 @@ pub fn menu_button(
         description_galley.paint_with_visuals(ui.painter(), description_pos, visuals);
     }
 
-    // All done! Return the interaction response so the user can check what happened
-    // (hovered, clicked, ...) and maybe show a tooltip:
+    // return response
     response
 }
 
 /// Return an arrow shaped Mesh suitable for egui::Painter.
 pub fn arrow_shape(
     pos: Pos2,
-    arrow_size: f32,
+    size: f32,
     direction: &Direction,
     to_screen: RectTransform,
     color: Color32,
 ) -> Shape {
     // Define some basic measures. M = measure, H = half measure.
-    let m = arrow_size / 3. * 0.02;
+    let m = size / 3. * 0.02;
     let h = m / 2.;
 
     // Create a mesh
@@ -179,9 +177,9 @@ pub fn arrow_shape(
 
     // Calculate arrowhead triangle positions and add to mesh.
     let right_arrow = vec![
-        to_screen * pos2(pos.x + m, pos.y), // The tip
-        to_screen * pos2(pos.x, pos.y + m), // Right
-        to_screen * pos2(pos.x, pos.y - m), // Left
+        to_screen * pos2(pos.x + m, pos.y), // Right corner
+        to_screen * pos2(pos.x, pos.y + m), // Bottom corner
+        to_screen * pos2(pos.x, pos.y - m), // Top corner
     ];
     for pos in right_arrow.iter() {
         arrow.colored_vertex(pos.to_owned(), color);
@@ -202,5 +200,6 @@ pub fn arrow_shape(
         Direction::Right => (),
     }
 
+    // Return shape suitable for painter
     Shape::Mesh(arrow)
 }

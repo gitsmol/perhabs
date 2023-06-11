@@ -4,7 +4,7 @@ use chrono::Duration;
 use egui::*;
 
 use super::{
-    circle_mutable::{circle_input_duration, circle_input_integer},
+    circle_mutable::{circle_mut_duration, circle_mut_integer},
     circle_with_data,
 };
 
@@ -73,7 +73,7 @@ pub fn eval_config_widgets(ui: &mut egui::Ui, duration: &mut Duration, reps: &mu
         ui.vertical(|ui| {
 
             ui.horizontal(|ui| {
-                let duration_circle = circle_input_duration(
+                let duration_circle = circle_mut_duration(
                     ui,
                     duration,
                     &Duration::seconds(1),
@@ -86,7 +86,7 @@ pub fn eval_config_widgets(ui: &mut egui::Ui, duration: &mut Duration, reps: &mu
                 if duration_circle.double_clicked() {
                     *duration = Duration::seconds(60);
                 }
-                let reps_circle = circle_input_integer(
+                let reps_circle = circle_mut_integer(
                     ui,
                     reps,
                     &1,

@@ -1,5 +1,5 @@
 use crate::wm::sessionman::Exercise;
-use crate::{exercises::numvec_to_string, modules::asset_loader::AppData};
+use crate::{asset_loader::AppData, exercises::numvec_to_string};
 use egui::RichText;
 use rand::prelude::*;
 

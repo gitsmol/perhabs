@@ -189,7 +189,7 @@ impl Evaluation<f32> {
 
 #[cfg(test)]
 mod tests {
-    use crate::modules::evaluation::Evaluation;
+    use crate::evaluation::Evaluation;
     use chrono::Duration;
 
     #[test]

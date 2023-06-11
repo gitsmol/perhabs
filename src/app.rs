@@ -1,8 +1,9 @@
 use eframe::epaint::Shadow;
 use egui::{vec2, Align, Rounding, ScrollArea, Vec2, Visuals};
 
-use crate::{
-    modules::asset_loader::{
+use log::debug;
+use perhabs::{
+    asset_loader::{
         exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
         AppData, AssetSource,
     },

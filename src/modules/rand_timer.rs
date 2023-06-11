@@ -1,4 +1,4 @@
-use crate::modules::asset_loader::AppData;
+use crate::asset_loader::AppData;
 use crate::wm::windowman::{AppWin, View};
 use egui::RichText;
 use rand::prelude::*;

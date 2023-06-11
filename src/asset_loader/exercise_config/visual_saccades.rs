@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::modules::asset_loader::exercise_config::ExerciseConfig;
+use crate::asset_loader::exercise_config::ExerciseConfig;
 
 /// Params for a visual recognition exercise.
 #[derive(Deserialize, Serialize, Debug, Clone)]

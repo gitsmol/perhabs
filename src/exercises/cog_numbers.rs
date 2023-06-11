@@ -1,4 +1,4 @@
-use crate::modules::asset_loader::AppData;
+use crate::asset_loader::AppData;
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
@@ -93,7 +93,7 @@ impl CogNumbers {
 
 impl Exercise for CogNumbers {
     fn name(&self) -> &'static str {
-        "CogNumbers"
+        "Cognitive Numbers"
     }
 
     fn description(&self) -> &'static str {

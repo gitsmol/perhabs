@@ -1,6 +1,6 @@
 use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
 
-use crate::modules::asset_loader::AppData;
+use crate::asset_loader::AppData;
 
 // All the editor functions go here.
 impl super::SpatialDrawing {

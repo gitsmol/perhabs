@@ -1,5 +1,5 @@
-use crate::modules::asset_loader::sentences::Sentences;
-use crate::modules::asset_loader::{self, AppData};
+use crate::asset_loader::sentences::Sentences;
+use crate::asset_loader::{self, AppData};
 use crate::widgets::{loading_bar_vertical, loading_screen, menu_button};
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, Color32, RichText, TextEdit, Vec2};
