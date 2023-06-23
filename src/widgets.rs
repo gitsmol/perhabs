@@ -160,7 +160,7 @@ pub fn menu_button(
     response
 }
 
-/// Return an arrow shaped Mesh suitable for egui::Painter.
+/// Return an arrow shaped Mesh suitable for [`egui::Painter`].
 pub fn arrow_shape(
     pos: Pos2,
     size: f32,
@@ -169,6 +169,10 @@ pub fn arrow_shape(
     color: Color32,
 ) -> Shape {
     // Define some basic measures. M = measure, H = half measure.
+    // To keep the arrow in its intended shape, we need to take the aspect ratio
+    // of [`to_screen`] into account. In this case, we fix one dimension (height)
+    // in size and scale the other (width) according to the aspect ratio.
+    let aspect = to_screen.scale().x / to_screen.scale().y;
     let m = size / 3. * 0.02;
     let h = m / 2.;
 
@@ -176,10 +180,11 @@ pub fn arrow_shape(
     let mut arrow = Mesh::default();
 
     // Calculate arrowhead triangle positions and add to mesh.
+    // The horizontal size [`pos.x + m`] is corrected for aspect ratio
     let right_arrow = vec![
-        to_screen * pos2(pos.x + m, pos.y), // Right corner
-        to_screen * pos2(pos.x, pos.y + m), // Bottom corner
-        to_screen * pos2(pos.x, pos.y - m), // Top corner
+        to_screen * pos2(pos.x + m / aspect, pos.y), // Right corner
+        to_screen * pos2(pos.x, pos.y + m),          // Bottom corner
+        to_screen * pos2(pos.x, pos.y - m),          // Top corner
     ];
     for pos in right_arrow.iter() {
         arrow.colored_vertex(pos.to_owned(), color);
@@ -187,7 +192,8 @@ pub fn arrow_shape(
     arrow.add_triangle(0, 1, 2);
 
     // Add the rectangular arrow tail.
-    let tail_top_left = to_screen * (pos + vec2(-m, -h));
+    // Here too the horizontal size [`pos.x + m`] is corrected for aspect ratio
+    let tail_top_left = to_screen * (pos + vec2(-m / aspect, -h));
     let tail_bottom_right = to_screen * (pos + vec2(0., h));
     let r = Rect::from_two_pos(tail_top_left, tail_bottom_right);
     arrow.add_colored_rect(r, color);

@@ -1,3 +1,4 @@
+pub mod depth_perception;
 pub mod vergence;
 pub mod visual_recognition;
 pub mod visual_saccades;

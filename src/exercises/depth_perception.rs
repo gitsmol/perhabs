@@ -7,7 +7,6 @@ use tts::Tts;
 
 use crate::asset_loader::AppData;
 use crate::evaluation::Evaluation;
-use crate::exercises::Direction;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::wm::sessionman::Exercise;
@@ -32,7 +31,7 @@ impl Default for Session {
 }
 
 /// Exercise to train binocular convergence/divergence usign anaglyph images.
-pub struct Vergence {
+pub struct DepthPerception {
     anaglyph: Anaglyph,
     calibrating: bool,
     evaluation: Evaluation<bool>,
@@ -40,7 +39,7 @@ pub struct Vergence {
     step: isize,
 }
 
-impl Default for Vergence {
+impl Default for DepthPerception {
     fn default() -> Self {
         Self {
             anaglyph: Anaglyph::default(),
@@ -55,74 +54,30 @@ impl Default for Vergence {
 // ***********
 // Internals: painting, calculations etc
 // ***********
-impl Vergence {
+impl DepthPerception {
     /// Evaluate given answer
-    fn evaluate_answer(&mut self, a: Direction) {
-        // If the answer is correct, add true to the results vec.
-        // If the previous answer was also correct (indicated by the answer threshold),
-        // increase the difficulty of the exercise.
-        // If the previous answer was not correct, set the answer threshold to true.
-        if a == self.anaglyph.focal_position {
-            // Add result to evaluation
-            self.evaluation.add_result(true);
-            // Any correct answer invalidates the failure streak.
-            self.session.answer_thresh_fail = false;
-            match self.evaluation.show_results().last() {
-                Some(prev_val) => {
-                    if prev_val == &true && self.session.answer_thresh_success == true {
-                        self.session.answer_thresh_success = false;
-                        self.anaglyph.background_offset += self.step;
-                    }
-                    if prev_val == &true && self.session.answer_thresh_success == false {
-                        self.session.answer_thresh_success = true
-                    }
-                    if prev_val == &false {
-                        self.session.answer_thresh_success = false
-                    }
-                }
-                None => (),
-            }
-        }
+    fn evaluate_answer(&mut self) {}
 
-        // If the answer is incorrect, add false to the results vec.
-        // If the previous answer was also incorrect (indicated by the answer threshold),
-        // reset the difficulty of the exercise and set the answer_threshold to false.
-        // If the previous answer was correct, set the answer_threshhold to true.
-        if a != self.anaglyph.focal_position {
-            // Add result to evaluation
-            self.evaluation.add_result(false);
-            // Any failure invalidates the success streak.
-            self.session.answer_thresh_success = false;
-            match self.evaluation.show_results().last() {
-                Some(prev_val) => {
-                    if prev_val == &false && self.session.answer_thresh_fail == true {
-                        self.session.answer_thresh_fail = false;
-                        self.anaglyph.background_offset = 0;
-                    } else {
-                        self.session.answer_thresh_fail = true
-                    }
-                }
-                None => (),
-            }
-        }
-        // create arrays for a new anaglyph
-        self.anaglyph.initialize();
-    }
+    /// Move the indicator arrow and give an answer by pressing enter.
+    fn read_keypress(&mut self, ctx: &egui::Context) {
+        ctx.input(|i| {
+            // move left
+            if i.key_pressed(Key::ArrowLeft) && self.anaglyph.arrow_position > 0 {
+                self.anaglyph.arrow_position -= 1;
+            };
+            // move right
+            // note the correction for counting from zero
+            if i.key_pressed(Key::ArrowRight)
+                && self.anaglyph.arrow_position < self.anaglyph.circles - 1
+            {
+                self.anaglyph.arrow_position += 1;
+            };
 
-    fn read_keypress(&mut self, ctx: &egui::Context) -> Option<Direction> {
-        if ctx.input(|i| i.key_pressed(Key::ArrowUp)) {
-            return Some(Direction::Up);
-        };
-        if ctx.input(|i| i.key_pressed(Key::ArrowDown)) {
-            return Some(Direction::Down);
-        };
-        if ctx.input(|i| i.key_pressed(Key::ArrowLeft)) {
-            return Some(Direction::Left);
-        };
-        if ctx.input(|i| i.key_pressed(Key::ArrowRight)) {
-            return Some(Direction::Right);
-        };
-        None
+            // press enter to give answer
+            if i.key_pressed(Key::Enter) {
+                self.evaluate_answer();
+            };
+        });
     }
 
     /// Keeps track of answer, response, result progression.
@@ -134,16 +89,14 @@ impl Vergence {
         // NB this also sets bounds on the timer precision.
         ctx.request_repaint_after(std::time::Duration::from_millis(100));
 
-        if let Some(answer) = self.read_keypress(ctx) {
-            self.evaluate_answer(answer);
-        }
+        self.read_keypress(ctx)
     }
 }
 
 // ***********
 // UI
 // ***********
-impl Vergence {
+impl DepthPerception {
     /// Basic controls during a session
     fn ui_controls(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
@@ -276,19 +229,19 @@ impl Vergence {
     }
 }
 
-impl Exercise for Vergence {
+impl Exercise for DepthPerception {
     fn name(&self) -> &'static str {
-        "Vergence"
+        "Depth perception"
     }
 
     fn description(&self) -> &'static str {
-        "Train your eyes to diverge and converge. Requires glasses in two different colors."
+        "Learn to see (minor) differences in object depth."
     }
 
     fn reset(&mut self) {
         // Remember color calibrations
         let tmp_color = self.anaglyph.color.clone();
-        *self = Vergence::default();
+        *self = DepthPerception::default();
         self.anaglyph.color = tmp_color;
     }
 
@@ -352,8 +305,6 @@ impl Exercise for Vergence {
 
                         for level in &excercise.levels {
                             if ui.button(&level.name).clicked() {
-                                self.step = level.step;
-                                self.anaglyph.pixel_size = level.pixel_size;
                                 self.session.active = true;
                                 self.evaluation.start();
                             }
@@ -375,7 +326,6 @@ impl Exercise for Vergence {
     /// The session window showing anaglyphs
     fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
         self.ui_controls(ui);
-
         self.anaglyph.draw(ui);
     }
 }

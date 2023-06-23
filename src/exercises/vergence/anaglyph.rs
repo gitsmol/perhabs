@@ -211,7 +211,7 @@ impl Anaglyph {
                         (y as isize * pixel_size) as f32,
                     );
                     let coords_max = coords_min + vec2(*pixel_size as f32, *pixel_size as f32);
-                    let sq = RectShape::filled(
+                    let pixel = RectShape::filled(
                         Rect {
                             min: *origin + coords_min,
                             max: *origin + coords_max,
@@ -219,7 +219,7 @@ impl Anaglyph {
                         0.0,
                         color,
                     );
-                    rects.push(Shape::Rect(sq));
+                    rects.push(Shape::Rect(pixel));
                 }
                 if self.arrays.focal_mask[[x, y]] == 1 && self.arrays.focal[[x, y]] == 1 {
                     // pixel starts at
@@ -228,7 +228,7 @@ impl Anaglyph {
                         (y as isize * pixel_size) as f32,
                     );
                     let coords_max = coords_min + vec2(*pixel_size as f32, *pixel_size as f32);
-                    let sq = RectShape::filled(
+                    let pixel = RectShape::filled(
                         Rect {
                             min: *origin + coords_min,
                             max: *origin + coords_max,
@@ -240,7 +240,7 @@ impl Anaglyph {
                             color
                         },
                     );
-                    rects.push(Shape::Rect(sq));
+                    rects.push(Shape::Rect(pixel));
                 }
             }
         }
@@ -249,17 +249,10 @@ impl Anaglyph {
 
     /// Draw the background pixels and the focal pixes for left and right eye.
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
-        if self.debug.show {
-            self.debug_controls(ui);
-        }
-
-        if self.arrays.background_left.nrows() != self.grid_size {
-            self.initialize()
-        };
+        self.debug_controls(ui);
 
         Frame::dark_canvas(ui.style())
-            .outer_margin(Margin::from(0.0)) // TODO: look into eliminating visible margin
-            // (negative number works but what are the downsides?)
+            .outer_margin(Margin::from(0.0))
             .show(ui, |ui| {
                 let origin = {
                     // Determine size of drawing surface: full screen
@@ -297,6 +290,10 @@ impl Anaglyph {
             });
     }
     fn debug_controls(&mut self, ui: &mut egui::Ui) {
+        if !self.debug.show {
+            return;
+        }
+
         ui.horizontal(|ui| {
             ui.add(egui::Checkbox::new(&mut self.debug.draw_left, "Left"));
             ui.add(egui::Checkbox::new(&mut self.debug.draw_right, "Right"));
@@ -307,8 +304,18 @@ impl Anaglyph {
             ui.label(&self.debug.size_info);
         });
         ui.horizontal(|ui| {
-            ui.add(egui::Slider::new(&mut self.pixel_size, 1..=10).suffix("pixel size"));
-            ui.add(egui::Slider::new(&mut self.grid_size, 10..=150).suffix("anaglyph size"));
+            if ui
+                .add(egui::Slider::new(&mut self.pixel_size, 1..=10).suffix("pixel size"))
+                .changed()
+            {
+                self.initialize()
+            };
+            if ui
+                .add(egui::Slider::new(&mut self.grid_size, 10..=150).suffix("anaglyph size"))
+                .changed()
+            {
+                self.initialize()
+            };
             if ui
                 .add(
                     egui::Slider::new(&mut self.background_offset, -30..=30)

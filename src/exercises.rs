@@ -1,5 +1,6 @@
 pub mod cog_numbers;
 pub mod cog_words;
+pub mod depth_perception;
 pub mod episodic_memory;
 pub mod seq_numbers;
 pub mod spatial_drawing;

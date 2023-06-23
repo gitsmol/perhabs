@@ -157,7 +157,6 @@ impl VisRecognition {
     /// Keeps track of answer, response, result progression.
     fn progressor(&mut self, ctx: &egui::Context) {
         // Repaint regularly to update timers!
-        // 60 fps = 100ms per frame
         // NB this also sets bounds on the timer precision.
         ctx.request_repaint_after(std::time::Duration::from_millis(100));
 

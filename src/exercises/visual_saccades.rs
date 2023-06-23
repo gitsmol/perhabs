@@ -49,7 +49,7 @@ impl VisSaccades {
             Sense::focusable_noninteractive(),
         );
         let to_screen = emath::RectTransform::from_to(
-            Rect::from_min_size(Pos2::ZERO, response.rect.square_proportions()),
+            Rect::from_x_y_ranges(0.0..=1.0, 0.0..=1.0),
             response.rect,
         );
 
@@ -95,7 +95,6 @@ impl VisSaccades {
     ///   - incorrect or no response = result 0.0
     fn progressor(&mut self, ctx: &egui::Context) {
         // Repaint regularly to update timers!
-        // 60 fps = 100ms per frame
         // NB this also sets bounds on the timer precision.
         ctx.request_repaint_after(std::time::Duration::from_millis(100));
 

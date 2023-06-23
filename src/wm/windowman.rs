@@ -1,7 +1,7 @@
 #![warn(clippy::all)]
 use crate::{
     asset_loader::AppData,
-    modules::{clock, debug_info, metronome, rand_timer},
+    tools::{clock, debug_info, metronome, rand_timer},
 };
 use egui::{Context, Ui};
 use std::collections::BTreeSet;

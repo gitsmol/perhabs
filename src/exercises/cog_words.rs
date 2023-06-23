@@ -1,19 +1,9 @@
-use crate::asset_loader::sentences::Sentences;
+use crate::asset_loader::sentences::{SentenceFile, Sentences};
 use crate::asset_loader::{self, AppData};
+use crate::widgets::menu_button;
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
-
 use tts::{self, Tts};
-
-struct Session {
-    active: bool,
-}
-
-impl Default for Session {
-    fn default() -> Self {
-        Self { active: false }
-    }
-}
 
 struct Answers {
     sequence: String,
@@ -24,7 +14,7 @@ struct Answers {
 impl Default for Answers {
     fn default() -> Self {
         Self {
-            sequence: String::from("No sequence."),
+            sequence: String::from("Press continue to begin."),
             sequence_alpha: String::new(),
             sequence_alpha_rev: String::new(),
             sequence_rev: String::new(),
@@ -35,9 +25,9 @@ impl Default for Answers {
 /// Sequences
 pub struct CogWords {
     sentences: Sentences,
-
-    session: Session,
     answers: Answers,
+    session_active: bool,
+    display_answer: bool,
 }
 
 impl Default for CogWords {
@@ -45,13 +35,29 @@ impl Default for CogWords {
         Self {
             answers: Answers::default(),
             sentences: Sentences::default(),
-            session: Session::default(),
+            session_active: false,
+            display_answer: true,
         }
     }
 }
 
 impl CogWords {
-    fn say(&mut self, spk: &mut tts::Tts) -> () {
+    fn next(&mut self, spk: &mut tts::Tts) {
+        match self.display_answer {
+            true => {
+                // Hide answer, pick new sentence, speak the sentence
+                self.display_answer = false;
+                self.pick_sequence();
+                self.say(spk);
+            }
+            false => {
+                // Unhide answer
+                self.display_answer = true;
+            }
+        }
+    }
+
+    fn say(&mut self, spk: &mut tts::Tts) {
         match spk.speak(&self.answers.sequence, false) {
             Ok(_) => debug!("TTS: Sentence spoken."),
             Err(e) => warn!("TTS error: {:?}", e),
@@ -65,6 +71,18 @@ impl CogWords {
             match contents.pop() {
                 Some(answer) => {
                     let answer = answer.to_lowercase();
+                    // This is a relatively simple way of filtering out anything
+                    // that isn't an alpha character or a space. Without this,
+                    // the answers show interpunction in the wrong order.
+                    let answer: String = answer
+                        .chars()
+                        .filter(|x| match x {
+                            'A'..='Z' => true,
+                            'a'..='z' => true,
+                            ' ' => true,
+                            _ => false,
+                        })
+                        .collect();
                     self.answers.sequence = answer.to_owned();
                     let mut sorted: Vec<&str> = answer.split(" ").collect();
                     sorted.reverse();
@@ -79,14 +97,16 @@ impl CogWords {
                     contents.insert(0, answer)
                 }
                 None => {
-                    self.session.active = false;
+                    self.session_active = false;
                 }
             };
         };
     }
 
+    /// Returns a boolean to indicate if the exercise content is loaded.
+    /// If no contents are found, works to retrieve them either from disk or web.
     fn contents_guarantee(&mut self, appdata: &AppData) -> bool {
-        // If we have contents, give a guarantee
+        // If we have contents, give a positive guarantee
         if let Some(_) = self.sentences.contents {
             return true;
         };
@@ -150,6 +170,38 @@ impl CogWords {
         // return false if we can't return a guarantee
         false
     }
+
+    /// Reads keypress to progress the exercise
+    fn read_keypress(&mut self, ctx: &egui::Context, spk: &mut tts::Tts) {
+        if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
+            self.next(spk);
+        }
+        if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+            self.say(spk);
+        }
+    }
+
+    /// A simple loading screen while we have no file contents loaded
+    fn loading_screen(&mut self, ui: &mut egui::Ui, appdata: &AppData) {
+        // If we have selected a file, try to load it
+        // When it is loaded, start the session.
+        if self.contents_guarantee(appdata) == false {
+            if let Some(_) = self.sentences.selected_file {
+                // Show loading screen while waiting for contents of file
+                ui.horizontal(|ui| {
+                    ui.label("Loading file...");
+                    ui.spinner();
+                });
+
+                // Provide way to reset state if we somehow can't load a file
+                ui.horizontal(|ui| {
+                    if ui.button("Cancel").clicked() {
+                        self.reset();
+                    }
+                });
+            }
+        }
+    }
 }
 
 impl Exercise for CogWords {
@@ -167,102 +219,115 @@ impl Exercise for CogWords {
 
     /// Show the configuration dialog
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
-        if !self.session.active {
-            egui::Window::new(self.name())
-                .anchor(
-                    egui::Align2([Align::Center, Align::TOP]),
-                    Vec2::new(0., 100.),
-                )
-                .fixed_size(vec2(350., 300.))
-                .resizable(false)
-                .movable(false)
-                .collapsible(false)
-                .show(ctx, |ui| self.ui(ui, appdata, tts));
+        let menu_window = egui::Window::new(self.name())
+            .anchor(
+                egui::Align2([Align::Center, Align::TOP]),
+                Vec2::new(0., 100.),
+            )
+            .fixed_size(vec2(350., 300.))
+            .resizable(false)
+            .movable(false)
+            .collapsible(false);
+
+        if !self.session_active {
+            menu_window.show(ctx, |ui| self.ui(ui, appdata, tts));
         }
 
-        if self.session.active {
-            if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
-                self.pick_sequence();
-                self.say(tts);
-            }
-            if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-                self.say(tts);
-            }
+        if self.session_active {
+            self.read_keypress(ctx, tts);
             egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
         }
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
-        // Show file picker.
-        egui::ComboBox::from_label("Select sentences file")
-            .selected_text(match &self.sentences.selected_file {
-                Some(file) => file.language.clone(),
-                None => String::from("No language selected."),
-            })
-            .show_ui(ui, |ui| {
-                if let Some(config) = &appdata.config {
-                    for file in &config.sentences_files {
-                        if ui
-                            .selectable_value(
-                                &mut self.sentences.selected_file,
-                                Some(file.to_owned()),
-                                &file.language,
-                            )
-                            .changed()
-                        {
-                            // If the selected value changes set the contents to none.
-                            // This triggers the contents guarantee and fetches the appropriate file.
-                            self.sentences.contents = None;
+        // An explanation of this exercise.
+        ui.label(
+            "This exercise uses your computers voice to say a random sentence out loud. It is up to you to reorder the words in this sentence.
+
+Each sentence will be shown in full, alongside with
+- the words reversed
+- the words ordered alphabetically (A-Z)
+- the words ordered alphabetically reversed (Z-A)
+
+Pick your language and work your brain!",
+        );
+        ui.separator();
+
+        // Show language picker
+        // First define what happens when we click a language
+        let mut func = |file: &SentenceFile| {
+            // Select file
+            self.sentences.selected_file = Some(file.to_owned());
+            // Trigger content loading
+            self.sentences.contents = None;
+            // Activate session
+            self.session_active = true;
+        };
+
+        if let Some(config) = &appdata.config {
+            let buttons_total: f32 = config.sentences_files.len() as f32;
+            let col_1_range = buttons_total - (buttons_total / 2.).floor();
+
+            ui.columns(2, |col| {
+                // Column 1 gets populated with at least half the buttons
+                for i in 0..col_1_range as usize {
+                    if let Some(file) = config.sentences_files.get(i) {
+                        if menu_button(&mut col[0], None, file.language.as_str(), "").clicked() {
+                            func(file);
                         };
-                    }
+                    };
+                }
+
+                // Column 2 gets populated with the remaining buttons
+                for i in col_1_range as usize..buttons_total as usize {
+                    if let Some(file) = config.sentences_files.get(i) {
+                        if menu_button(&mut col[1], None, file.language.as_str(), "").clicked() {
+                            func(file);
+                        };
+                    };
                 }
             });
-
-        // Load contents of selected file
-        if let Some(_) = self.sentences.selected_file {
-            if self.contents_guarantee(appdata) == false {
-                // Show loading screen while waiting for contents of file
-                ui.horizontal(|ui| {
-                    ui.label("Loading file...");
-                    ui.spinner();
-                });
-
-                return;
-            } else {
-                // Show session button only when we have a file loaded.
-                if ui.button("Start session").clicked() {
-                    self.session.active = true;
-                }
-            }
         }
     }
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, tts: &mut Tts) {
+
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts) {
+        // Show loading screen if necessary
+        self.loading_screen(ui, appdata);
+
         let spacer = ui.available_height() / 30.;
 
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
-                self.session = Session::default();
+                self.reset()
             };
         });
 
         ui.vertical_centered(|ui| {
-            ui.add_space(spacer * 4.);
+            if self.display_answer {
+                ui.add_space(spacer * 4.);
 
-            ui.label("Sentence");
-            ui.heading(RichText::new(&self.answers.sequence).size(25.));
-            ui.add_space(spacer);
+                ui.label("Sentence");
+                ui.heading(RichText::new(&self.answers.sequence).size(25.));
+                ui.add_space(spacer);
 
-            ui.label("Reversed");
-            ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
-            ui.add_space(spacer);
+                ui.label("Reversed");
+                ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
+                ui.add_space(spacer);
 
-            ui.label("Alphabetical");
-            ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
-            ui.add_space(spacer);
+                ui.label("Alphabetical");
+                ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
+                ui.add_space(spacer);
 
-            ui.label("Alphabetical reversed");
-            ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
-            ui.add_space(spacer);
+                ui.label("Alphabetical reversed");
+                ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
+                ui.add_space(spacer);
+            }
+
+            if !self.display_answer {
+                ui.add_space(spacer * 4.);
+                ui.label("Try to reorder the words in your head.\nPress repeat (enter) to hear the sentence again.");
+                ui.add_space(spacer * 9.);
+            }
 
             ui.add_space(spacer * 2.);
             if ui
@@ -274,15 +339,17 @@ impl Exercise for CogWords {
 
             ui.add_space(spacer / 4.);
             if ui
-                .add_sized(vec2(spacer * 4., spacer * 2.), egui::Button::new("Next"))
+                .add_sized(
+                    vec2(spacer * 4., spacer * 2.),
+                    egui::Button::new("Continue"),
+                )
                 .clicked()
             {
-                self.pick_sequence();
-                self.say(tts);
+                self.next(tts);
             };
 
             ui.add_space(spacer);
-            ui.label("Press space for next sequence. Press return to repeat sequence.");
+            ui.label("Press space to continue. Press return to repeat sequence.");
         });
     }
 }
