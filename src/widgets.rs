@@ -1,4 +1,5 @@
 use crate::exercises::Direction;
+
 use egui::{
     emath::{RectTransform, Rot2},
     pos2, vec2,
@@ -6,6 +7,7 @@ use egui::{
     Color32, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, Vec2, WidgetText,
 };
 
+pub mod calibrate_anaglyph;
 pub mod circle_mutable;
 pub mod evaluation;
 

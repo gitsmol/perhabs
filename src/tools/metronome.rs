@@ -1,13 +1,13 @@
 use std::sync::mpsc::{self, Sender};
 
-use crate::asset_loader::AppData;
-use crate::cpal_audio::{beep, AudioHandle, Voice};
+use crate::shared::asset_loader::AppData;
+use crate::shared::cpal_audio::{beep, AudioHandle, Voice};
 use crate::wm::windowman::{AppWin, View};
 
 use chrono::Duration;
 use tts::{self, Tts};
 
-use crate::timer::Timer;
+use crate::shared::timer::Timer;
 
 pub struct Metronome {
     running: bool,

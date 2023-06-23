@@ -4,7 +4,7 @@ use chrono::Duration;
 use egui::*;
 use num::{Integer, ToPrimitive};
 
-use crate::time_formatting;
+use crate::shared::time_formatting;
 
 /// Circle to display and alter a duration.
 /// Senses both clicks and drags.

@@ -1,6 +1,6 @@
 use crate::{
-    asset_loader::exercise_config::vergence::Level,
     exercises::spatial_drawing::painters::SpatialPuzzle,
+    shared::asset_loader::exercise_config::vergence::Level,
 };
 use ehttp::{Response, Result};
 use log::debug;

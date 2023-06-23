@@ -3,8 +3,8 @@ use std::path::Path;
 use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
 
 use crate::{
-    asset_loader::{write_string_to_file, AppData},
     exercises::spatial_drawing::{painters::PuzzleGrid, SessionStatus},
+    shared::asset_loader::{write_string_to_file, AppData},
 };
 
 use super::painters::SpatialPuzzle;

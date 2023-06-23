@@ -6,35 +6,14 @@ use egui::{
 use rand::Rng;
 
 use crate::{
-    asset_loader::exercise_config::depth_perception::DepthPerceptionExercise, exercises::Direction,
-    widgets,
+    exercises::Direction, shared::anaglyph::AnaglyphColor,
+    shared::asset_loader::exercise_config::depth_perception::DepthPerceptionExercise, widgets,
 };
-
-enum Eye {
-    Left,
-    Right,
-}
-
-#[derive(PartialEq, Clone)]
-pub struct AnaglyphColor {
-    pub left: Color32,
-    pub right: Color32,
-}
-
-impl Default for AnaglyphColor {
-    fn default() -> Self {
-        Self {
-            left: Color32::from_rgba_unmultiplied(0, 38, 230, 100), // blue
-            right: Color32::from_rgba_unmultiplied(255, 25, 25, 50), // red
-        }
-    }
-}
 
 pub struct Debug {
     pub show: bool,
     draw_left: bool,
     draw_right: bool,
-    positions: Vec<Pos2>,
 }
 impl Default for Debug {
     fn default() -> Self {
@@ -42,7 +21,6 @@ impl Default for Debug {
             show: true,
             draw_left: true,
             draw_right: true,
-            positions: vec![],
         }
     }
 }

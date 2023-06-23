@@ -1,10 +1,10 @@
 use crate::{
-    asset_loader::AppData,
     exercises::{
         cog_numbers::CogNumbers, cog_words::CogWords, depth_perception::DepthPerception,
         episodic_memory::EpisodicMemory, seq_numbers::NumSeq, spatial_drawing::SpatialDrawing,
         vergence::Vergence, visual_recognition::VisRecognition, visual_saccades::VisSaccades,
     },
+    shared::asset_loader::AppData,
     widgets::menu_button,
 };
 

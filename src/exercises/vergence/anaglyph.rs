@@ -1,30 +1,11 @@
-use crate::exercises::Direction;
+use crate::shared::anaglyph::AnaglyphColor;
+use crate::{exercises::Direction, shared::anaglyph::Eye};
 use eframe::{emath, epaint::RectShape};
 use egui::{pos2, style::Margin, vec2, Color32, Frame, Pos2, Rect, Shape};
 use ndarray::Array2;
 use ndarray_rand::{rand_distr::Binomial, RandomExt};
 use rand::prelude::*;
 use std::iter::zip;
-
-enum Eye {
-    Left,
-    Right,
-}
-
-#[derive(PartialEq, Clone)]
-pub struct AnaglyphColor {
-    pub left: Color32,
-    pub right: Color32,
-}
-
-impl Default for AnaglyphColor {
-    fn default() -> Self {
-        Self {
-            left: Color32::from_rgba_unmultiplied(0, 38, 230, 100), // blue
-            right: Color32::from_rgba_unmultiplied(255, 25, 25, 50), // red
-        }
-    }
-}
 
 struct AnaglyphArrays {
     background_left: Array2<u64>,

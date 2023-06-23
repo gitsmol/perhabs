@@ -5,15 +5,15 @@ use egui::style::Margin;
 use egui::{pos2, vec2, Align, Frame, Key, Rect, Stroke, Vec2};
 use tts::Tts;
 
-use crate::asset_loader::AppData;
-use crate::evaluation::Evaluation;
 use crate::exercises::Direction;
+use crate::shared::asset_loader::AppData;
+use crate::shared::evaluation::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::wm::sessionman::Exercise;
 
 use self::anaglyph::Anaglyph;
-mod anaglyph;
+pub mod anaglyph;
 
 struct Session {
     active: bool,

@@ -2,7 +2,7 @@ use egui::vec2;
 use tts::Tts;
 
 use crate::{
-    asset_loader::AppData,
+    shared::asset_loader::AppData,
     wm::windowman::{AppWin, View},
 };
 

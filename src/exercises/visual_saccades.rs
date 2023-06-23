@@ -1,11 +1,13 @@
-use crate::asset_loader::exercise_config::{visual_saccades::VisSaccadesExercise, ExerciseConfig};
-use crate::asset_loader::AppData;
 use crate::exercises::Direction;
+use crate::shared::asset_loader::exercise_config::{
+    visual_saccades::VisSaccadesExercise, ExerciseConfig,
+};
+use crate::shared::asset_loader::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::{self, menu_button};
 use crate::{
     wm::sessionman::Exercise,
-    {evaluation::Evaluation, timer::Timer},
+    {shared::evaluation::Evaluation, shared::timer::Timer},
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Pos2, Rect, Sense, Vec2};

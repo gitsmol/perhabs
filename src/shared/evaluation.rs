@@ -1,4 +1,4 @@
-use super::timer::Timer;
+use crate::shared::timer::Timer;
 use chrono::{Duration, Local};
 
 /// Manage a performance evaluation by keeping track of time and reps and
@@ -189,7 +189,7 @@ impl Evaluation<f32> {
 
 #[cfg(test)]
 mod tests {
-    use crate::evaluation::Evaluation;
+    use crate::shared::evaluation::Evaluation;
     use chrono::Duration;
 
     #[test]

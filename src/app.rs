@@ -3,7 +3,7 @@ use egui::{vec2, Align, Rounding, ScrollArea, Vec2, Visuals};
 
 use log::debug;
 use perhabs::{
-    asset_loader::{
+    shared::asset_loader::{
         exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
         AppData, AssetSource,
     },
