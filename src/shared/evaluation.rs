@@ -154,7 +154,7 @@ impl<T> Evaluation<T> {
 
     /// How many reps are remaining?
     pub fn reps_remaining(&self) -> usize {
-        self.repetitions - self.results.len()
+        self.repetitions.saturating_sub(self.reps_done())
     }
 }
 

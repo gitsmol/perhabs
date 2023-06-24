@@ -26,14 +26,14 @@ impl Default for Debug {
 }
 
 /// Struct for anaglyph images, in this case a number of rings and an indicator arrow.
-/// [draw()] draws both the rings and the indicator arrow, according to a configuration.
+/// `draw()` draws both the rings and the indicator arrow, according to a configuration.
 /// The offset creates the illusion of depth. One if the rings has a different offset,
 /// creating the impression that it is either in front or in back of the other rings.
 /// The challenge for the user is to move the arrow to indicate the ring that stands out.
 pub struct Anaglyph {
     pub config: DepthPerceptionExercise,
     pub circles: usize,
-    target_index: usize, // The circle that has a different depth
+    pub target_index: usize, // The circle that has a different depth
     pub arrow_position: usize,
     offset: f32,
     target_offset: f32,
@@ -49,8 +49,8 @@ impl Default for Anaglyph {
             circles: 5,
             target_index: 2,
             arrow_position: 0,
-            offset: 0.02,
-            target_offset: 0.03,
+            offset: 0.005,
+            target_offset: 0.02,
             circle_radius: 0.05,
             color: AnaglyphColor::default(),
             debug: Debug::default(),
@@ -60,7 +60,7 @@ impl Default for Anaglyph {
 
 impl Anaglyph {
     /// Convert the config values to usable parameters
-    pub fn init(&mut self) {
+    pub fn next(&mut self) {
         // We need an RNG for much of the following.
         let mut rng = rand::thread_rng();
 
@@ -198,7 +198,7 @@ impl Anaglyph {
 
         ui.horizontal(|ui| {
             if ui.button("Init").clicked() {
-                self.init()
+                self.next()
             };
             ui.add(egui::Checkbox::new(&mut self.debug.draw_left, "Left"));
             ui.add(egui::Checkbox::new(&mut self.debug.draw_right, "Right"));

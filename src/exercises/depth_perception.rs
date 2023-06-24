@@ -1,6 +1,6 @@
 use chrono::Duration;
 
-use egui::{vec2, Align, Key, Vec2};
+use egui::{Align, Key, Vec2};
 use tts::Tts;
 
 use crate::shared::asset_loader::AppData;
@@ -12,22 +12,14 @@ use crate::wm::sessionman::Exercise;
 use self::anaglyph::Anaglyph;
 mod anaglyph;
 
-struct Session {
-    active: bool,
-}
-
-impl Default for Session {
-    fn default() -> Self {
-        Self { active: false }
-    }
-}
+use super::SessionStatus;
 
 /// Exercise to train binocular convergence/divergence usign anaglyph images.
 pub struct DepthPerception {
     anaglyph: Anaglyph,
     calibrating: bool,
-    evaluation: Evaluation<bool>,
-    session: Session,
+    evaluation: Evaluation<f32>,
+    session: SessionStatus,
 }
 
 impl Default for DepthPerception {
@@ -36,7 +28,7 @@ impl Default for DepthPerception {
             anaglyph: Anaglyph::default(),
             calibrating: false,
             evaluation: Evaluation::new(Duration::seconds(60), 60),
-            session: Session::default(),
+            session: SessionStatus::None,
         }
     }
 }
@@ -45,8 +37,16 @@ impl Default for DepthPerception {
 // Internals: painting, calculations etc
 // ***********
 impl DepthPerception {
-    /// Evaluate given answer
-    fn evaluate_answer(&mut self) {}
+    /// Evaluate given answer. Records responses as f32:
+    ///   - correct response = result 1.0
+    ///   - incorrect or no response = result 0.0
+    fn evaluate_answer(&mut self) {
+        if self.anaglyph.arrow_position == self.anaglyph.target_index {
+            self.evaluation.add_result(1.0)
+        } else {
+            self.evaluation.add_result(0.0)
+        }
+    }
 
     /// Move the indicator arrow and give an answer by pressing enter.
     fn read_keypress(&mut self, ctx: &egui::Context) {
@@ -66,20 +66,25 @@ impl DepthPerception {
             // press enter to give answer
             if i.key_pressed(Key::Enter) {
                 self.evaluate_answer();
+                self.anaglyph.next();
             };
         });
     }
 
     /// Keeps track of answer, response, result progression.
-    /// Record responses as f32:
-    ///   - correct response = result 1.0
-    ///   - incorrect or no response = result 0.0
     fn progressor(&mut self, ctx: &egui::Context) {
-        // Repaint regularly to update timers!
-        // NB this also sets bounds on the timer precision.
-        ctx.request_repaint_after(std::time::Duration::from_millis(100));
-
-        self.read_keypress(ctx)
+        match self.session {
+            SessionStatus::Response => {
+                // Repaint regularly to update timers!
+                // NB this also sets bounds on the timer precision.
+                ctx.request_repaint_after(std::time::Duration::from_millis(100));
+                self.read_keypress(ctx);
+                if self.evaluation.is_finished() {
+                    self.session = SessionStatus::Finished;
+                }
+            }
+            _ => (),
+        }
     }
 }
 
@@ -156,34 +161,32 @@ impl Exercise for DepthPerception {
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
-        let menu_window = egui::Window::new("Vergence")
+        let menu_window = egui::Window::new(self.name())
             .anchor(
                 egui::Align2([Align::Center, Align::TOP]),
                 Vec2::new(0., 100.),
             )
-            .fixed_size(vec2(350., 300.))
+            // .fixed_size(vec2(350., 300.))
             .resizable(false)
             .movable(false)
             .collapsible(false);
 
+        // Keep track of progress
+        self.progressor(ctx);
+
         // There are three possible states:
+        // - Response means we are showing the exercise and taking responses
         // - Finished session shows the evaluation scores
-        // - Active session shows anaglyphs and keeps track of progression
-        // - No session shows the exercise menu
-        match self.session.active {
-            true => match self.evaluation.is_finished() {
-                true => {
-                    menu_window.show(ctx, |ui| self.finished_screen(ui));
-                }
-                false => {
-                    egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
-                    self.progressor(ctx);
-                }
-            },
-            false => {
-                menu_window.show(ctx, |ui| {
-                    self.ui(ui, appdata, tts);
-                });
+        // - Anything else shows the exercise menu
+        match self.session {
+            SessionStatus::Response => {
+                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
+            }
+            SessionStatus::Finished => {
+                menu_window.show(ctx, |ui| self.finished_screen(ui));
+            }
+            _ => {
+                menu_window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
         };
     }
@@ -215,8 +218,9 @@ impl Exercise for DepthPerception {
 
                         for level in &excercise.levels {
                             if ui.button(&level.name).clicked() {
-                                self.session.active = true;
+                                self.session = SessionStatus::Response;
                                 self.evaluation.start();
+                                self.anaglyph.next();
                             }
                         }
 
@@ -225,8 +229,8 @@ impl Exercise for DepthPerception {
                 }
             });
 
-        // Fill space
-        ui.allocate_space(ui.available_size());
+        // Add some space
+        ui.add_space(ui.available_height() * 0.05);
 
         if ui.button("Calibrate").clicked() {
             self.calibrating = true
