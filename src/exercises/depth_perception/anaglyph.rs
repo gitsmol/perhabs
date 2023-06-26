@@ -10,21 +10,6 @@ use crate::{
     shared::asset_loader::exercise_config::depth_perception::DepthPerceptionExercise, widgets,
 };
 
-pub struct Debug {
-    pub show: bool,
-    draw_left: bool,
-    draw_right: bool,
-}
-impl Default for Debug {
-    fn default() -> Self {
-        Self {
-            show: true,
-            draw_left: true,
-            draw_right: true,
-        }
-    }
-}
-
 /// Struct for anaglyph images, in this case a number of rings and an indicator arrow.
 /// `draw()` draws both the rings and the indicator arrow, according to a configuration.
 /// The offset creates the illusion of depth. One if the rings has a different offset,
@@ -37,9 +22,8 @@ pub struct Anaglyph {
     pub arrow_position: usize,
     offset: f32,
     target_offset: f32,
-    pub circle_radius: f32,
+    circle_radius: f32,
     pub color: AnaglyphColor,
-    pub debug: Debug,
 }
 
 impl Default for Anaglyph {
@@ -53,7 +37,6 @@ impl Default for Anaglyph {
             target_offset: 0.02,
             circle_radius: 0.05,
             color: AnaglyphColor::default(),
-            debug: Debug::default(),
         }
     }
 }
@@ -171,8 +154,6 @@ impl Anaglyph {
 
     /// Draws the exercise circles and indicator arrow
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
-        self.debug_controls(ui);
-
         Frame::dark_canvas(ui.style())
             .outer_margin(Margin::from(0.0))
             .show(ui, |ui| {
@@ -190,20 +171,5 @@ impl Anaglyph {
                 ui.painter().extend(circles);
                 ui.painter().add(arrow);
             });
-    }
-    fn debug_controls(&mut self, ui: &mut egui::Ui) {
-        if !self.debug.show {
-            return;
-        }
-
-        ui.horizontal(|ui| {
-            if ui.button("Init").clicked() {
-                self.next()
-            };
-            ui.add(egui::Checkbox::new(&mut self.debug.draw_left, "Left"));
-            ui.add(egui::Checkbox::new(&mut self.debug.draw_right, "Right"));
-            ui.label(format!("target idx {:?}", self.target_index));
-            ui.label(format!("arrow idx {:?}", self.arrow_position));
-        });
     }
 }

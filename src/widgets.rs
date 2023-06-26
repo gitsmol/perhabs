@@ -10,6 +10,7 @@ use egui::{
 pub mod calibrate_anaglyph;
 pub mod circle_mutable;
 pub mod evaluation;
+pub mod exercise_config_menu;
 
 pub fn loading_screen(ui: &mut egui::Ui) {
     // Show loading screen while waiting for contents of file

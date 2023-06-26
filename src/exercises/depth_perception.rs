@@ -3,10 +3,13 @@ use chrono::Duration;
 use egui::{Align, Key, Vec2};
 use tts::Tts;
 
+use crate::shared::asset_loader::exercise_config::depth_perception::DepthPerceptionExercise;
+use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 use crate::shared::asset_loader::AppData;
 use crate::shared::evaluation::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::wm::sessionman::Exercise;
 
 use self::anaglyph::Anaglyph;
@@ -73,17 +76,16 @@ impl DepthPerception {
 
     /// Keeps track of answer, response, result progression.
     fn progressor(&mut self, ctx: &egui::Context) {
-        match self.session {
-            SessionStatus::Response => {
-                // Repaint regularly to update timers!
-                // NB this also sets bounds on the timer precision.
-                ctx.request_repaint_after(std::time::Duration::from_millis(100));
-                self.read_keypress(ctx);
-                if self.evaluation.is_finished() {
-                    self.session = SessionStatus::Finished;
-                }
+        // The only change is from Response to Finished. All other status changes
+        // are forced by the user.
+        if self.session == SessionStatus::Response {
+            // Repaint regularly to update timers!
+            // NB this also sets bounds on the timer precision.
+            ctx.request_repaint_after(std::time::Duration::from_millis(100));
+            self.read_keypress(ctx);
+            if self.evaluation.is_finished() {
+                self.session = SessionStatus::Finished;
             }
-            _ => (),
         }
     }
 }
@@ -110,7 +112,6 @@ impl DepthPerception {
             ));
 
             ui.add_space(ui.available_width() - 100.0);
-            ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
         });
     }
 
@@ -144,6 +145,9 @@ impl DepthPerception {
     }
 }
 
+// ***********
+// Exercise trait
+// ***********
 impl Exercise for DepthPerception {
     fn name(&self) -> &'static str {
         "Depth perception"
@@ -208,26 +212,21 @@ impl Exercise for DepthPerception {
             &mut self.evaluation.repetitions,
         );
 
+        let mut func = |config: &DepthPerceptionExercise| {
+            self.session = SessionStatus::Response;
+            self.anaglyph.config = config.clone();
+            self.evaluation.start();
+            self.anaglyph.next();
+        };
+
         // Display exercise configs
-        egui::Grid::new("vergence_selector_grid")
-            .num_columns(4)
-            .show(ui, |ui| {
-                if let Some(excconfig) = &appdata.excconfig {
-                    for excercise in &excconfig.vergence {
-                        ui.label(format!("{}", excercise.name));
-
-                        for level in &excercise.levels {
-                            if ui.button(&level.name).clicked() {
-                                self.session = SessionStatus::Response;
-                                self.evaluation.start();
-                                self.anaglyph.next();
-                            }
-                        }
-
-                        ui.end_row();
-                    }
-                }
-            });
+        if let Some(config) = &appdata.excconfig {
+            if let Some(config) =
+                exercise_config_menu::<DepthPerceptionExercise>(ui, &config.depth_perception)
+            {
+                func(config)
+            };
+        }
 
         // Add some space
         ui.add_space(ui.available_height() * 0.05);

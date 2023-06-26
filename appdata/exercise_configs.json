@@ -192,6 +192,56 @@
       "answer_timeout": 500
     }
   ],
+  "depth_perception": [
+    {
+      "name": "Easy (big)",
+      "circle_size": 3,
+      "offset_min": 1,
+      "offset_max": 2,
+      "offset_target_variance_min": 2,
+      "offset_target_variance_max": 4
+    },
+    {
+      "name": "Medium (big)",
+      "circle_size": 3,
+      "offset_min": 1,
+      "offset_max": 3,
+      "offset_target_variance_min": 2,
+      "offset_target_variance_max": 4
+    },
+    {
+      "name": "Hard (big)",
+      "circle_size": 3,
+      "offset_min": 2,
+      "offset_max": 3,
+      "offset_target_variance_min": 1,
+      "offset_target_variance_max": 2
+    },
+    {
+      "name": "Easy (small)",
+      "circle_size": 2,
+      "offset_min": 1,
+      "offset_max": 2,
+      "offset_target_variance_min": 2,
+      "offset_target_variance_max": 4
+    },
+    {
+      "name": "Medium (small)",
+      "circle_size": 2,
+      "offset_min": 1,
+      "offset_max": 3,
+      "offset_target_variance_min": 2,
+      "offset_target_variance_max": 4
+    },
+    {
+      "name": "Hard (small)",
+      "circle_size": 3,
+      "offset_min": 2,
+      "offset_max": 3,
+      "offset_target_variance_min": 1,
+      "offset_target_variance_max": 2
+    }
+  ],
   "spatial_drawing": [
     {
       "grid_size": 5,

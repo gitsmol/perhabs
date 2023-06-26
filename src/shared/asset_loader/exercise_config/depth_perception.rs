@@ -17,10 +17,10 @@ impl Default for DepthPerceptionExercise {
         Self {
             name: String::from("Default"),
             circle_size: 3,
-            offset_min: 2,
-            offset_max: 4,
+            offset_min: 1,
+            offset_max: 3,
             offset_target_variance_min: 2,
-            offset_target_variance_max: 8,
+            offset_target_variance_max: 5,
         }
     }
 }

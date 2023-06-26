@@ -3,6 +3,7 @@ use crate::shared::asset_loader::exercise_config::{
     visual_recognition::VisRecognitionExercise, ExerciseConfig,
 };
 use crate::widgets::evaluation::eval_config_widgets;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::widgets::{self, menu_button};
 use crate::{
     wm::sessionman::Exercise,
@@ -299,37 +300,21 @@ impl Exercise for VisRecognition {
             &mut self.evaluation.repetitions,
         );
 
-        // Display all exercise configs
+        // Anonymous function that uses the exercise config
         let mut func = |exercise: &VisRecognitionExercise| {
             self.exercise_params = exercise.to_owned();
             self.session_status = SessionStatus::Answer;
             self.evaluation.start();
         };
 
+        // Display exercise configs
         if let Some(config) = &appdata.excconfig {
-            let buttons_total: f32 = config.visual_recognition.len() as f32;
-            let col_1_range = buttons_total - (buttons_total / 2.).floor();
-
-            ui.columns(2, |col| {
-                // Column 1 gets populated with at least half the buttons
-                for i in 0..col_1_range as usize {
-                    if let Some(exercise) = config.visual_recognition.get(i) {
-                        if menu_button(&mut col[0], None, exercise.name(), "").clicked() {
-                            func(exercise);
-                        };
-                    };
-                }
-
-                // Column 2 gets populated with the remaining buttons
-                for i in col_1_range as usize..buttons_total as usize {
-                    if let Some(exercise) = config.visual_recognition.get(i) {
-                        if menu_button(&mut col[1], None, exercise.name(), "").clicked() {
-                            func(exercise);
-                        };
-                    };
-                }
-            });
-        };
+            if let Some(config) =
+                exercise_config_menu::<VisRecognitionExercise>(ui, &config.visual_recognition)
+            {
+                func(config)
+            };
+        }
     }
 
     fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {

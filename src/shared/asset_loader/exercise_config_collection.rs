@@ -14,8 +14,8 @@ use std::{
 
 use super::{
     exercise_config::{
-        vergence::VergenceExercise, visual_recognition::VisRecognitionExercise,
-        visual_saccades::VisSaccadesExercise,
+        depth_perception::DepthPerceptionExercise, vergence::VergenceExercise,
+        visual_recognition::VisRecognitionExercise, visual_saccades::VisSaccadesExercise,
     },
     AssetSource,
 };
@@ -30,6 +30,7 @@ pub struct ExerciseConfigCollection {
     pub spatial_drawing: Vec<SpatialPuzzle>,
     pub visual_recognition: Vec<VisRecognitionExercise>,
     pub visual_saccades: Vec<VisSaccadesExercise>,
+    pub depth_perception: Vec<DepthPerceptionExercise>,
 }
 
 impl Default for ExerciseConfigCollection {
@@ -58,6 +59,7 @@ impl Default for ExerciseConfigCollection {
             spatial_drawing: vec![SpatialPuzzle::new(5)],
             visual_recognition: vec![VisRecognitionExercise::default()],
             visual_saccades: vec![VisSaccadesExercise::default()],
+            depth_perception: vec![DepthPerceptionExercise::default()],
         }
     }
 }
