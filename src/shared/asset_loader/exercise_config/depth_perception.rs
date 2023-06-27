@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::ExerciseConfig;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct DepthPerceptionExercise {
+pub struct DepthPerceptionConfig {
     pub name: String,
     pub circle_size: usize,
     pub offset_min: usize,
@@ -12,7 +12,7 @@ pub struct DepthPerceptionExercise {
     pub offset_target_variance_max: usize,
 }
 
-impl Default for DepthPerceptionExercise {
+impl Default for DepthPerceptionConfig {
     fn default() -> Self {
         Self {
             name: String::from("Default"),
@@ -25,7 +25,7 @@ impl Default for DepthPerceptionExercise {
     }
 }
 
-impl ExerciseConfig for DepthPerceptionExercise {
+impl ExerciseConfig for DepthPerceptionConfig {
     fn name(&self) -> &str {
         self.name.as_str()
     }

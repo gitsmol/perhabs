@@ -36,6 +36,11 @@ impl DebugInfo {
                     ui.label("No ExcConfig found. This is bad.");
                 }
             });
+        ui.separator();
+        ui.heading("Debug messages.");
+        for msg in &appdata.debug_messages {
+            ui.label(msg);
+        }
     }
 }
 

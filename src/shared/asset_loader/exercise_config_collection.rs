@@ -14,8 +14,8 @@ use std::{
 
 use super::{
     exercise_config::{
-        depth_perception::DepthPerceptionExercise, vergence::VergenceExercise,
-        visual_recognition::VisRecognitionExercise, visual_saccades::VisSaccadesExercise,
+        depth_perception::DepthPerceptionConfig, vergence::VergenceConfig,
+        visual_recognition::VisRecognitionConfig, visual_saccades::VisSaccadesConfig,
     },
     AssetSource,
 };
@@ -26,11 +26,11 @@ use super::{
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ExerciseConfigCollection {
     pub source: AssetSource,
-    pub vergence: Vec<VergenceExercise>,
+    pub vergence: Vec<VergenceConfig>,
     pub spatial_drawing: Vec<SpatialPuzzle>,
-    pub visual_recognition: Vec<VisRecognitionExercise>,
-    pub visual_saccades: Vec<VisSaccadesExercise>,
-    pub depth_perception: Vec<DepthPerceptionExercise>,
+    pub visual_recognition: Vec<VisRecognitionConfig>,
+    pub visual_saccades: Vec<VisSaccadesConfig>,
+    pub depth_perception: Vec<DepthPerceptionConfig>,
 }
 
 impl Default for ExerciseConfigCollection {
@@ -39,7 +39,7 @@ impl Default for ExerciseConfigCollection {
         ExerciseConfigCollection {
             source: AssetSource::Default,
             vergence: vec![
-                VergenceExercise {
+                VergenceConfig {
                     name: String::from("Convergence"),
                     levels: vec![Level {
                         name: String::from("Easy"),
@@ -47,7 +47,7 @@ impl Default for ExerciseConfigCollection {
                         pixel_size: 3,
                     }],
                 },
-                VergenceExercise {
+                VergenceConfig {
                     name: String::from("Divergence"),
                     levels: vec![Level {
                         name: String::from("Easy"),
@@ -57,9 +57,9 @@ impl Default for ExerciseConfigCollection {
                 },
             ],
             spatial_drawing: vec![SpatialPuzzle::new(5)],
-            visual_recognition: vec![VisRecognitionExercise::default()],
-            visual_saccades: vec![VisSaccadesExercise::default()],
-            depth_perception: vec![DepthPerceptionExercise::default()],
+            visual_recognition: vec![VisRecognitionConfig::default()],
+            visual_saccades: vec![VisSaccadesConfig::default()],
+            depth_perception: vec![DepthPerceptionConfig::default()],
         }
     }
 }

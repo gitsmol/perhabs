@@ -4,13 +4,13 @@ use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 
 /// Params for a visual recognition exercise.
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct VisSaccadesExercise {
+pub struct VisSaccadesConfig {
     pub name: String,
     pub arrow_size: usize,
     pub answer_timeout: i64, // The number of milliseconds the answer is shown
 }
 
-impl Default for VisSaccadesExercise {
+impl Default for VisSaccadesConfig {
     fn default() -> Self {
         Self {
             name: String::from("default"),
@@ -20,7 +20,7 @@ impl Default for VisSaccadesExercise {
     }
 }
 
-impl ExerciseConfig for VisSaccadesExercise {
+impl ExerciseConfig for VisSaccadesConfig {
     fn name(&self) -> &str {
         self.name.as_str()
     }

@@ -1,6 +1,6 @@
 use crate::exercises::Direction;
 use crate::shared::asset_loader::exercise_config::{
-    visual_recognition::VisRecognitionExercise, ExerciseConfig,
+    visual_recognition::VisRecognitionConfig, ExerciseConfig,
 };
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
@@ -23,7 +23,7 @@ use super::SessionStatus;
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct VisRecognition {
     session_status: SessionStatus,
-    exercise_params: VisRecognitionExercise,
+    exercise_params: VisRecognitionConfig,
     answer: Vec<Direction>,   // The correct answer: a sequence of directions
     timer: Timer,             // Keeps track of timeouts
     response: Vec<Direction>, // The response given by the player
@@ -34,7 +34,7 @@ impl Default for VisRecognition {
     fn default() -> Self {
         Self {
             session_status: SessionStatus::None,
-            exercise_params: VisRecognitionExercise::default(),
+            exercise_params: VisRecognitionConfig::default(),
             answer: vec![],
             timer: Timer::new(),
             response: vec![],
@@ -301,7 +301,7 @@ impl Exercise for VisRecognition {
         );
 
         // Anonymous function that uses the exercise config
-        let mut func = |exercise: &VisRecognitionExercise| {
+        let mut func = |exercise: &VisRecognitionConfig| {
             self.exercise_params = exercise.to_owned();
             self.session_status = SessionStatus::Answer;
             self.evaluation.start();
@@ -310,7 +310,7 @@ impl Exercise for VisRecognition {
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
             if let Some(config) =
-                exercise_config_menu::<VisRecognitionExercise>(ui, &config.visual_recognition)
+                exercise_config_menu::<VisRecognitionConfig>(ui, &config.visual_recognition)
             {
                 func(config)
             };

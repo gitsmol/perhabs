@@ -7,7 +7,7 @@ use rand::Rng;
 
 use crate::{
     exercises::Direction, shared::anaglyph::AnaglyphColor,
-    shared::asset_loader::exercise_config::depth_perception::DepthPerceptionExercise, widgets,
+    shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig, widgets,
 };
 
 /// Struct for anaglyph images, in this case a number of rings and an indicator arrow.
@@ -16,7 +16,7 @@ use crate::{
 /// creating the impression that it is either in front or in back of the other rings.
 /// The challenge for the user is to move the arrow to indicate the ring that stands out.
 pub struct Anaglyph {
-    pub config: DepthPerceptionExercise,
+    pub config: DepthPerceptionConfig,
     pub circles: usize,
     pub target_index: usize, // The circle that has a different depth
     pub arrow_position: usize,
@@ -29,7 +29,7 @@ pub struct Anaglyph {
 impl Default for Anaglyph {
     fn default() -> Self {
         Self {
-            config: DepthPerceptionExercise::default(),
+            config: DepthPerceptionConfig::default(),
             circles: 5,
             target_index: 2,
             arrow_position: 0,

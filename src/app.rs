@@ -77,7 +77,13 @@ impl Perhabs {
                     res.source = AssetSource::Disk;
                     self.appdata.config = Some(res);
                 }
-                Err(_) => self.appdata.config_promise = Some(PerhabsConfig::from_web()),
+                Err(e) => {
+                    self.appdata.debug_messages.push(format!(
+                        "AppData - Failed to get perhabsconfig from disk: {}, Trying to get config from web.",
+                        e
+                    ));
+                    self.appdata.config_promise = Some(PerhabsConfig::from_web())
+                }
             },
             // Yes: we have a promise.
             Some(promise) => {
@@ -95,7 +101,13 @@ impl Perhabs {
                             Some(res)
                         }
                         // If deserialization fails, store hardcoded defaults
-                        Err(_) => Some(PerhabsConfig::default()),
+                        Err(e) => {
+                            self.appdata.debug_messages.push(format!(
+                                "AppData - Failed to deserialize perhabsconfig: {}",
+                                e
+                            ));
+                            Some(PerhabsConfig::default())
+                        }
                     }
                 }
             }
@@ -115,7 +127,7 @@ impl Perhabs {
 
         let config = match &self.appdata.config {
             Some(res) => res,
-            None => panic!("Fatal error: no PerhabsConfig found."),
+            None => panic!("ExcConfig - Fatal error: no PerhabsConfig found."),
         };
 
         // Is there a promise for a web download of a config?
@@ -131,10 +143,16 @@ impl Perhabs {
                     res.source = AssetSource::Disk;
                     self.appdata.excconfig = Some(res)
                 }
-                Err(_) => {
-                    debug!("No exercise config found on disk. Getting web config.");
+                Err(e) => {
                     let path = format!("{}{}", &config.web_root, &config.excconfig_path);
-                    self.appdata.excconfig_promise = Some(ExerciseConfigCollection::from_web(&path))
+                    self.appdata.excconfig_promise =
+                        Some(ExerciseConfigCollection::from_web(&path));
+
+                    debug!("No exercise config found on disk. Getting web config.");
+                    let errormsg = format!(
+                        "ExcConfig - No exercise config found on disk: {e}.\nGetting web config from {path}."
+                    );
+                    self.appdata.debug_messages.push(String::from(errormsg));
                 }
             },
             // Yes: we have a promise.
@@ -146,7 +164,7 @@ impl Perhabs {
                     let config =
                         serde_json::from_str::<ExerciseConfigCollection>(resource.text().unwrap());
 
-                    // Store data in config, depending on the success deserialization.
+                    // Store data in config, depending on successful deserialization.
                     // If deser fails, store hardcoded defaults.
                     self.appdata.excconfig = match config {
                         Ok(mut res) => {
@@ -157,6 +175,11 @@ impl Perhabs {
                         // If deserialization fails, store hardcoded defaults
                         Err(error) => {
                             debug!("Failed to deserialize exercise config: {}", error);
+                            let errormsg = format!(
+                                "ExcConfig - Failed to deserialize exercise config: {}",
+                                error
+                            );
+                            self.appdata.debug_messages.push(String::from(errormsg));
                             Some(ExerciseConfigCollection::default())
                         }
                     }

@@ -1,6 +1,6 @@
 use crate::exercises::Direction;
 use crate::shared::asset_loader::exercise_config::{
-    visual_saccades::VisSaccadesExercise, ExerciseConfig,
+    visual_saccades::VisSaccadesConfig, ExerciseConfig,
 };
 use crate::shared::asset_loader::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
@@ -22,7 +22,7 @@ pub struct VisSaccades {
     arrow_pos: Option<Pos2>,
     answer: Option<Direction>, // The right answer is the direction of the arrow
     response: Option<Direction>, // The given response is a direction
-    exercise_params: VisSaccadesExercise,
+    exercise_params: VisSaccadesConfig,
     answer_timeout_timer: Timer,
     evaluation: Evaluation<f32>,
 }
@@ -31,7 +31,7 @@ impl Default for VisSaccades {
     fn default() -> Self {
         Self {
             session_status: SessionStatus::None,
-            exercise_params: VisSaccadesExercise::default(),
+            exercise_params: VisSaccadesConfig::default(),
             arrow_pos: None,
             answer: None,
             response: None,
@@ -267,7 +267,7 @@ impl Exercise for VisSaccades {
         );
 
         // Display all exercise configs
-        let mut func = |exercise: &VisSaccadesExercise| {
+        let mut func = |exercise: &VisSaccadesConfig| {
             self.exercise_params = exercise.to_owned();
             self.session_status = SessionStatus::Response;
             self.evaluation.start();
@@ -276,7 +276,7 @@ impl Exercise for VisSaccades {
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
             if let Some(config) =
-                exercise_config_menu::<VisSaccadesExercise>(ui, &config.visual_saccades)
+                exercise_config_menu::<VisSaccadesConfig>(ui, &config.visual_saccades)
             {
                 func(config)
             };

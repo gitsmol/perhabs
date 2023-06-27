@@ -3,7 +3,7 @@ use chrono::Duration;
 use egui::{Align, Key, Vec2};
 use tts::Tts;
 
-use crate::shared::asset_loader::exercise_config::depth_perception::DepthPerceptionExercise;
+use crate::shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig;
 use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 use crate::shared::asset_loader::AppData;
 use crate::shared::evaluation::Evaluation;
@@ -212,7 +212,7 @@ impl Exercise for DepthPerception {
             &mut self.evaluation.repetitions,
         );
 
-        let mut func = |config: &DepthPerceptionExercise| {
+        let mut func = |config: &DepthPerceptionConfig| {
             self.session = SessionStatus::Response;
             self.anaglyph.config = config.clone();
             self.evaluation.start();
@@ -222,7 +222,7 @@ impl Exercise for DepthPerception {
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
             if let Some(config) =
-                exercise_config_menu::<DepthPerceptionExercise>(ui, &config.depth_perception)
+                exercise_config_menu::<DepthPerceptionConfig>(ui, &config.depth_perception)
             {
                 func(config)
             };

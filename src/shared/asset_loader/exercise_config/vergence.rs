@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct VergenceExercise {
+pub struct VergenceConfig {
     pub name: String,
     pub levels: Vec<Level>,
 }

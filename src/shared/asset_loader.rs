@@ -22,6 +22,7 @@ pub struct AppData {
     pub config_promise: Option<Promise<ehttp::Result<Response>>>,
     pub excconfig: Option<ExerciseConfigCollection>,
     pub excconfig_promise: Option<Promise<ehttp::Result<Response>>>,
+    pub debug_messages: Vec<String>,
 }
 
 impl Default for AppData {
@@ -31,6 +32,7 @@ impl Default for AppData {
             config_promise: None,
             excconfig: None,
             excconfig_promise: None,
+            debug_messages: vec![],
         }
     }
 }
