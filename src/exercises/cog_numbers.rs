@@ -1,5 +1,6 @@
-use crate::shared::asset_loader::AppData;
+use crate::widgets::menu_button;
 use crate::wm::sessionman::Exercise;
+use crate::{shared::asset_loader::AppData, widgets};
 use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
 
@@ -132,51 +133,26 @@ impl Exercise for CogNumbers {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
-        // normal stuff
-        ui.vertical(|ui| {
-            egui::Grid::new("my_grid")
-                .num_columns(2)
-                .spacing([40.0, 4.0])
-                .striped(true)
-                .show(ui, |ui| {
-                    ui.label("Show sequence");
-                    ui.checkbox(&mut self.config.seq_show, "");
-                    ui.end_row();
-                    ui.label("Sequence length");
-                    ui.add(egui::Slider::new(&mut self.config.seq_length, 1..=10));
-                    ui.end_row();
-                });
-
-            if ui.button("Start session").clicked() {
-                self.session.active = true;
+        // Draw a menu in two columns
+        ui.columns(2, |col| {
+            // Column 1 gets populated with at least half the buttons
+            for i in 4..8 as usize {
+                if menu_button(&mut col[0], None, format!("{i} numbers").as_str(), "").clicked() {
+                    self.config.seq_length = i;
+                    self.session.active = true;
+                };
             }
 
-            if self.config.seq_show {
-                ui.separator();
-                egui::Grid::new("answer_grid")
-                    .num_columns(2)
-                    .spacing([40.0, 4.0])
-                    .striped(true)
-                    .show(ui, |ui| {
-                        ui.label("Sequence");
-                        ui.heading(&self.answers.sequence.to_string());
-                        ui.end_row();
-
-                        ui.label("Reversed");
-                        ui.label(&self.answers.sequence_rev);
-                        ui.end_row();
-
-                        ui.label("Alphabetical");
-                        ui.label(&self.answers.sequence_alpha);
-                        ui.end_row();
-
-                        ui.label("Alphabetical reversed");
-                        ui.label(&self.answers.sequence_alpha_rev);
-                        ui.end_row();
-                    });
+            // Column 2 gets populated with the remaining buttons
+            for i in 8..=10 as usize {
+                if menu_button(&mut col[1], None, format!("{i} numbers").as_str(), "").clicked() {
+                    self.config.seq_length = i;
+                    self.session.active = true;
+                };
             }
         });
     }
+
     fn session(&mut self, ui: &mut egui::Ui, _: &AppData, tts: &mut Tts) {
         let spacer = ui.available_height() / 30.;
         if ui.button("Close").clicked() {

@@ -352,6 +352,7 @@ impl Exercise for Vergence {
 
                         for level in &excercise.levels {
                             if ui.button(&level.name).clicked() {
+                                self.anaglyph.initialize();
                                 self.step = level.step;
                                 self.anaglyph.pixel_size = level.pixel_size;
                                 self.session.active = true;
