@@ -157,9 +157,6 @@ impl Anaglyph {
     }
 
     /// Generates shapes to be drawn.
-    /// remove_focal_from_bg() needs to be called beforehand so the pixels in the focal
-    /// point are removed from the left and right background arrays.
-    ///
     /// The focal point is drawn according to the shape in the focal_mask array.
     fn draw_pixels(self: &mut Self, eye: Eye, origin: &Pos2) -> Result<Vec<Shape>, eframe::Error> {
         // Left/right image gets appropriate coloring and the offset value is split between them
@@ -270,6 +267,8 @@ impl Anaglyph {
                 }
             });
     }
+
+    /// Show some simple debugging controls
     fn debug_controls(&mut self, ui: &mut egui::Ui) {
         if !self.debug.show {
             return;

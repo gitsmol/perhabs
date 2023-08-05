@@ -4,7 +4,13 @@ use chrono::Duration;
 use egui::*;
 use num::{Integer, ToPrimitive};
 
-use crate::shared::time_formatting;
+/// Format a duration:
+/// 1 minute and 9 seconds = "1:09"
+pub fn format_min_secs(duration: &Duration) -> String {
+    let mins = duration.num_minutes();
+    let secs = duration.num_seconds() - (mins * 60);
+    format!("{}:{:02}", mins, secs)
+}
 
 /// Circle to display and alter a duration.
 /// Senses both clicks and drags.
@@ -236,7 +242,7 @@ pub fn circle_mut_duration(
         // Paint text
         //
         // Paint data
-        let data = time_formatting::format_min_secs(duration);
+        let data = format_min_secs(duration);
         let data_wt: WidgetText = data.into();
         let data_galley = data_wt.into_galley(ui, None, rect.width(), TextStyle::Heading);
         let data_galley_size = data_galley.size();

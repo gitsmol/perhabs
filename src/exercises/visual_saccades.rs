@@ -1,11 +1,9 @@
 use crate::exercises::Direction;
-use crate::shared::asset_loader::exercise_config::{
-    visual_saccades::VisSaccadesConfig, ExerciseConfig,
-};
+use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
 use crate::shared::asset_loader::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
-use crate::widgets::{self, menu_button};
+use crate::widgets::{self};
 use crate::{
     wm::sessionman::Exercise,
     {shared::evaluation::Evaluation, shared::timer::Timer},
@@ -14,11 +12,11 @@ use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Pos2, Rect, Sense, Vec2};
 use rand::{seq::SliceRandom, Rng};
 
-use super::SessionStatus;
+use super::ExerciseStatus;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct VisSaccades {
-    session_status: SessionStatus,
+    session_status: ExerciseStatus,
     arrow_pos: Option<Pos2>,
     answer: Option<Direction>, // The right answer is the direction of the arrow
     response: Option<Direction>, // The given response is a direction
@@ -30,7 +28,7 @@ pub struct VisSaccades {
 impl Default for VisSaccades {
     fn default() -> Self {
         Self {
-            session_status: SessionStatus::None,
+            session_status: ExerciseStatus::None,
             exercise_params: VisSaccadesConfig::default(),
             arrow_pos: None,
             answer: None,
@@ -103,12 +101,12 @@ impl VisSaccades {
 
         // When the evaluation time is up or number of reps is reached, stop immediately.
         if self.evaluation.is_finished() {
-            self.session_status = SessionStatus::Finished;
+            self.session_status = ExerciseStatus::Finished;
         }
 
         match self.session_status {
             // This exercise is always in response mode.
-            SessionStatus::Response => {
+            ExerciseStatus::Response => {
                 // Setup and display answer
                 // If no arrow is visible, create new arrow and set answer timeout timer
                 if let None = self.answer {
@@ -241,11 +239,11 @@ impl Exercise for VisSaccades {
 
         match self.session_status {
             // Default shows the menu
-            SessionStatus::None => {
+            ExerciseStatus::None => {
                 menu_window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
             // After an evaluation show the review
-            SessionStatus::Finished => {
+            ExerciseStatus::Finished => {
                 menu_window.show(ctx, |ui| self.finished_screen(ui));
             }
             // Any other status means we are in session.
@@ -269,7 +267,7 @@ impl Exercise for VisSaccades {
         // Display all exercise configs
         let mut func = |exercise: &VisSaccadesConfig| {
             self.exercise_params = exercise.to_owned();
-            self.session_status = SessionStatus::Response;
+            self.session_status = ExerciseStatus::Response;
             self.evaluation.start();
         };
 

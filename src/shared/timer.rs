@@ -57,6 +57,14 @@ impl Timer {
         }
     }
 
+    /// Returns true when timer is running.
+    pub fn is_running(&self) -> bool {
+        match self.end_time {
+            Some(_) => true,
+            None => false,
+        }
+    }
+
     /// Return the time remaining until the timer is finished.
     pub fn remaining(&self) -> Duration {
         if let Some(end_time) = self.end_time {

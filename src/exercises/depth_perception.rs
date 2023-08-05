@@ -4,7 +4,7 @@ use egui::{Align, Key, Vec2};
 use tts::Tts;
 
 use crate::shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig;
-use crate::shared::asset_loader::exercise_config::ExerciseConfig;
+
 use crate::shared::asset_loader::AppData;
 use crate::shared::evaluation::Evaluation;
 use crate::widgets;
@@ -15,14 +15,14 @@ use crate::wm::sessionman::Exercise;
 use self::anaglyph::Anaglyph;
 mod anaglyph;
 
-use super::SessionStatus;
+use super::ExerciseStatus;
 
 /// Exercise to train binocular convergence/divergence usign anaglyph images.
 pub struct DepthPerception {
     anaglyph: Anaglyph,
     calibrating: bool,
     evaluation: Evaluation<f32>,
-    session: SessionStatus,
+    session: ExerciseStatus,
 }
 
 impl Default for DepthPerception {
@@ -31,7 +31,7 @@ impl Default for DepthPerception {
             anaglyph: Anaglyph::default(),
             calibrating: false,
             evaluation: Evaluation::new(Duration::seconds(60), 60),
-            session: SessionStatus::None,
+            session: ExerciseStatus::None,
         }
     }
 }
@@ -78,13 +78,13 @@ impl DepthPerception {
     fn progressor(&mut self, ctx: &egui::Context) {
         // The only change is from Response to Finished. All other status changes
         // are forced by the user.
-        if self.session == SessionStatus::Response {
+        if self.session == ExerciseStatus::Response {
             // Repaint regularly to update timers!
             // NB this also sets bounds on the timer precision.
             ctx.request_repaint_after(std::time::Duration::from_millis(100));
             self.read_keypress(ctx);
             if self.evaluation.is_finished() {
-                self.session = SessionStatus::Finished;
+                self.session = ExerciseStatus::Finished;
             }
         }
     }
@@ -183,10 +183,10 @@ impl Exercise for DepthPerception {
         // - Finished session shows the evaluation scores
         // - Anything else shows the exercise menu
         match self.session {
-            SessionStatus::Response => {
+            ExerciseStatus::Response => {
                 egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
             }
-            SessionStatus::Finished => {
+            ExerciseStatus::Finished => {
                 menu_window.show(ctx, |ui| self.finished_screen(ui));
             }
             _ => {
@@ -213,7 +213,7 @@ impl Exercise for DepthPerception {
         );
 
         let mut func = |config: &DepthPerceptionConfig| {
-            self.session = SessionStatus::Response;
+            self.session = ExerciseStatus::Response;
             self.anaglyph.config = config.clone();
             self.evaluation.start();
             self.anaglyph.next();
