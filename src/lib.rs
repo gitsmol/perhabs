@@ -1,3 +1,4 @@
+pub mod egui_style;
 pub mod exercises;
 pub mod shared;
 pub mod tools;

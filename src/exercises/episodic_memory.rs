@@ -1,5 +1,5 @@
 use crate::shared::asset_loader::sentences::Sentences;
-use crate::shared::asset_loader::{self, AppData};
+use crate::shared::asset_loader::{self, appdata::AppData};
 use crate::widgets::{loading_bar_vertical, loading_screen, menu_button};
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, Color32, RichText, TextEdit, Vec2};
@@ -7,7 +7,7 @@ use tts::{self, Tts};
 
 /// Sequences
 pub struct EpisodicMemory {
-    sentences: Sentences,
+    prompts: Sentences,
     session: bool,
     answer: String,
 }
@@ -15,7 +15,7 @@ pub struct EpisodicMemory {
 impl Default for EpisodicMemory {
     fn default() -> Self {
         Self {
-            sentences: Sentences::default(),
+            prompts: Sentences::default(),
             session: false,
             answer: String::new(),
         }
@@ -23,22 +23,11 @@ impl Default for EpisodicMemory {
 }
 
 impl EpisodicMemory {
-    fn say(&mut self, spk: &mut tts::Tts) -> () {
-        if let Some(contents) = &self.sentences.contents {
-            if let Some(question) = contents.last() {
-                match spk.speak(question, false) {
-                    Ok(_) => debug!("TTS: Sentence spoken."),
-                    Err(e) => warn!("TTS error: {:?}", e),
-                };
-            }
-        }
-    }
-
     /// Pop the last sentence from the vec of file contents.
     fn next_question(&mut self) {
         self.answer.clear();
 
-        if let Some(contents) = &mut self.sentences.contents {
+        if let Some(contents) = &mut self.prompts.contents {
             // Get the last sentence in the vec
             match contents.pop() {
                 Some(answer) => {
@@ -55,16 +44,16 @@ impl EpisodicMemory {
 
     fn contents_guarantee(&mut self, appdata: &AppData) -> bool {
         // If we have contents, give a guarantee
-        if let Some(_) = self.sentences.contents {
+        if let Some(_) = self.prompts.contents {
             return true;
         };
 
         // If we don't have contents, we may have a promise for a web download
-        match &self.sentences.promise {
+        match &self.prompts.promise {
             // No we don't have a promise
             None => {
                 // We need a config to be present
-                let file = match &self.sentences.selected_file {
+                let file = match &self.prompts.selected_file {
                     Some(file) => file,
                     None => return false,
                 };
@@ -77,8 +66,8 @@ impl EpisodicMemory {
                     match asset_loader::sentences::get_sentences_disk(diskpath) {
                         // Found contents: store in self and shuffle
                         Ok(file) => {
-                            self.sentences.contents = Some(file);
-                            self.sentences.shuffle_contents()
+                            self.prompts.contents = Some(file);
+                            self.prompts.shuffle_contents()
                         }
                         // Can't load from disk: create a promise to load from web
                         Err(_) => {
@@ -86,7 +75,7 @@ impl EpisodicMemory {
                                 "{}{}{}",
                                 config.web_root, config.episodic_memory_path, file.filename
                             );
-                            self.sentences.promise =
+                            self.prompts.promise =
                                 Some(asset_loader::sentences::get_sentences_web(webpath));
                         }
                     };
@@ -102,7 +91,7 @@ impl EpisodicMemory {
                     let contents = resource.text().unwrap();
 
                     // Store contents of sentences file
-                    self.sentences.contents =
+                    self.prompts.contents =
                         match asset_loader::sentences::read_sentences_promise(contents) {
                             Ok(res) => Some(res),
                             // If deserialization fails, store hardcoded defaults
@@ -110,7 +99,7 @@ impl EpisodicMemory {
                         };
 
                     // Finally, shuffle the downloaded/default contents
-                    self.sentences.shuffle_contents()
+                    self.prompts.shuffle_contents()
                 }
             }
         }
@@ -157,10 +146,10 @@ impl Exercise for EpisodicMemory {
         if let Some(config) = &appdata.config {
             for file in &config.episodic_memory_files {
                 if menu_button(ui, None, file.language.as_str(), "").clicked() {
-                    self.sentences.selected_file = Some(file.to_owned());
+                    self.prompts.selected_file = Some(file.to_owned());
                     // If the selected value changes set the contents to none.
                     // This triggers the contents guarantee and fetches the appropriate file.
-                    self.sentences.contents = None;
+                    self.prompts.contents = None;
                     self.session = true;
                 };
             }
@@ -187,7 +176,7 @@ impl Exercise for EpisodicMemory {
         ui.vertical_centered(|ui| {
             ui.add_space(spacer * 4.);
 
-            if let Some(contents) = &self.sentences.contents {
+            if let Some(contents) = &self.prompts.contents {
                 if let Some(question) = contents.last() {
                     ui.heading(RichText::new(question).size(25.));
                     ui.add_space(spacer * 2.);

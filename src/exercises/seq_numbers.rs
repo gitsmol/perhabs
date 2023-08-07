@@ -1,4 +1,4 @@
-use crate::{shared::asset_loader::AppData, wm::sessionman::Exercise};
+use crate::{shared::asset_loader::appdata::AppData, wm::sessionman::Exercise};
 use egui::{vec2, Align, Vec2};
 use rand::prelude::*;
 use tts::Tts;

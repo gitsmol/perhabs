@@ -1,18 +1,18 @@
 use self::soundsource::{match_coords_to_pin, SoundSource};
 
 use super::ExerciseStatus;
-use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
-use crate::shared::asset_loader::AppData;
+use crate::shared::asset_loader::appdata::AppData;
+
 use crate::shared::pos3::Pos3;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu;
+
 use crate::widgets::{self};
 use crate::{
     wm::sessionman::Exercise,
     {shared::evaluation::Evaluation, shared::timer::Timer},
 };
-use chrono::{Duration, DurationRound};
-use egui::{vec2, Align, CollapsingResponse, Frame, Vec2};
+use chrono::Duration;
+use egui::{vec2, Align, Frame, Vec2};
 use rand::seq::SliceRandom;
 
 mod soundsource;
@@ -38,16 +38,21 @@ pub struct SpatialHearing {
 
 impl Default for SpatialHearing {
     fn default() -> Self {
-        Self {
+        let mut _self = Self {
             device_url: String::from("http://192.168.1.38:5000/buzz"),
             status: ExerciseStatus::None,
-            space_dimensions: SpaceDimensions { x: 2, y: 3, z: 2 },
+            space_dimensions: SpaceDimensions { x: 2, y: 3, z: 1 },
             sound_sources: Vec::new(),
             answer: None,
             response: None,
             timer: Timer::new(),
             evaluation: Evaluation::new(Duration::seconds(60), 60),
-        }
+        };
+
+        // Always initialize default soundsources
+        _self.init_soundsources();
+
+        _self
     }
 }
 
@@ -57,7 +62,7 @@ impl Default for SpatialHearing {
 impl SpatialHearing {
     /// Initialize the exercise by creating soundsources according to
     /// the parameters in `space_dimensions`.
-    fn init(&mut self) {
+    fn init_soundsources(&mut self) {
         // We iterate through each dimension in turn, finally constructing an
         // object that contains both the coordinates according to the xyz-system
         // and the normalized Pos3 object.
@@ -98,11 +103,12 @@ impl SpatialHearing {
         ctx.request_repaint_after(std::time::Duration::from_millis(100));
 
         // When the evaluation time is up or number of reps is reached, stop immediately.
-        // if self.evaluation.is_finished() {
-        //     self.session_status = SessionStatus::Finished;
-        // }
+        if self.evaluation.is_finished() {
+            self.status = ExerciseStatus::Finished;
+        }
 
         match self.status {
+            // Show the menu (ie do nothing)
             ExerciseStatus::None => (),
             // Give the challenge (ie make a sound)
             ExerciseStatus::Challenge => {
@@ -287,21 +293,37 @@ impl Exercise for SpatialHearing {
             &mut self.evaluation.repetitions,
         );
 
-        // Display all exercise configs
-        let mut func = |exercise: &VisSaccadesConfig| {
-            // self.exercise_params = exercise.to_owned();
-            self.status = ExerciseStatus::Response;
-            self.evaluation.start();
-        };
+        // Display spatial setup config on dark background
+        Frame::dark_canvas(ui.style()).show(ui, |ui| self.draw_3d_space(ui));
 
-        // Display exercise configs
-        if let Some(config) = &appdata.excconfig {
-            if let Some(config) =
-                exercise_config_menu::<VisSaccadesConfig>(ui, &config.visual_saccades)
-            {
-                func(config)
-            };
-        }
+        egui::Grid::new("space_dimensions")
+            .num_columns(2)
+            .show(ui, |ui| {
+                ui.label("Width (x axis)");
+                if ui
+                    .add(egui::Slider::new(&mut self.space_dimensions.x, 1..=5))
+                    .changed()
+                {
+                    self.init_soundsources()
+                };
+                ui.end_row();
+                ui.label("Height (Y axis)");
+                if ui
+                    .add(egui::Slider::new(&mut self.space_dimensions.y, 1..=5))
+                    .changed()
+                {
+                    self.init_soundsources()
+                };
+                ui.end_row();
+                ui.label("Depth (Z axis)");
+                if ui
+                    .add(egui::Slider::new(&mut self.space_dimensions.z, 1..=5))
+                    .changed()
+                {
+                    self.init_soundsources()
+                };
+                ui.end_row();
+            });
 
         //
         // DEBUGGING STUFF! REMOVE ME!
@@ -309,8 +331,8 @@ impl Exercise for SpatialHearing {
         if ui.button("Buzz").clicked() {
             self.request_beep(&self.device_url, 12, 200, 200);
         }
-        if ui.button("Test session").clicked() {
-            self.init();
+        if ui.button("Start session").clicked() {
+            self.init_soundsources();
             self.status = ExerciseStatus::Challenge;
         }
     }
@@ -329,7 +351,7 @@ impl Exercise for SpatialHearing {
 
         Frame::dark_canvas(ui.style()).show(ui, |ui| {
             // Draw the '3d' space and fill it with the configured soundsources.
-            let visual_space = self.draw(ui);
+            let visual_space = self.draw_3d_space(ui);
             // Taking care of clicks while we are in response mode
             if self.status == ExerciseStatus::Response && visual_space.clicked() {
                 // On click, get pointer position. If user clicks a soundsource,
@@ -352,5 +374,51 @@ impl Exercise for SpatialHearing {
                 }
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{thread::sleep, time::Duration};
+
+    use egui::Context;
+
+    use crate::{
+        exercises::{spatial_hearing::soundsource::SoundSource, ExerciseStatus},
+        shared::pos3::Pos3,
+    };
+
+    use super::SpatialHearing;
+
+    #[test]
+    fn single_progression() {
+        // create the exercise
+        let mut exercise = SpatialHearing::default();
+        let mut ctx = Context::default();
+
+        // start the exercise
+        exercise.init_soundsources();
+        exercise.status = ExerciseStatus::Challenge;
+        exercise.progressor(&mut ctx);
+        sleep(Duration::from_secs(1));
+        exercise.progressor(&mut ctx);
+
+        // In response mode, create a response
+        assert!(exercise.status == ExerciseStatus::Response);
+        exercise.response = Some(SoundSource {
+            coords: [9, 9, 9],
+            pos3: Pos3::new(1., 1., 1.),
+            rect: None,
+        });
+        exercise.progressor(&mut ctx);
+
+        // In result mode, wait 2 seconds and go to next challenge
+        assert!(exercise.status == ExerciseStatus::Result);
+        exercise.progressor(&mut ctx);
+        sleep(Duration::from_secs(2));
+        exercise.progressor(&mut ctx);
+        assert!(exercise.status == ExerciseStatus::Challenge);
+
+        // assert_eq!(score, 0.59999996);
     }
 }

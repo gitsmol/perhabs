@@ -5,7 +5,7 @@ use tts::Tts;
 
 use crate::shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig;
 
-use crate::shared::asset_loader::AppData;
+use crate::shared::asset_loader::appdata::AppData;
 use crate::shared::evaluation::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;

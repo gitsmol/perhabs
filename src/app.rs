@@ -1,11 +1,11 @@
-use eframe::epaint::Shadow;
-use egui::{vec2, Align, Rounding, ScrollArea, Vec2, Visuals};
+use egui::{vec2, Align, ScrollArea, Vec2};
 
 use log::debug;
 use perhabs::{
+    egui_style,
     shared::asset_loader::{
-        exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
-        AppData, AssetSource,
+        appdata::AppData, exercise_config_collection::ExerciseConfigCollection,
+        perhabs_config::PerhabsConfig, AssetSource,
     },
     widgets,
     wm::sessionman::SessionManager,
@@ -34,31 +34,34 @@ impl Default for Perhabs {
     }
 }
 
+// ***********
+// Internals
+// ***********
+
 impl Perhabs {
     /// Called once before the first frame.
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customized the look at feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        let mut visuals = Visuals::light();
-        visuals.window_rounding = Rounding::same(2.);
-        visuals.window_shadow = Shadow::small_light();
-        cc.egui_ctx.set_visuals(visuals);
+        // Use custom styles
+        cc.egui_ctx.set_visuals(egui_style::light_visuals());
 
         Default::default()
     }
 
+    /// Only returns true when both PerhabsConfig and ExcerciseConfig are present.
     fn guarantee_configs(&mut self) -> bool {
-        // If we have a PerhabsConfig and ExcConfig, don't do anything.
-        if self.guarantee_phconfig() == true {
-            // NOTE we can't have ExcConfig without PerhabsConfig
-            if self.guarantee_excconfig() == true {
-                return true;
-            }
-        }
+        if !self.guarantee_phconfig() {
+            return false;
+        };
 
-        // return false if we dont early return true
-        false
+        if !self.guarantee_excconfig() {
+            return false;
+        };
+
+        // only return true if the guard clauses aren't triggered.
+        true
     }
 
     /// Guarantees a configuration; returns false when there is no PerhabsConfig.
@@ -191,7 +194,103 @@ impl Perhabs {
         // knows there is no config (yet).
         false
     }
+}
 
+//
+// UI
+//
+
+impl eframe::App for Perhabs {
+    /// Called each time the UI needs repainting, which may be many times per second.
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        // Persistent menubar at the top of the screen.
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| self.menu_bar(ui, frame));
+
+        // The central panel is where we display all windows and exercises.
+        // Note the early return pattern in this code!
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // Show a loading screen until we have configs. Then show utility windows and session.
+            if self.guarantee_configs() == false {
+                widgets::loading(ui);
+                return;
+            }
+
+            // Always show single windows
+            self.windows.windows(ctx, &self.appdata, &mut self.speaker);
+
+            // Show the session menu or an active session if present
+            if self.sessionman.open.is_some() {
+                self.sessionman
+                    .session_show(ctx, &self.appdata, &mut self.speaker);
+                return;
+            }
+
+            // If there is no open session, show the exercise menu
+            // First, determine if we are on a small screen or not
+            let menu_width = {
+                if ui.available_width() < 600. {
+                    ui.available_width()
+                } else {
+                    600.
+                }
+            };
+
+            if menu_width < 600. {
+                self.menu_smallscreen(ctx, ui)
+            } else {
+                self.menu(ctx, ui);
+            };
+        });
+    }
+}
+
+impl Perhabs {
+    /// Persistent menu bar at the top of the screen
+    fn menu_bar(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        egui::menu::bar(ui, |ui| {
+            ui.menu_button("File", |ui| {
+                // Toggle dark mode
+                if ui.button("Toggle dark mode").clicked() {
+                    match ui.ctx().style().visuals.dark_mode {
+                        true => {
+                            debug!("Options - Dark mode is on, switching to light mode.");
+                            ui.ctx().set_visuals(egui_style::light_visuals());
+                        }
+                        false => {
+                            debug!("Options - Light mode is on, switching to dark mode.");
+                            ui.ctx().set_visuals(egui_style::dark_visuals());
+                        }
+                    }
+                }
+
+                // Quit button
+                if ui.button("\u{2386} Quit").clicked() {
+                    frame.close();
+                };
+            });
+            ui.menu_button("Tools \u{27A1}", |ui| {
+                // Debug checkbox
+                ui.checkbox(&mut self.appdata.debug, "Debug");
+                // Available windows
+                self.windows.labels(ui);
+            });
+            // Only show quit when a session is active.
+            if let Some(session_name) = self.sessionman.open {
+                ui.add_space(ui.available_width() - 85.);
+                if ui.button("\u{2386} Quit session").clicked() {
+                    self.sessionman.open = None;
+                    // Reset the session on close
+                    for session in &mut self.sessionman.sessions {
+                        if session.name() == session_name {
+                            session.reset();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /// The exercise menu in its 2 column layout
     fn menu(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
         let spacer = ui.available_size() / 20.;
 
@@ -209,68 +308,12 @@ impl Perhabs {
             });
     }
 
-    fn menu_smallscreen(&mut self, ctx: &egui::Context, ui: &mut egui::Ui) {
-        ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menubar at the top of the screen provides a number of helpful tools.");
+    /// The exercise menu in its single column layout for small screens
+    fn menu_smallscreen(&mut self, _: &egui::Context, ui: &mut egui::Ui) {
+        ui.label("Perhabs consists of a number of exercises targeting different skills.\n\nThe menu at the top of the screen provides some tools.");
         ui.add_space(10.);
-        ScrollArea::new([false, true]).show(ui, |ui| self.sessionman.buttons(ui));
-    }
-}
-
-impl eframe::App for Perhabs {
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // Persistent menu bar at the top of the screen
-            egui::menu::bar(ui, |ui| {
-                ui.label("Theme");
-                egui::widgets::global_dark_light_mode_switch(ui);
-                ui.label(" | ");
-                ui.label("Tools \u{27A1}");
-                self.windows.labels(ui);
-                // Only show quit when a session is active.
-                if let Some(session_name) = self.sessionman.open {
-                    ui.add_space(ui.available_width() - 85.);
-                    if ui.button("\u{2386} Quit session").clicked() {
-                        self.sessionman.open = None;
-                        // Reset the session on close
-                        for session in &mut self.sessionman.sessions {
-                            if session.name() == session_name {
-                                session.reset();
-                            }
-                        }
-                    }
-                }
-            });
-        });
-
-        // Show a loading screen until we have configs. Then show utility windows and session.
-        egui::CentralPanel::default().show(ctx, |ui| {
-            if self.guarantee_configs() == false {
-                widgets::loading(ui);
-            } else {
-                // Show windows
-                self.windows.windows(ctx, &self.appdata, &mut self.speaker);
-
-                // Show the session menu or an active session
-                if let None = self.sessionman.open {
-                    let menu_width = {
-                        if ui.available_width() < 600. {
-                            ui.available_width()
-                        } else {
-                            600.
-                        }
-                    };
-
-                    if menu_width < 600. {
-                        self.menu_smallscreen(ctx, ui)
-                    } else {
-                        self.menu(ctx, ui);
-                    };
-                } else {
-                    self.sessionman
-                        .session_show(ctx, &self.appdata, &mut self.speaker);
-                }
-            }
-        });
+        ScrollArea::new([false, true])
+            .drag_to_scroll(true)
+            .show(ui, |ui| self.sessionman.buttons(ui));
     }
 }

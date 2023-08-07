@@ -1,6 +1,6 @@
 use crate::exercises::Direction;
+use crate::shared::asset_loader::appdata::AppData;
 use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
-use crate::shared::asset_loader::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::widgets::{self};

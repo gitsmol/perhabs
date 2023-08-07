@@ -6,7 +6,7 @@ use egui::{pos2, vec2, Align, Frame, Key, Rect, Stroke, Vec2};
 use tts::Tts;
 
 use crate::exercises::Direction;
-use crate::shared::asset_loader::AppData;
+use crate::shared::asset_loader::appdata::AppData;
 use crate::shared::evaluation::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
@@ -160,9 +160,6 @@ impl Vergence {
                 "Reps remaining: {}",
                 self.evaluation.reps_remaining()
             ));
-
-            ui.add_space(ui.available_width() - 100.0);
-            ui.checkbox(&mut self.anaglyph.debug.show, "Debug");
         });
     }
 
@@ -374,8 +371,11 @@ impl Exercise for Vergence {
     }
 
     /// The session window showing anaglyphs
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
         self.ui_controls(ui);
+        if appdata.debug {
+            self.anaglyph.debug_controls(ui);
+        }
 
         self.anaglyph.draw(ui);
     }

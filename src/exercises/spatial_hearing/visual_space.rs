@@ -13,9 +13,9 @@ impl super::SpatialHearing {
     /// For example, if (0, 0) is the vanishing point of a 2 dimensional system, all
     /// operations that bring Z closer to 1 must bring X and Y closer to 0. To the
     /// point where they are (asymptotically close to) 0 when Z is 1.
-    pub fn draw(&mut self, ui: &mut egui::Ui) -> egui::Response {
+    pub fn draw_3d_space(&mut self, ui: &mut egui::Ui) -> egui::Response {
         // Set up
-        let (mut response, painter) =
+        let (response, painter) =
             ui.allocate_painter(ui.available_size_before_wrap(), Sense::click());
         // Create a transform mapping the available space on a rectangle,
         // In this case, we make 0.0 the center of the screen. This works well with

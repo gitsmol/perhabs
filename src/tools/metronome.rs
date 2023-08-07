@@ -1,6 +1,6 @@
 use std::sync::mpsc::{self, Sender};
 
-use crate::shared::asset_loader::AppData;
+use crate::shared::asset_loader::appdata::AppData;
 use crate::shared::cpal_audio::{beep, AudioHandle, Voice};
 use crate::wm::windowman::{AppWin, View};
 

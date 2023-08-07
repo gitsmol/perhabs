@@ -1,5 +1,5 @@
 use crate::{
-    shared::asset_loader::AppData,
+    shared::asset_loader::appdata::AppData,
     wm::windowman::{AppWin, View},
 };
 use chrono::{Local, Timelike};

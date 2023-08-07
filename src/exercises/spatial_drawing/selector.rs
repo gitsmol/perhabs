@@ -4,7 +4,7 @@ use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
 
 use crate::{
     exercises::spatial_drawing::{painters::PuzzleGrid, SessionStatus},
-    shared::asset_loader::{write_string_to_file, AppData},
+    shared::asset_loader::{appdata::AppData, write_string_to_file},
 };
 
 use super::painters::SpatialPuzzle;

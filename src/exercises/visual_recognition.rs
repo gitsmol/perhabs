@@ -6,7 +6,10 @@ use crate::widgets::exercise_config_menu::exercise_config_menu;
 
 use crate::{
     wm::sessionman::Exercise,
-    {shared::asset_loader::AppData, shared::evaluation::Evaluation, shared::timer::Timer},
+    {
+        shared::asset_loader::appdata::AppData, shared::evaluation::Evaluation,
+        shared::timer::Timer,
+    },
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2};

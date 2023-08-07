@@ -1,4 +1,4 @@
-use crate::shared::asset_loader::AppData;
+use crate::shared::asset_loader::appdata::AppData;
 use crate::widgets::menu_button;
 use crate::wm::sessionman::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
@@ -16,11 +16,6 @@ impl Default for Session {
     fn default() -> Self {
         Self { active: false }
     }
-}
-
-struct Configuration {
-    seq_length: usize,
-    seq_show: bool,
 }
 
 struct Answers {
@@ -42,7 +37,7 @@ impl Default for Answers {
 
 /// Sequences
 pub struct CogNumbers {
-    config: Configuration,
+    seq_length: usize,
     session: Session,
     answers: Answers,
 }
@@ -51,10 +46,7 @@ impl Default for CogNumbers {
     fn default() -> Self {
         Self {
             answers: Answers::default(),
-            config: Configuration {
-                seq_length: 4,
-                seq_show: false,
-            },
+            seq_length: 4,
             session: Session::default(),
         }
     }
@@ -70,11 +62,11 @@ impl CogNumbers {
 
     fn pick_sequence(&mut self) -> () {
         let mut seq = vec![];
-        if self.config.seq_length > 11 {
+        if self.seq_length > 11 {
             return;
         }
         let mut rng = thread_rng();
-        while seq.len() < self.config.seq_length {
+        while seq.len() < self.seq_length {
             // this means no seq longer than 11 numbers (0..10)!
             let num = rng.gen_range(0..=10);
             if !seq.contains(&num) {
@@ -138,7 +130,7 @@ impl Exercise for CogNumbers {
             // Column 1 gets populated with at least half the buttons
             for i in 4..8 as usize {
                 if menu_button(&mut col[0], None, format!("{i} numbers").as_str(), "").clicked() {
-                    self.config.seq_length = i;
+                    self.seq_length = i;
                     self.session.active = true;
                 };
             }
@@ -146,7 +138,7 @@ impl Exercise for CogNumbers {
             // Column 2 gets populated with the remaining buttons
             for i in 8..=10 as usize {
                 if menu_button(&mut col[1], None, format!("{i} numbers").as_str(), "").clicked() {
-                    self.config.seq_length = i;
+                    self.seq_length = i;
                     self.session.active = true;
                 };
             }

@@ -4,7 +4,7 @@ use egui::Pos2;
 use rand::Rng;
 
 /// Holds a 3D position. Implemented functions all normalize input to range 0.0 - 1.0.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub struct Pos3 {
     x: f32,
     y: f32,
@@ -44,15 +44,10 @@ impl Pos3 {
     }
 }
 
-impl PartialEq for Pos3 {
-    fn eq(&self, other: &Self) -> bool {
-        self.x == other.x && self.y == other.y && self.z == other.z
-    }
-}
-
 impl Sub<Pos2> for Pos3 {
     type Output = Pos3;
 
+    /// Subtract a pos2 from a pos3 by subtracting x and y.
     fn sub(self, rhs: Pos2) -> Self::Output {
         Self {
             x: self.x - rhs.x,
@@ -65,6 +60,7 @@ impl Sub<Pos2> for Pos3 {
 impl Add<Pos2> for Pos3 {
     type Output = Pos3;
 
+    /// Add a pos2 to a pos3 by adding x and y.
     fn add(self, rhs: Pos2) -> Self::Output {
         Self {
             x: self.x + rhs.x,

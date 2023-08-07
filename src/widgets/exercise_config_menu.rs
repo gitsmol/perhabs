@@ -1,6 +1,5 @@
-use crate::shared::asset_loader::exercise_config::ExerciseConfig;
-
 use super::menu_button;
+use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 
 /// Draws a menu consisting of two columns. All menu items are distributed evenly
 /// across the two columns, filling the first and then the second. For an uneven number
@@ -11,13 +10,14 @@ use super::menu_button;
 /// The reference is wrapped in an option, so the function returns None when not clicked.
 ///
 /// ## Example
-/// ```
+/// ```ignore
 /// if let Some(config) =
-///     exercise_config_menu::<DepthPerceptionExercise>(ui, &config.depth_perception)
+///     exercise_config_menu::<DepthPerceptionConfig>(&mut ui, &config.depth_perception)
 /// {
 ///    println!("Config {} has been clicked!", config.name());
 /// };
 /// ```
+
 pub fn exercise_config_menu<'a, T>(ui: &mut egui::Ui, config: &'a Vec<T>) -> Option<&'a T>
 where
     T: ExerciseConfig,

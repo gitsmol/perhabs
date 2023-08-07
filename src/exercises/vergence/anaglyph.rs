@@ -28,7 +28,6 @@ impl Default for AnaglyphArrays {
 }
 
 pub struct Debug {
-    pub show: bool,
     draw_left: bool,
     draw_right: bool,
     focal_mark: bool,
@@ -37,7 +36,6 @@ pub struct Debug {
 impl Default for Debug {
     fn default() -> Self {
         Self {
-            show: false,
             draw_left: true,
             draw_right: true,
             focal_mark: false,
@@ -227,8 +225,6 @@ impl Anaglyph {
 
     /// Draw the background pixels and the focal pixes for left and right eye.
     pub fn draw(self: &mut Self, ui: &mut egui::Ui) {
-        self.debug_controls(ui);
-
         Frame::dark_canvas(ui.style())
             .outer_margin(Margin::from(0.0))
             .show(ui, |ui| {
@@ -269,11 +265,7 @@ impl Anaglyph {
     }
 
     /// Show some simple debugging controls
-    fn debug_controls(&mut self, ui: &mut egui::Ui) {
-        if !self.debug.show {
-            return;
-        }
-
+    pub fn debug_controls(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.add(egui::Checkbox::new(&mut self.debug.draw_left, "Left"));
             ui.add(egui::Checkbox::new(&mut self.debug.draw_right, "Right"));

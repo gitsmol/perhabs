@@ -5,7 +5,7 @@ use crate::{
         spatial_hearing::SpatialHearing, vergence::Vergence, visual_recognition::VisRecognition,
         visual_saccades::VisSaccades,
     },
-    shared::asset_loader::AppData,
+    shared::asset_loader::appdata::AppData,
     widgets::menu_button,
 };
 
