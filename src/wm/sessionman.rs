@@ -1,11 +1,9 @@
 use crate::{
     exercises::{
-        cog_numbers::CogNumbers, cog_words::CogWords, depth_perception::DepthPerception,
-        episodic_memory::EpisodicMemory, seq_numbers::NumSeq, spatial_drawing::SpatialDrawing,
-        spatial_hearing::SpatialHearing, vergence::Vergence, visual_recognition::VisRecognition,
-        visual_saccades::VisSaccades,
+        CogNumbers, CogWords, DepthPerception, EpisodicMemory, NumSeq, SpatialDrawing,
+        SpatialHearing, Vergence, VisRecognition, VisSaccades,
     },
-    shared::asset_loader::appdata::AppData,
+    shared::AppData,
     widgets::menu_button,
 };
 

@@ -1,4 +1,4 @@
-use crate::exercises::Direction;
+use crate::{exercises::Direction, shared::egui_style};
 
 use egui::{
     emath::{RectTransform, Rot2},
@@ -20,11 +20,25 @@ pub fn loading_screen(ui: &mut egui::Ui) {
     });
 }
 
-pub fn loading(ui: &mut egui::Ui) {
-    ui.horizontal_centered(|ui| {
-        ui.heading("Loading...");
-        ui.spinner();
-    });
+/// Button to toggle dark/light mode. Button label changes depending on current mode.
+pub fn dark_mode_toggle_button(ui: &mut egui::Ui) {
+    let dark_mode: bool = ui.ctx().style().visuals.dark_mode;
+    let label = match dark_mode {
+        true => "\u{263C} Light mode",
+        false => "\u{1F319} Dark mode",
+    };
+    if ui.button(label).clicked() {
+        match dark_mode {
+            true => {
+                debug!("Options - Dark mode is on, switching to light mode.");
+                ui.ctx().set_visuals(egui_style::light_visuals());
+            }
+            false => {
+                debug!("Options - Light mode is on, switching to dark mode.");
+                ui.ctx().set_visuals(egui_style::dark_visuals());
+            }
+        }
+    }
 }
 
 /// Vertical loading bar, quite narrow.
@@ -100,8 +114,10 @@ pub fn circle_with_data(
 /// Large menu button
 
 /// ## Params
-/// override_size:  When Some, determines the size of the button.
-///                 When None, vec2(ui.available_width(), 100.) is used.
+/// override_size:      When Some, determines the size of the button.
+///                     When None, vec2(ui.available_width(), 100.) is used.
+/// label_source:       Button label
+/// description_source: Button description
 pub fn menu_button(
     ui: &mut egui::Ui,
     override_size: Option<Vec2>,
@@ -146,7 +162,7 @@ pub fn menu_button(
 
         // All coordinates are in absolute screen coordinates so we use `rect` to place the elements.
         let rect = rect.expand(visuals.expansion);
-        let radius = 0.1 * rect.height(); // Round corners.
+        let radius = 0.05 * rect.height(); // Round corners slightly.
         ui.painter()
             .rect(rect, radius, visuals.bg_fill, visuals.bg_stroke);
 

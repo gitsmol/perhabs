@@ -1,49 +1,59 @@
 use super::menu_button;
 use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 
-/// Draws a menu consisting of two columns. All menu items are distributed evenly
-/// across the two columns, filling the first and then the second. For an uneven number
-/// of items, the extra item goes into the first column.
+/// Draws a menu consisting of two columns. All menu items are distributed across
+/// a given number of columns. For an uneven number of items,
+/// the last column gets the smallest number of items.
 ///
 /// To use, define T using turbofish (::<>) and load a vec containing exercise configs.
 /// When a button is clicked, it returns a reference to a specific config from this vec.
-/// The reference is wrapped in an option, so the function returns None when not clicked.
+/// The reference is wrapped in Option, so the function returns None when not clicked.
 ///
 /// ## Example
 /// ```ignore
-/// if let Some(config) =
-///     exercise_config_menu::<DepthPerceptionConfig>(&mut ui, &config.depth_perception)
+/// if let Some(list_of_configs) =
+///     exercise_config_menu::<DepthPerceptionConfig>(&mut ui, &config.depth_perception, 3)
 /// {
-///    println!("Config {} has been clicked!", config.name());
+///     let mut return_val: Option<&T> = None;
+///     for config in list_of_configs {
+///         if ui.button("Menu option").clicked {
+///             return_val = Some(config);
+///         };
+///     };
+///
+///     return_val
 /// };
 /// ```
-
-pub fn exercise_config_menu<'a, T>(ui: &mut egui::Ui, config: &'a Vec<T>) -> Option<&'a T>
+pub fn exercise_config_menu_multicol<'a, T>(
+    ui: &mut egui::Ui,
+    config: &'a Vec<T>,
+    num_cols: usize,
+) -> Option<&'a T>
 where
     T: ExerciseConfig,
 {
-    let buttons_total: f32 = config.len() as f32;
-    let col_1_range = buttons_total - (buttons_total / 2.).floor();
-
+    // We return None unless a button gets clicked.
     let mut return_val: Option<&T> = None;
 
-    ui.columns(2, |col| {
-        // Column 1 gets populated with at least half the buttons
-        for i in 0..col_1_range as usize {
-            if let Some(exercise) = config.get(i) {
-                if menu_button(&mut col[0], None, exercise.name(), "").clicked() {
-                    return_val = Some(exercise);
-                };
-            };
-        }
+    // Divide buttons across cols. For an uneven number of buttons, we want the least
+    // amount of buttons in the last column. Therefore, we use ceil() to get the highest
+    // possible number from the division.
+    let total_items = config.len();
+    let bin_size = (total_items as f32 / num_cols as f32).ceil() as usize;
 
-        // Column 2 gets populated with the remaining buttons
-        for i in col_1_range as usize..buttons_total as usize {
-            if let Some(exercise) = config.get(i) {
-                if menu_button(&mut col[1], None, exercise.name(), "").clicked() {
-                    return_val = Some(exercise);
+    // Each column is filled with `bin_size` buttons so long as an item can be
+    // found in the config file for that index. If not, no button is created.
+    ui.columns(num_cols, |col| {
+        for colnr in 0..num_cols {
+            let item_index_start = colnr * bin_size;
+            let item_index_end = colnr * bin_size + bin_size;
+            for i in item_index_start..item_index_end {
+                if let Some(exercise) = config.get(i) {
+                    if menu_button(&mut col[colnr], None, exercise.name(), "").clicked() {
+                        return_val = Some(exercise);
+                    };
                 };
-            };
+            }
         }
     });
 

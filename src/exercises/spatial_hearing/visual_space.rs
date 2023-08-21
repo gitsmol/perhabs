@@ -1,6 +1,6 @@
 use egui::{emath, epaint::RectShape, pos2, Color32, Pos2, Rect, Rounding, Sense, Shape, Stroke};
 
-use crate::{exercises::ExerciseStatus, shared::pos3::Pos3};
+use crate::{exercises::ExerciseStatus, shared::Pos3};
 
 impl super::SpatialHearing {
     /// How do we represent a 3D space in a simplistic 2D fashion?
@@ -12,7 +12,7 @@ impl super::SpatialHearing {
     ///
     /// For example, if (0, 0) is the vanishing point of a 2 dimensional system, all
     /// operations that bring Z closer to 1 must bring X and Y closer to 0. To the
-    /// point where they are (asymptotically close to) 0 when Z is 1.
+    /// point where they are (almost) 0 when Z is 1.
     pub fn draw_3d_space(&mut self, ui: &mut egui::Ui) -> egui::Response {
         // Set up
         let (response, painter) =

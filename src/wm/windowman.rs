@@ -1,6 +1,6 @@
 #![warn(clippy::all)]
 use crate::{
-    shared::asset_loader::appdata::AppData,
+    shared::AppData,
     tools::{clock, debug_info, metronome, rand_timer},
 };
 use egui::{Context, Ui};

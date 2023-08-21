@@ -6,7 +6,7 @@ use num::{Integer, ToPrimitive};
 
 /// Format a duration:
 /// 1 minute and 9 seconds = "1:09"
-pub fn format_min_secs(duration: &Duration) -> String {
+fn format_min_secs(duration: &Duration) -> String {
     let mins = duration.num_minutes();
     let secs = duration.num_seconds() - (mins * 60);
     format!("{}:{:02}", mins, secs)
@@ -31,9 +31,9 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
     size: f32,
     stroke_color: Color32,
 ) -> Response {
-    //
+    // ********
     // Basics
-    //
+    // ********
     // Allocate space
     let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::click_and_drag());
 
@@ -43,17 +43,10 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
         let radius = rect.height().min(rect.width()) * 0.4;
         let stroke_width = radius * 0.1;
         let painter = ui.painter();
-        // Paint circle
-        painter.circle(
-            rect.center(),
-            radius,
-            Color32::TRANSPARENT,
-            Stroke::new(stroke_width, stroke_color),
-        );
 
-        //
+        // **********
         // Paint obscured part of circle
-        //
+        // **********
         let angle = |period, time: f32| TAU * (time.rem_euclid(period) / period) as f32 - TAU / 4.0;
         let coord = |angle: f32, radius: f32| {
             pos2(
@@ -65,22 +58,15 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
         // There is some awkard type conversion involved here for the benefit
         // of this function relying on the Integer trait.
         let percentage_remaining = {
-            if let Some(range) = (*max - *min).to_f32() {
-                if let Some(mut float) = value.to_f32() {
-                    if float > range {
-                        float = range
-                    }
-                    100 - ((float / range as f32) * 100.0) as usize
-                } else {
-                    0
-                }
-            } else {
-                0
-            }
+            // Some guard clauses: if we can't
+            let range = (*max - *min).to_f32().unwrap_or(0.0);
+            let div = (*value - *min).to_f32().unwrap_or(0.0);
+
+            100 - ((div / range as f32) * 100.0) as usize
         };
 
         // Plot points to indicate remaining percentage and paint
-        if percentage_remaining > 0 {
+        if percentage_remaining < 100 {
             let mut points = vec![];
             for j in 0..percentage_remaining {
                 points.push(coord(angle(99., 99. - j as f32), radius + stroke_width));
@@ -88,9 +74,17 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
             points.push(rect.center());
             let bg_fill = ui.visuals().window_fill;
             painter.add(Shape::convex_polygon(points, bg_fill, Stroke::NONE));
+
+            // Paint circle
+            painter.circle(
+                rect.center(),
+                radius,
+                Color32::TRANSPARENT,
+                Stroke::new(stroke_width, stroke_color),
+            );
         }
 
-        // Paint inner circle
+        // Finally, paint inner circle with stroke. This stroke is always visible.
         painter.circle(
             rect.center(),
             radius - stroke_width / 2.,
@@ -98,9 +92,9 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
             ui.visuals().widgets.noninteractive.fg_stroke,
         );
 
-        //
+        // *************
         // Paint text
-        //
+        // *************
         // Create galley for data
         let value_string = {
             if let Some(int) = value.to_usize() {
@@ -180,28 +174,27 @@ pub fn circle_mut_duration(
     size: f32,
     stroke_color: Color32,
 ) -> Response {
-    //
+    // *****************************
     // Basics
-    //
+    // *****************************
+
     // Set up positioning etc
     let (rect, response) = ui.allocate_exact_size(vec2(size, size), Sense::click_and_drag());
     let painter = ui.painter();
     let radius = rect.height().min(rect.width()) * 0.4;
     let stroke_width = radius * 0.1;
 
+    // *****************************
+    // Paint circles
+    // *****************************
+
     // Only do all this if widget is visible
     if ui.is_rect_visible(rect) {
-        // Paint circle
-        painter.circle(
-            rect.center(),
-            radius,
-            Color32::TRANSPARENT,
-            Stroke::new(stroke_width, stroke_color),
-        );
+        // *****************************
+        // Paint obscuring part of circle
+        // *****************************
 
-        //
-        // Paint obscured part of circle
-        //
+        // Some basic functions to determine points on a circle
         let angle = |period, time: f32| TAU * (time.rem_euclid(period) / period) as f32 - TAU / 4.0;
         let coord = |angle: f32, radius: f32| {
             pos2(
@@ -210,17 +203,29 @@ pub fn circle_mut_duration(
             )
         };
         // Calculate duration as a percentage of min-max
+        // range is the difference between min and max duration
         let range = max.num_seconds() - min.num_seconds();
+        // Percentage remaining is the selected part of the range
         let percentage_remaining = {
-            let mut duration_secs = duration.num_seconds();
-            if duration.num_seconds() > range {
-                duration_secs = range
-            }
+            // How many seconds of the range have we selected?
+            let duration_secs = duration.num_seconds() - min.num_seconds();
+
+            // Calculate selected total seconds as percentage of range
             100 - ((duration_secs as f32 / range as f32) * 100.0) as usize
         };
 
-        // Plot points to indicate remaining percentage and paint
-        if percentage_remaining > 0 {
+        // Plot points to indicate remaining percentage and paint polygon
+        if percentage_remaining < 100 {
+            // Paint circle with big colored stroke. This circle is going to be partially
+            // obscured by the next circle to be painted.
+            painter.circle(
+                rect.center(),
+                radius,
+                Color32::TRANSPARENT,
+                Stroke::new(stroke_width, stroke_color),
+            );
+
+            // Paint circle that obscures the circle with the colored stroke.
             let mut points = vec![];
             for j in 0..percentage_remaining {
                 points.push(coord(angle(99., 99. - j as f32), radius + stroke_width));
@@ -230,7 +235,7 @@ pub fn circle_mut_duration(
             painter.add(Shape::convex_polygon(points, bg_fill, Stroke::NONE));
         }
 
-        // Paint inner circle
+        // Finally, paint inner circle with stroke. This stroke is always visible.
         painter.circle(
             rect.center(),
             radius - stroke_width / 2.,
@@ -238,9 +243,10 @@ pub fn circle_mut_duration(
             ui.visuals().widgets.noninteractive.fg_stroke,
         );
 
-        //
+        // *****************************
         // Paint text
-        //
+        // *****************************
+
         // Paint data
         let data = format_min_secs(duration);
         let data_wt: WidgetText = data.into();
@@ -262,9 +268,10 @@ pub fn circle_mut_duration(
             ui.style().noninteractive(),
         );
 
-        //
+        // *****************************
         // Handle changing the duration
-        //
+        // *****************************
+
         let delta = response.drag_delta();
         let in_bounds = |i: &Duration| {
             if i > max || i < min {
@@ -291,6 +298,9 @@ pub fn circle_mut_duration(
             _ => (),
         };
     }
+
+    // *****************************
     // return response
+    // *****************************
     response
 }

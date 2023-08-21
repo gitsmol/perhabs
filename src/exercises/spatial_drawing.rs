@@ -1,9 +1,10 @@
-use crate::{shared::asset_loader::appdata::AppData, wm::sessionman::Exercise};
 use egui::{CentralPanel, Color32, Pos2, Stroke};
 mod editor;
 mod exercise;
 pub mod painters;
 mod selector;
+
+use crate::{shared::AppData, wm::Exercise};
 
 use self::painters::{PuzzleGrid, SpatialPuzzle};
 

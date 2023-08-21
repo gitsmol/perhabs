@@ -1,19 +1,20 @@
 use chrono::Duration;
-use eframe::emath;
-use eframe::epaint::PathShape;
-use egui::style::Margin;
-use egui::{pos2, vec2, Align, Frame, Key, Rect, Stroke, Vec2};
+
+use egui::{Align, Key, Vec2};
 use tts::Tts;
 
 use crate::exercises::Direction;
-use crate::shared::asset_loader::appdata::AppData;
-use crate::shared::evaluation::Evaluation;
+
+use crate::shared::asset_loader::exercise_config::vergence::VergenceConfig;
+use crate::shared::AppData;
+use crate::shared::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::wm::sessionman::Exercise;
+use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::wm::Exercise;
 
 use self::anaglyph::Anaglyph;
-pub mod anaglyph;
+mod anaglyph;
 
 struct Session {
     active: bool,
@@ -177,100 +178,6 @@ impl Vergence {
             self.reset();
         }
     }
-
-    /// Shows a menu to calibrate the colors used in the anaglyph painting.
-    /// Different glasses for viewing anaglyphs exist, user must be able to
-    /// set colors for optimal effect.
-    /// TODO: there is currently no option to permanently save calibration data.
-    fn calibrate(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            ui.label("Calibrate the colors for your anaglyph glasses so each color is clearly visible to one eye, but hardly visible to the other. When properly calibrated the two diamonds may appear as one when seen through the glasses.");
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.label("Left eye");
-                ui.color_edit_button_srgba(&mut self.anaglyph.color.left);
-                ui.add_space(ui.available_width() / 3.);
-
-                ui.color_edit_button_srgba(&mut self.anaglyph.color.right);
-                ui.label("Right eye");
-            });
-
-            ui.separator();
-
-            Frame::dark_canvas(ui.style())
-                .outer_margin(Margin::from(0.0))
-                // TODO: look into eliminating visible margin
-                // (negative number works but what are the downsides?)
-                .show(ui, |ui| {
-                    let space = ui.available_size();
-                    let center = {
-                        // Determine size of drawing surface
-                        let (_id, rect) = ui.allocate_space(space);
-                        // Create a transform mapping the available space on a rectangle
-                        let to_screen = emath::RectTransform::from_to(
-                            Rect::from_x_y_ranges(0.0..=1.0, -1.0..=1.0),
-                            rect,
-                        );
-                        // the center is at half the x width
-                        let center = pos2(0.5, 0.0);
-                        to_screen * center
-                    };
-
-                    // diamond is hardcoded to be half the width of the frame
-                    let diamond_size = space[0] / 2.;
-
-                    // calculte the vertices of a diamond
-                    let gen_points = |x_offset_fraction: f32| {
-                        let x_offset = x_offset_fraction * diamond_size;
-                        let mut array = vec![];
-                        let diamond_points = [
-                            vec2(0.0, 0.5 * diamond_size),          // left
-                            vec2(0.5 * diamond_size, 0.),           // top
-                            vec2(diamond_size, 0.5 * diamond_size), // right
-                            vec2(0.5 * diamond_size, diamond_size), // bottom
-                        ];
-                        let mut offset = center.clone();
-                        offset[0] += x_offset; // offset horizontally
-                        offset[1] -= diamond_size / 2.; // center vertically
-                        for item in diamond_points {
-                            array.push(offset + item.clone());
-                        }
-                        array
-                    };
-
-                    let left_diamond = {
-                        let points = gen_points(-0.8);
-                        PathShape::convex_polygon(points, self.anaglyph.color.left, Stroke::NONE)
-                    };
-                    let right_diamond = {
-                        let points = gen_points(-0.2);
-                        PathShape::convex_polygon(points, self.anaglyph.color.right, Stroke::NONE)
-                    };
-
-                    ui.painter().add(left_diamond);
-                    ui.painter().add(right_diamond);
-
-                });
-
-            ui.horizontal(|ui| {
-                if ui.button("Swap").clicked() {
-                    let tmp = self.anaglyph.color.left;
-                    self.anaglyph.color.left = self.anaglyph.color.right;
-                    self.anaglyph.color.right = tmp;
-                }
-            });
-
-            ui.horizontal(|ui| {
-                if ui.button("Cancel").clicked() {
-                    self.anaglyph = Anaglyph::default();
-                    self.calibrating = false
-                }
-                if ui.button("Save and close").clicked() {
-                    self.calibrating = false
-                }
-            });
-        });
-    }
 }
 
 impl Exercise for Vergence {
@@ -285,7 +192,7 @@ impl Exercise for Vergence {
     fn reset(&mut self) {
         // Remember color calibrations
         let tmp_color = self.anaglyph.color.clone();
-        *self = Vergence::default();
+        *self = Default::default();
         self.anaglyph.color = tmp_color;
     }
 
@@ -295,7 +202,6 @@ impl Exercise for Vergence {
                 egui::Align2([Align::Center, Align::TOP]),
                 Vec2::new(0., 100.),
             )
-            .fixed_size(vec2(350., 300.))
             .resizable(false)
             .movable(false)
             .collapsible(false);
@@ -324,8 +230,13 @@ impl Exercise for Vergence {
 
     /// The exercise menu
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
+        // Calibration guard clause
         if self.calibrating {
-            self.calibrate(ui);
+            widgets::calibrate_anaglyph::calibrate(
+                ui,
+                &mut self.anaglyph.color,
+                &mut self.calibrating,
+            );
             return;
         }
 
@@ -337,33 +248,46 @@ impl Exercise for Vergence {
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
+            [30, 120],
+            [30, 120],
         );
 
+        let mut func = |config_level: &VergenceConfig| {
+            self.anaglyph.initialize();
+            self.step = config_level.step;
+            self.anaglyph.pixel_size = config_level.pixel_size;
+            self.session.active = true;
+            self.evaluation.start();
+        };
+
         // Display exercise configs
-        egui::Grid::new("vergence_selector_grid")
-            .num_columns(4)
-            .show(ui, |ui| {
-                if let Some(excconfig) = &appdata.excconfig {
-                    for excercise in &excconfig.vergence {
-                        ui.label(format!("{}", excercise.name));
+        if let Some(excconfig) = &appdata.excconfig {
+            egui::ScrollArea::new([false, true])
+                .max_height(400.)
+                .drag_to_scroll(true)
+                .show(ui, |ui| {
+                    ui.heading("Convergence");
+                    if let Some(config) = exercise_config_menu_multicol::<VergenceConfig>(
+                        ui,
+                        &excconfig.convergence,
+                        3,
+                    ) {
+                        func(config)
+                    };
 
-                        for level in &excercise.levels {
-                            if ui.button(&level.name).clicked() {
-                                self.anaglyph.initialize();
-                                self.step = level.step;
-                                self.anaglyph.pixel_size = level.pixel_size;
-                                self.session.active = true;
-                                self.evaluation.start();
-                            }
-                        }
+                    ui.heading("Divergence");
+                    if let Some(config) = exercise_config_menu_multicol::<VergenceConfig>(
+                        ui,
+                        &excconfig.divergence,
+                        3,
+                    ) {
+                        func(config)
+                    };
+                });
+        };
 
-                        ui.end_row();
-                    }
-                }
-            });
-
-        // Fill space
-        ui.allocate_space(ui.available_size());
+        // Add some space and show calibration button
+        ui.add_space(20.);
 
         if ui.button("Calibrate").clicked() {
             self.calibrating = true

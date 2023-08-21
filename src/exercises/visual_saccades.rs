@@ -1,12 +1,12 @@
 use crate::exercises::Direction;
-use crate::shared::asset_loader::appdata::AppData;
 use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
+use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu;
+use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
 use crate::widgets::{self};
 use crate::{
-    wm::sessionman::Exercise,
-    {shared::evaluation::Evaluation, shared::timer::Timer},
+    wm::Exercise,
+    {shared::Evaluation, shared::Timer},
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Pos2, Rect, Sense, Vec2};
@@ -262,6 +262,8 @@ impl Exercise for VisSaccades {
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
+            [30, 120],
+            [30, 120],
         );
 
         // Display all exercise configs
@@ -274,7 +276,7 @@ impl Exercise for VisSaccades {
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
             if let Some(config) =
-                exercise_config_menu::<VisSaccadesConfig>(ui, &config.visual_saccades)
+                exercise_config_menu_multicol::<VisSaccadesConfig>(ui, &config.visual_saccades, 3)
             {
                 func(config)
             };

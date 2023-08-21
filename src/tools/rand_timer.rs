@@ -1,5 +1,5 @@
-use crate::shared::asset_loader::appdata::AppData;
-use crate::wm::windowman::{AppWin, View};
+use crate::shared::AppData;
+use crate::wm::{AppWin, View};
 use egui::RichText;
 use rand::prelude::*;
 use std::sync::{mpsc, Arc, Mutex};

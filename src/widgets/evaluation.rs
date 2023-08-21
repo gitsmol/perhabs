@@ -50,55 +50,76 @@ pub fn post_eval_widgets(
 }
 
 /// A set of widgets to configure the evalation parameters.
-pub fn eval_config_widgets(ui: &mut egui::Ui, duration: &mut Duration, reps: &mut usize) {
+///
+/// # Example
+/// Lets say we have a struct with a field for `duration` and `reps`.
+/// This example will present a set of widgets to change both duration and reps within
+/// their respective min/max values of 1 - 120 and 1 - 60.
+/// ```
+/// eval_config_widgets(ui, &mut mystruct.duration, &mut mystruct.reps, [Duration::seconds(1), Duration::seconds(120)], [1, 60]);
+/// ```
+pub fn eval_config_widgets(
+    ui: &mut egui::Ui,
+    duration: &mut Duration,
+    reps: &mut usize,
+    duration_range_secs: [i64; 2],
+    rep_range: [usize; 2],
+) {
     ui.heading("Session length");
     ui.separator();
     ui.horizontal(|ui| {
         ui.vertical(|ui| {
+            // We need to set a maximum size so the label gets wrapped.
             ui.set_max_size(vec2(225., 100.));
         ui.label("Pick a session length or manually change duration and repetitions. The session ends when time runs out or the maximum number of repetitions is reached.");
         ui.add_space(15.);
-        ui.horizontal(|ui| {
-            for (name, i) in zip(["Short", "Medium", "Long"], [60, 90, 120]) {
-                if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button(name)
-                ).clicked() {
-                    *duration = Duration::seconds(i);
-                    *reps = i as usize;
-            };
 
+        // Add shortcuts to set session length
+        ui.horizontal(|ui| {
+            if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button("Short")
+            ).clicked() {
+                *duration = Duration::seconds(duration_range_secs[0]);
+                *reps = rep_range[0];
+            };
+            if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button("Medium")
+            ).clicked() {
+                *duration = Duration::seconds(duration_range_secs[1] / 2);
+                *reps = rep_range[1] / 2;
+            };
+            if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button("Long")
+            ).clicked() {
+                *duration = Duration::seconds(duration_range_secs[1]);
+                *reps = rep_range[1];
             };
         });
         });
         ui.add_space(25.);
-        ui.vertical(|ui| {
 
+        // Add round widgets
+        ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                let duration_circle = circle_mut_duration(
+                circle_mut_duration(
                     ui,
                     duration,
                     &Duration::seconds(1),
-                    &Duration::seconds(10),
-                    &Duration::seconds(120),
+                    &Duration::seconds(duration_range_secs[0]),
+                    &Duration::seconds(duration_range_secs[1]),
                     &String::from("Duration"),
                     125.,
                     Color32::DARK_BLUE,
                 );
-                if duration_circle.double_clicked() {
-                    *duration = Duration::seconds(60);
-                }
-                let reps_circle = circle_mut_integer(
+
+                circle_mut_integer(
                     ui,
                     reps,
                     &1,
-                    &5,
-                    &120,
+                    &rep_range.get(0).unwrap_or(&1),
+                    &rep_range.get(1).unwrap_or(&60),
                     &String::from("Repetitions"),
                     125.,
                     Color32::DARK_BLUE,
                 );
-                if reps_circle.double_clicked() {
-                    *reps = 60;
-                }
+
             });
 
         });

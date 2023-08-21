@@ -1,7 +1,4 @@
-use crate::{
-    exercises::spatial_drawing::painters::SpatialPuzzle,
-    shared::asset_loader::exercise_config::vergence::Level,
-};
+use crate::exercises::spatial_drawing::painters::SpatialPuzzle;
 use ehttp::{Response, Result};
 use log::debug;
 use poll_promise::Promise;
@@ -26,7 +23,8 @@ use super::{
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ExerciseConfigCollection {
     pub source: AssetSource,
-    pub vergence: Vec<VergenceConfig>,
+    pub convergence: Vec<VergenceConfig>,
+    pub divergence: Vec<VergenceConfig>,
     pub spatial_drawing: Vec<SpatialPuzzle>,
     pub visual_recognition: Vec<VisRecognitionConfig>,
     pub visual_saccades: Vec<VisSaccadesConfig>,
@@ -38,24 +36,16 @@ impl Default for ExerciseConfigCollection {
         debug!("Getting excercise config: falling back to default.");
         ExerciseConfigCollection {
             source: AssetSource::Default,
-            vergence: vec![
-                VergenceConfig {
-                    name: String::from("Convergence"),
-                    levels: vec![Level {
-                        name: String::from("Easy"),
-                        step: 1,
-                        pixel_size: 3,
-                    }],
-                },
-                VergenceConfig {
-                    name: String::from("Divergence"),
-                    levels: vec![Level {
-                        name: String::from("Easy"),
-                        step: -1,
-                        pixel_size: 3,
-                    }],
-                },
-            ],
+            convergence: vec![VergenceConfig {
+                name: String::from("Default Small"),
+                step: 2,
+                pixel_size: 2,
+            }],
+            divergence: vec![VergenceConfig {
+                name: String::from("Default Small"),
+                step: -2,
+                pixel_size: 2,
+            }],
             spatial_drawing: vec![SpatialPuzzle::new(5)],
             visual_recognition: vec![VisRecognitionConfig::default()],
             visual_saccades: vec![VisSaccadesConfig::default()],

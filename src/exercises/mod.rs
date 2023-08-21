@@ -1,13 +1,24 @@
-pub mod cog_numbers;
-pub mod cog_words;
-pub mod depth_perception;
-pub mod episodic_memory;
-pub mod seq_numbers;
+mod cog_numbers;
+mod cog_words;
+mod depth_perception;
+mod episodic_memory;
+mod seq_numbers;
 pub mod spatial_drawing;
-pub mod spatial_hearing;
-pub mod vergence;
-pub mod visual_recognition;
-pub mod visual_saccades;
+mod spatial_hearing;
+mod vergence;
+mod visual_recognition;
+mod visual_saccades;
+
+pub use cog_numbers::CogNumbers;
+pub use cog_words::CogWords;
+pub use depth_perception::DepthPerception;
+pub use episodic_memory::EpisodicMemory;
+pub use seq_numbers::NumSeq;
+pub use spatial_drawing::SpatialDrawing;
+pub use spatial_hearing::SpatialHearing;
+pub use vergence::Vergence;
+pub use visual_recognition::VisRecognition;
+pub use visual_saccades::VisSaccades;
 
 //  **********
 // Some basic supporting stuff

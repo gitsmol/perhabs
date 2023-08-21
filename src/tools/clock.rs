@@ -1,6 +1,6 @@
 use crate::{
-    shared::asset_loader::appdata::AppData,
-    wm::windowman::{AppWin, View},
+    shared::AppData,
+    wm::{AppWin, View},
 };
 use chrono::{Local, Timelike};
 use eframe::epaint::{self, CircleShape};

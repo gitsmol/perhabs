@@ -1,6 +1,6 @@
 use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense, Ui};
 
-use crate::shared::asset_loader::appdata::AppData;
+use crate::shared::AppData;
 
 use super::{SessionStatus, Transformation};
 

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use egui::Rect;
 
-use crate::shared::pos3::Pos3;
+use crate::shared::Pos3;
 
 /// A soundsource mapped in both 2D and 3D space.
 /// Coordinates are fixed in an array as x, y, z.

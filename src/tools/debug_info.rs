@@ -2,8 +2,8 @@ use egui::vec2;
 use tts::Tts;
 
 use crate::{
-    shared::asset_loader::appdata::AppData,
-    wm::windowman::{AppWin, View},
+    shared::AppData,
+    wm::{AppWin, View},
 };
 
 pub struct DebugInfo {}

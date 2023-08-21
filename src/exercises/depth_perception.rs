@@ -5,12 +5,12 @@ use tts::Tts;
 
 use crate::shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig;
 
-use crate::shared::asset_loader::appdata::AppData;
-use crate::shared::evaluation::Evaluation;
+use crate::shared::AppData;
+use crate::shared::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu;
-use crate::wm::sessionman::Exercise;
+use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::wm::Exercise;
 
 use self::anaglyph::Anaglyph;
 mod anaglyph;
@@ -115,20 +115,6 @@ impl DepthPerception {
         });
     }
 
-    fn calibrate(&mut self, ui: &mut egui::Ui) {
-        widgets::calibrate_anaglyph::calibrate(&mut self.anaglyph.color, ui);
-
-        ui.horizontal(|ui| {
-            if ui.button("Cancel").clicked() {
-                self.anaglyph = Anaglyph::default();
-                self.calibrating = false
-            }
-            if ui.button("Save and close").clicked() {
-                self.calibrating = false
-            }
-        });
-    }
-
     /// Review the evaluation.
     fn finished_screen(&mut self, ui: &mut egui::Ui) {
         widgets::evaluation::post_eval_widgets(
@@ -170,7 +156,6 @@ impl Exercise for DepthPerception {
                 egui::Align2([Align::Center, Align::TOP]),
                 Vec2::new(0., 100.),
             )
-            // .fixed_size(vec2(350., 300.))
             .resizable(false)
             .movable(false)
             .collapsible(false);
@@ -197,8 +182,13 @@ impl Exercise for DepthPerception {
 
     /// The exercise menu
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
+        // Calibration guard clause
         if self.calibrating {
-            self.calibrate(ui);
+            widgets::calibrate_anaglyph::calibrate(
+                ui,
+                &mut self.anaglyph.color,
+                &mut self.calibrating,
+            );
             return;
         }
 
@@ -210,6 +200,8 @@ impl Exercise for DepthPerception {
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
+            [30, 120],
+            [30, 120],
         );
 
         let mut func = |config: &DepthPerceptionConfig| {
@@ -221,15 +213,17 @@ impl Exercise for DepthPerception {
 
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
-            if let Some(config) =
-                exercise_config_menu::<DepthPerceptionConfig>(ui, &config.depth_perception)
-            {
+            if let Some(config) = exercise_config_menu_multicol::<DepthPerceptionConfig>(
+                ui,
+                &config.depth_perception,
+                2,
+            ) {
                 func(config)
             };
         }
 
-        // Add some space
-        ui.add_space(ui.available_height() * 0.05);
+        // Add some space and show calibration button
+        ui.add_space(20.);
 
         if ui.button("Calibrate").clicked() {
             self.calibrating = true

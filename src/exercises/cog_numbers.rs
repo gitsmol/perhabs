@@ -1,22 +1,13 @@
-use crate::shared::asset_loader::appdata::AppData;
-use crate::widgets::menu_button;
-use crate::wm::sessionman::Exercise;
+use crate::shared::{AppData, Evaluation};
+use crate::widgets::{self, menu_button};
+use crate::wm::Exercise;
+use chrono::Duration;
 use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
 
 use tts::{self, Tts};
 
-use super::numvec_to_string;
-
-struct Session {
-    active: bool,
-}
-
-impl Default for Session {
-    fn default() -> Self {
-        Self { active: false }
-    }
-}
+use super::{numvec_to_string, ExerciseStatus};
 
 struct Answers {
     sequence: String,
@@ -27,7 +18,7 @@ struct Answers {
 impl Default for Answers {
     fn default() -> Self {
         Self {
-            sequence: String::from("No sequence."),
+            sequence: String::from("Press space/next to start."),
             sequence_alpha: String::new(),
             sequence_alpha_rev: String::new(),
             sequence_rev: String::new(),
@@ -38,8 +29,9 @@ impl Default for Answers {
 /// Sequences
 pub struct CogNumbers {
     seq_length: usize,
-    session: Session,
+    session: ExerciseStatus,
     answers: Answers,
+    evaluation: Evaluation<bool>,
 }
 
 impl Default for CogNumbers {
@@ -47,20 +39,44 @@ impl Default for CogNumbers {
         Self {
             answers: Answers::default(),
             seq_length: 4,
-            session: Session::default(),
+            session: ExerciseStatus::None,
+            evaluation: Evaluation::new(Duration::seconds(60), 60),
         }
     }
 }
 
 impl CogNumbers {
-    fn say(&mut self, spk: &mut tts::Tts) -> () {
-        match spk.speak(&self.answers.sequence, false) {
+    /// Keeps track of exercise progression
+    fn progressor(&mut self) {
+        // end exercise when evaluation is finished.
+        if self.evaluation.is_finished() {
+            self.session = ExerciseStatus::Finished;
+        };
+    }
+
+    fn next(&mut self, tts: &mut tts::Tts) {
+        match self.session {
+            ExerciseStatus::Challenge => {
+                self.evaluation.add_result(true);
+                self.session = ExerciseStatus::Result;
+            }
+            ExerciseStatus::Result => {
+                self.session = ExerciseStatus::Challenge;
+                self.pick_sequence();
+                self.say(tts);
+            }
+            _ => (),
+        }
+    }
+
+    fn say(&mut self, tts: &mut tts::Tts) {
+        match tts.speak(&self.answers.sequence, false) {
             Ok(_) => debug!("TTS: Sentence spoken."),
             Err(e) => warn!("TTS error: {:?}", e),
         };
     }
 
-    fn pick_sequence(&mut self) -> () {
+    fn pick_sequence(&mut self) {
         let mut seq = vec![];
         if self.seq_length > 11 {
             return;
@@ -82,6 +98,30 @@ impl CogNumbers {
         seq.reverse();
         self.answers.sequence_alpha_rev = numvec_to_string(&seq);
     }
+
+    /// Review the evaluation.
+    fn finished_screen(&mut self, ui: &mut egui::Ui) {
+        widgets::evaluation::post_eval_widgets(
+            ui,
+            self.evaluation.average_score(),
+            self.evaluation.reps_done(),
+            self.evaluation.time_taken_as_string(),
+        );
+
+        // Close
+        if ui.button("Close").clicked() {
+            self.reset();
+        }
+    }
+
+    fn read_keypress(&mut self, ctx: &egui::Context, tts: &mut tts::Tts) {
+        if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
+            self.next(tts)
+        }
+        if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
+            self.say(tts);
+        }
+    }
 }
 
 impl Exercise for CogNumbers {
@@ -99,47 +139,63 @@ impl Exercise for CogNumbers {
 
     /// Show the configuration dialog
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {
-        if !self.session.active {
-            egui::Window::new(self.name())
-                .anchor(
-                    egui::Align2([Align::Center, Align::TOP]),
-                    Vec2::new(0., 100.),
-                )
-                .fixed_size(vec2(350., 300.))
-                .resizable(false)
-                .movable(false)
-                .collapsible(false)
-                .show(ctx, |ui| self.ui(ui, appdata, tts));
-        }
+        let window = egui::Window::new(self.name())
+            .anchor(
+                egui::Align2([Align::Center, Align::TOP]),
+                Vec2::new(0., 100.),
+            )
+            .fixed_size(vec2(350., 300.))
+            .resizable(false)
+            .movable(false)
+            .collapsible(false);
 
-        if self.session.active {
-            if ctx.input(|i| i.key_pressed(egui::Key::Space)) {
-                self.pick_sequence();
-                self.say(tts);
+        match self.session {
+            ExerciseStatus::None => {
+                window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
-            if ctx.input(|i| i.key_pressed(egui::Key::Enter)) {
-                self.say(tts);
+            ExerciseStatus::Finished => {
+                window.show(ctx, |ui| self.finished_screen(ui));
             }
-            egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
-        }
+            _ => {
+                self.read_keypress(ctx, tts);
+                self.progressor();
+                ctx.request_repaint_after(std::time::Duration::from_millis(50));
+                egui::CentralPanel::default().show(ctx, |ui| self.session(ui, appdata, tts));
+            }
+        };
+
+        if self.session != ExerciseStatus::None {}
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
+        // Show evaluation config
+        widgets::evaluation::eval_config_widgets(
+            ui,
+            &mut self.evaluation.duration,
+            &mut self.evaluation.repetitions,
+            [30, 600],
+            [5, 20],
+        );
+
         // Draw a menu in two columns
+        let mut func = |i| {
+            self.seq_length = i;
+            self.evaluation.start();
+            self.session = ExerciseStatus::Result;
+        };
+
         ui.columns(2, |col| {
             // Column 1 gets populated with at least half the buttons
             for i in 4..8 as usize {
                 if menu_button(&mut col[0], None, format!("{i} numbers").as_str(), "").clicked() {
-                    self.seq_length = i;
-                    self.session.active = true;
+                    func(i);
                 };
             }
 
             // Column 2 gets populated with the remaining buttons
             for i in 8..=10 as usize {
                 if menu_button(&mut col[1], None, format!("{i} numbers").as_str(), "").clicked() {
-                    self.seq_length = i;
-                    self.session.active = true;
+                    func(i);
                 };
             }
         });
@@ -147,28 +203,47 @@ impl Exercise for CogNumbers {
 
     fn session(&mut self, ui: &mut egui::Ui, _: &AppData, tts: &mut Tts) {
         let spacer = ui.available_height() / 30.;
-        if ui.button("Close").clicked() {
-            self.session = Session::default();
-        };
+
+        ui.horizontal(|ui| {
+            if ui.button("Close").clicked() {
+                *self = Default::default();
+            };
+            ui.label(format!(
+                "Time remaining: {}",
+                self.evaluation.time_remaining_as_string()
+            ));
+            ui.label(format!(
+                "Reps remaining: {}",
+                self.evaluation.reps_remaining()
+            ));
+        });
 
         ui.vertical_centered(|ui| {
-            ui.add_space(spacer * 4.);
+            if self.session == ExerciseStatus::Result {
+                ui.add_space(spacer * 4.);
 
-            ui.label("Sequence");
-            ui.heading(RichText::new(&self.answers.sequence).size(25.));
-            ui.add_space(spacer);
+                ui.label("Sentence");
+                ui.heading(RichText::new(&self.answers.sequence).size(25.));
+                ui.add_space(spacer);
 
-            ui.label("Reversed");
-            ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
-            ui.add_space(spacer);
+                ui.label("Reversed");
+                ui.label(RichText::new(&self.answers.sequence_rev).size(25.));
+                ui.add_space(spacer);
 
-            ui.label("Alphabetical");
-            ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
-            ui.add_space(spacer);
+                ui.label("Alphabetical");
+                ui.label(RichText::new(&self.answers.sequence_alpha).size(25.));
+                ui.add_space(spacer);
 
-            ui.label("Alphabetical reversed");
-            ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
-            ui.add_space(spacer);
+                ui.label("Alphabetical reversed");
+                ui.label(RichText::new(&self.answers.sequence_alpha_rev).size(25.));
+                ui.add_space(spacer);
+            };
+
+            if self.session == ExerciseStatus::Challenge {
+                ui.add_space(spacer * 4.);
+                ui.label("Try to reorder the words in your head.\nPress repeat (enter) to hear the sentence again.");
+                ui.add_space(spacer * 9.);
+            };
 
             ui.add_space(spacer * 2.);
 
@@ -185,8 +260,7 @@ impl Exercise for CogNumbers {
                 .add_sized(vec2(spacer * 4., spacer * 2.), egui::Button::new("Next"))
                 .clicked()
             {
-                self.pick_sequence();
-                self.say(tts);
+                self.next(tts);
             };
 
             ui.add_space(spacer);

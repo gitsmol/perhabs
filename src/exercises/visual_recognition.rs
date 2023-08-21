@@ -2,14 +2,11 @@ use crate::exercises::Direction;
 use crate::shared::asset_loader::exercise_config::visual_recognition::VisRecognitionConfig;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu;
+use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
 
 use crate::{
-    wm::sessionman::Exercise,
-    {
-        shared::asset_loader::appdata::AppData, shared::evaluation::Evaluation,
-        shared::timer::Timer,
-    },
+    wm::Exercise,
+    {shared::AppData, shared::Evaluation, shared::Timer},
 };
 use chrono::Duration;
 use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2};
@@ -300,6 +297,8 @@ impl Exercise for VisRecognition {
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
+            [30, 120],
+            [30, 120],
         );
 
         // Anonymous function that uses the exercise config
@@ -311,9 +310,11 @@ impl Exercise for VisRecognition {
 
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
-            if let Some(config) =
-                exercise_config_menu::<VisRecognitionConfig>(ui, &config.visual_recognition)
-            {
+            if let Some(config) = exercise_config_menu_multicol::<VisRecognitionConfig>(
+                ui,
+                &config.visual_recognition,
+                2,
+            ) {
                 func(config)
             };
         }

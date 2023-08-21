@@ -1,7 +1,7 @@
 use crate::shared::asset_loader::sentences::{SentenceFile, Sentences};
-use crate::shared::asset_loader::{self, appdata::AppData};
+use crate::shared::{asset_loader, AppData};
 use crate::widgets::menu_button;
-use crate::wm::sessionman::Exercise;
+use crate::wm::Exercise;
 use egui::{vec2, Align, RichText, Vec2};
 use tts::{self, Tts};
 

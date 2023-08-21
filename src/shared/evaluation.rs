@@ -5,7 +5,7 @@ use chrono::{Duration, Local};
 /// storing results.
 ///
 /// Note: comparing two Evaluation structs only compares the duration and
-/// repetitions fields.
+/// repetitions fields!
 pub struct Evaluation<T> {
     start_time: chrono::DateTime<Local>,
     end_time: Option<chrono::DateTime<Local>>,
@@ -70,6 +70,7 @@ impl<T> Evaluation<T> {
 
     /// Are we done?
     pub fn is_finished(&mut self) -> bool {
+        // Have we recorded an end time?
         if let Some(_) = self.end_time {
             return true;
         }

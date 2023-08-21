@@ -1,5 +1,3 @@
-Als AI-taalmodel kan ik u helpen met een lijst van 100 vragen om episodisch geheugen te trainen. Hier zijn enkele voorbeelden:
-
 1. Waar was je op je tiende verjaardag?
 2. Wie was je beste vriend in de eerste klas?
 3. Wat hebben jij en je vrienden gedaan tijdens je laatste zomeruitje?
@@ -9,34 +7,14 @@ Als AI-taalmodel kan ik u helpen met een lijst van 100 vragen om episodisch gehe
 7. Wat is de mooiste plek waar je ooit bent geweest en waarom?
 8. Kun je de kleur en het merk van je allereerste auto herinneren?
 9. Herinner je verjaardagscadeaus die je heel graag wilde als kind?
-10. Wat was je favoriete vak op school en waarom?
-11. Kun je je eerste dag op de universiteit nog herinneren?
-12. Vertel me over een voorval waar je je voor altijd voor schaamt.
-13. Wat is het meest avontuurlijke dat je ooit hebt gedaan?
-14. Welke film heeft de grootste indruk op je gemaakt en waarom?
 15. Vertel me over het allereerste concert waar je ooit bent geweest.
-16. Wat was je favoriete gerecht als kind?
 17. Hoe was je eerste werkdag?
-18. Herinner je je nog hoe je je voelde op de dag dat je afstudeerde?
-19. Waar was je tijdens de aanslagen van 9/11?
-20. Wie was je eerste vriendje / vriendinnetje?
 21. Waar ging je eerste reis zonder ouders naartoe?
 22. Herinner je je alle huizen waar je in hebt gewoond?
-23. Welke bijnamen kreeg je vaak in je jeugd?
-24. Wat was het leukste speelgoed dat je ooit hebt gehad?
 25. Ken je de namen van de kleuterschooljuffen nog steeds?
 26. Wat was de grootste prijs die je ooit hebt gewonnen en hoe?
-27. Waar was je toen de muur viel?
 28. Wat was de eerste baan waar je ooit op solliciteerde?
-29. Wat waren de namen van de personages in je favoriete boek?
-30. Herinner je de namen van de leerkrachten die je het meest inspireerden?
-31. Wat was de beste prestatie die je ooit hebt behaald?
-32. Wat was de grootste uitdaging in je leven tot nu toe?
-33. Wat was je favoriete weggevertje als kind en waarom?
-34. Waar was je toen neergeschoten president John F. Kennedy stief?
-35. Welke speeltjes koop jij graag voor je huisdier?
-36. Welk beroep wilde je zijn als kind en waarom?
-37. Vertel me over een moment waarop je een grote verandering in je leven maakte.
+29. Wat zijn de namen van de personages in je favoriete boek?
 38. Welke herinneringen heb je aan je grootmoeders en opa's?
 39. Welke tekenfilms keek je graag als kind?
 40. Wat heb je geleerd van je allereerste baan?
@@ -67,9 +45,7 @@ Als AI-taalmodel kan ik u helpen met een lijst van 100 vragen om episodisch gehe
 65. Welk liedje werd er op de dag dat je geboren werd het meest gedraaid op de radio?
 66. Wat was de datum van het eerste concert dat je ooit hebt bijgewoond?
 67. Herinner je de namen van de personen waar je het meest door geïnspireerd bent?
-68. Wat was je favoriete eten toen je in je tienerjaren zat?
 69. Welke sporten heb jij beoefend als kind?
-70. Wat was het eerste woord dat je leerde toen je een kind was?
 71. Welk cadeau gaf je iemand voor zijn / haar laatste verjaardag?
 72. Wat waren de namen van de docenten die je het meest inspireerden?
 73. Welke films heb je het vaakst gezien in je leven?
@@ -78,7 +54,6 @@ Als AI-taalmodel kan ik u helpen met een lijst van 100 vragen om episodisch gehe
 76. Wat was de grootste prestatie die je ooit op een examen hebt behaald?
 77. Wat waren de namen van de personages in je favoriete boekenserie?
 78. Wat voor speelgoed nam je mee naar school toen je klein was?
-79. Wie was je favoriete leraar van de middelbare school?
 80. Welke acteurs waren er in je favoriete film van vroeger?
 81. Wat waren de namen van de hoofdpersonen in je favoriete jeugdboek?
 82. Herinner je je de namen van de personages uit de film waar je het meest van houdt?
@@ -100,8 +75,6 @@ Als AI-taalmodel kan ik u helpen met een lijst van 100 vragen om episodisch gehe
 98. Waar zijn de mensen uit je klas mee bezig, en welke fases hebben ze doorlopen?
 99. Wat voor sporten doe je tegenwoordig graag?
 100. Welke vrienden zijn nog steeds belangrijk voor je?
-Ja, natuurlijk! Hier zijn 100 vragen waarmee je je korte termijn geheugen kunt trainen:
-
 1. Wat heb je vandaag gegeten voor ontbijt?
 2. Hoe laat stond je vanochtend op?
 3. Hoeveel uur heb je vannacht geslapen?
@@ -115,7 +88,6 @@ Ja, natuurlijk! Hier zijn 100 vragen waarmee je je korte termijn geheugen kunt t
 11. Wat was het laatste cadeau dat je aan iemand hebt gegeven?
 12. Hoe laat ga je vanavond slapen?
 13. In welke maand ben je geboren?
-14. Wat is je favoriete kleur?
 15. Hoeveel broers en zussen heb je?
 16. Wat is je lievelingsgerecht?
 17. Wat is de naam van je beste vriend(in)?
@@ -124,81 +96,41 @@ Ja, natuurlijk! Hier zijn 100 vragen waarmee je je korte termijn geheugen kunt t
 20. Hoeveel verschillende telefoonnummers ken je uit je hoofd?
 21. Welke dag van de maand is het vandaag?
 22. Hoeveel paar schoenen heb je?
-23. Wat is je favoriete boek?
 24. Wie was de laatste persoon die je hebt gebeld?
-25. Hoe laat is het nu?
 26. Welke kleur heeft het stopbord bij jou in de buurt?
 27. Hoeveel sleutels heb je aan je sleutelbos?
-28. Wat is je favoriete film?
 29. Wat is het antwoord op 6 x 7?
-30. Wat is de naam van je huisdier?
-31. Hoeveel uur per dag kijk je naar een scherm?
 32. Hoeveel jaar zit er tussen jouw leeftijd en die van je grootouders?
-33. Wat is je favoriete muziekgenre?
 34. Hoeveel euro's zitten er in je portemonnee op dit moment?
-35. Wat is je favoriete vakantiebestemming?
-36. Hoeveel tandenborstels heb je thuis?
 37. Welke dag van de week is het over 2 dagen?
 38. Wat is de naam van de eerste school waarop je hebt gezeten?
 39. Hoeveel trappen zijn er in je huis?
 40. Wat is het laatste boek dat je hebt gelezen?
 41. Hoeveel planten heb je in huis?
-42. Wat is je favoriete sport om naar te kijken?
 43. Wat is de naam van je favoriete leraar/lerares?
 44. Hoeveel kledingstukken heb je aan?
 45. Hoeveel vingers kun je opsteken?
 46. Wie is de president van de Verenigde Staten?
 47. Wat is de naam van je tandarts?
 48. Hoeveel foto's staan er op je telefoon?
-49. Wat is je favoriete restaurant?
 50. Hoeveel ramen heeft je slaapkamer?
-51. Wat is je favoriete liedje?
 52. Hoeveel borden staan er in je keukenkastje?
 53. Wat is de naam van je eerste vriend(innet)je?
 54. Welke dag van de week is het over een week?
 55. Hoeveel dagen zijn er in de maand november?
-56. Wat is je favoriete dier?
-57. Hoeveel vingers heb je bij elkaar opgeteld?
 58. Welke kleur heeft de auto van je buurman/buurvrouw?
 59. Wie is de bekendste persoon die je ooit hebt ontmoet?
-60. Hoeveel knoppen zitten er op je afstandsbediening?
 61. Waar ga je het liefste naartoe voor ontspanning?
-62. Hoeveel tandenborstels heb je vandaag gebruikt?
-63. Wat is je favoriete chocolademerk?
 64. Welke dag van de week is het over 3 dagen?
 65. Hoeveel dagen zijn er in een jaar?
-66. Wat is de hoofdstad van Spanje?
-67. Wat is je favoriete seizoen?
-68. Hoeveel stapels boeken heb je op je nachtkastje?
 69. Wie is de laatste persoon die in je huis is geweest?
-70. Wat is je favoriete drankje?
-71. Hoeveel rode auto's zie je als je naar buiten kijkt?
 72. Wie is de beroemdste persoon die je ooit hebt gezien?
 73. Wat is de naam van je huisarts?
-74. Hoeveel broodjes heb je vandaag gegeten?
-75. Wat is de kleur van je ogen?
-76. Hoeveel tanden heb je in totaal?
 77. Wat is het antwoord op 67 + 91?
-78. Wat is je favoriete gerecht om te koken?
-79. Wat is de naam van de eerste baan die je ooit hebt gehad?
-80. Hoeveel planten staan er in je tuin?
-81. Hoeveel keer per dag poets je je tanden?
-82. Wat is je favoriete hobby?
-83. Hoeveel keer heb je vandaag je telefoon gecheckt?
 84. Wat is de naam van je laatste vakantiebestemming?
 85. Hoeveel paraplu's heb je in huis?
-86. Wat is je favoriete fruitsoort?
 87. Hoeveel eenpersoonsbedden staan er in je huis?
 88. Welke dag van de week is het over 4 dagen?
 89. Wat is de naam van je eerste huisdier?
 90. Hoeveel stopcontacten heb je in je slaapkamer?
-91. Wat is je favoriete bloem?
-92. Hoeveel bananen heb je vandaag gegeten?
-93. Wat is de naam van je favoriete neef/nicht?
-94. Hoeveel keer per week ga je naar de sportschool?
-95. Wat is je favoriete tv-programma?
-96. Hoeveel parfums heb je thuis?
-97. Wat is de kleur van je favoriete trui?
-98. Hoeveel keer heb je vandaag je tanden gepoetst?
 99. Wat is de naam van het bedrijf waar je voor het laatst hebt gesolliciteerd?
-100. Wat is je favoriete emoticon?

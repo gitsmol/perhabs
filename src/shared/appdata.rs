@@ -1,7 +1,9 @@
 use ehttp::Response;
 use poll_promise::Promise;
 
-use super::{exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig};
+use super::asset_loader::{
+    exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
+};
 
 /// AppData is loaded when launching Perhabs. Individual modules/windows get app-wide
 /// data through a reference to this struct.

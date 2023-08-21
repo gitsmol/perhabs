@@ -1,35 +1,37 @@
-use egui::{vec2, Align, ScrollArea, Vec2};
+use egui::{vec2, Align, Align2, ScrollArea, Vec2};
 
 use log::debug;
 use perhabs::{
-    egui_style,
     shared::asset_loader::{
-        appdata::AppData, exercise_config_collection::ExerciseConfigCollection,
-        perhabs_config::PerhabsConfig, AssetSource,
+        exercise_config_collection::ExerciseConfigCollection, perhabs_config::PerhabsConfig,
+        AssetSource,
     },
+    shared::{self, egui_style, AppData},
     widgets,
-    wm::sessionman::SessionManager,
-    wm::windowman::Windows,
+    wm::SessionManager,
+    wm::Windows,
 };
 
 pub struct Perhabs {
-    windows: Windows,
+    tools: Windows,
     sessionman: SessionManager,
     appdata: AppData,
-    speaker: tts::Tts,
+    show_about: bool,
+    tts: tts::Tts,
 }
 
 impl Default for Perhabs {
     fn default() -> Self {
         Self {
-            windows: Windows::default(),
+            tools: Windows::default(),
             sessionman: SessionManager::default(),
             appdata: AppData::default(),
+            show_about: false,
 
             #[cfg(target_os = "macos")]
-            speaker: tts::Tts::new(tts::Backends::AppKit).unwrap(), // NOTE default is AvKit which is bugged(?)
+            tts: tts::Tts::new(tts::Backends::AppKit).unwrap(), // NOTE default is AvKit which is bugged(?)
             #[cfg(not(target_os = "macos"))]
-            speaker: tts::Tts::default().unwrap(),
+            tts: tts::Tts::default().unwrap(),
         }
     }
 }
@@ -196,9 +198,9 @@ impl Perhabs {
     }
 }
 
-//
+// ***********
 // UI
-//
+// ***********
 
 impl eframe::App for Perhabs {
     /// Called each time the UI needs repainting, which may be many times per second.
@@ -211,17 +213,20 @@ impl eframe::App for Perhabs {
         egui::CentralPanel::default().show(ctx, |ui| {
             // Show a loading screen until we have configs. Then show utility windows and session.
             if self.guarantee_configs() == false {
-                widgets::loading(ui);
+                widgets::loading_screen(ui);
                 return;
             }
 
+            // Show about window
+            self.about_screen(ctx);
+
             // Always show single windows
-            self.windows.windows(ctx, &self.appdata, &mut self.speaker);
+            self.tools.windows(ctx, &self.appdata, &mut self.tts);
 
             // Show the session menu or an active session if present
             if self.sessionman.open.is_some() {
                 self.sessionman
-                    .session_show(ctx, &self.appdata, &mut self.speaker);
+                    .session_show(ctx, &self.appdata, &mut self.tts);
                 return;
             }
 
@@ -250,30 +255,25 @@ impl Perhabs {
         egui::menu::bar(ui, |ui| {
             ui.menu_button("File", |ui| {
                 // Toggle dark mode
-                if ui.button("Toggle dark mode").clicked() {
-                    match ui.ctx().style().visuals.dark_mode {
-                        true => {
-                            debug!("Options - Dark mode is on, switching to light mode.");
-                            ui.ctx().set_visuals(egui_style::light_visuals());
-                        }
-                        false => {
-                            debug!("Options - Light mode is on, switching to dark mode.");
-                            ui.ctx().set_visuals(egui_style::dark_visuals());
-                        }
-                    }
-                }
+                widgets::dark_mode_toggle_button(ui);
 
                 // Quit button
                 if ui.button("\u{2386} Quit").clicked() {
                     frame.close();
                 };
             });
-            ui.menu_button("Tools \u{27A1}", |ui| {
+
+            // Tools menu
+            ui.menu_button("Tools", |ui| {
                 // Debug checkbox
                 ui.checkbox(&mut self.appdata.debug, "Debug");
                 // Available windows
-                self.windows.labels(ui);
+                self.tools.labels(ui);
             });
+
+            // About button
+            ui.toggle_value(&mut self.show_about, "About");
+
             // Only show quit when a session is active.
             if let Some(session_name) = self.sessionman.open {
                 ui.add_space(ui.available_width() - 85.);
@@ -315,5 +315,25 @@ impl Perhabs {
         ScrollArea::new([false, true])
             .drag_to_scroll(true)
             .show(ui, |ui| self.sessionman.buttons(ui));
+    }
+
+    fn about_screen(&mut self, ctx: &egui::Context) {
+        let desired_size = {
+            let avail_size = ctx.available_rect().size();
+            if avail_size.x < 600.0 {
+                avail_size
+            } else {
+                vec2(500.0, avail_size.y)
+            }
+        };
+        egui::Window::new("About")
+            .open(&mut self.show_about)
+            .collapsible(false)
+            .resizable(false)
+            .min_width(desired_size.x)
+            .anchor(Align2::CENTER_TOP, vec2(0., desired_size.y * 0.2))
+            .show(ctx, |ui| {
+                shared::about_screen(ui);
+            });
     }
 }

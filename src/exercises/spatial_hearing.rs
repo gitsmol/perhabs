@@ -1,15 +1,15 @@
 use self::soundsource::{match_coords_to_pin, SoundSource};
 
 use super::ExerciseStatus;
-use crate::shared::asset_loader::appdata::AppData;
 
-use crate::shared::pos3::Pos3;
+use crate::shared::AppData;
+use crate::shared::Pos3;
 use crate::widgets::evaluation::eval_config_widgets;
 
 use crate::widgets::{self};
 use crate::{
-    wm::sessionman::Exercise,
-    {shared::evaluation::Evaluation, shared::timer::Timer},
+    wm::Exercise,
+    {shared::Evaluation, shared::Timer},
 };
 use chrono::Duration;
 use egui::{vec2, Align, Frame, Vec2};
@@ -33,7 +33,7 @@ pub struct SpatialHearing {
     answer: Option<SoundSource>,   // The right answer is a set of coords
     response: Option<SoundSource>, // A soundsource contains a set of coords
     timer: Timer,                  // A timer is useful for all kinds of things
-    evaluation: Evaluation<f32>,
+    evaluation: Evaluation<bool>,
 }
 
 impl Default for SpatialHearing {
@@ -108,7 +108,7 @@ impl SpatialHearing {
         }
 
         match self.status {
-            // Show the menu (ie do nothing)
+            // When we aren't in an exercise, the menu screen is painted by `self.show`.
             ExerciseStatus::None => (),
             // Give the challenge (ie make a sound)
             ExerciseStatus::Challenge => {
@@ -148,16 +148,20 @@ impl SpatialHearing {
                 // If we receive a response, show the result.
                 if self.response.is_some() {
                     debug!("SpatialHearing: User response received.");
+                    // Evaluate response and store result
                     self.evaluation.add_result(self.evaluate_response());
+                    // Move to next step
                     self.status = ExerciseStatus::Result
                 };
             }
             // Moving from result to next challenge is taken care of in the ui.
             ExerciseStatus::Result => {
+                // Show result for 2 secs
                 if !self.timer.is_running() {
                     debug!("SpatialHearing: Showing result. Setting timer for 2 seconds.");
                     self.timer.set(Duration::seconds(2));
                 }
+                // Then move to the next challenge.
                 if self.timer.is_finished() {
                     debug!("SpatialHearing: Result timer finished. Moving to next challenge.");
                     self.status = ExerciseStatus::Challenge;
@@ -167,18 +171,16 @@ impl SpatialHearing {
                     self.response = None;
                 }
             }
-            // The Finished screen is painted by `self.show`.
+            // When we are finished, the finished screen is painted by `self.show`.
             ExerciseStatus::Finished => (),
         };
     }
 
     /// Determine correctness of response.
-    /// Correct = 1.0
-    /// Incorrect = 0.0
-    fn evaluate_response(&self) -> f32 {
-        // If either answer or response is not available, return 0.0
-        let Some(answer) = &self.answer else { return 0.0 } ;
-        let Some(response) = &self.response else { return 0.0 };
+    fn evaluate_response(&self) -> bool {
+        // If either answer or response is not available, return false
+        let Some(answer) = &self.answer else { return false } ;
+        let Some(response) = &self.response else { return false };
 
         debug!("SpatialHearing: Comparing answer and response.");
         debug!("SpatialHearing: answer: {}", answer);
@@ -187,18 +189,23 @@ impl SpatialHearing {
         // Only return 1.0 (correct) if current response matches current answer.
         if answer.coords == response.coords {
             debug!("SpatialHearing: Answer matches response!");
-            return 1.0;
+            return true;
         }
 
-        // default answer is false (0.0)
-        0.0
+        // default answer is false
+        false
     }
 
     /// Send a get request to the ESP32 to trigger a beep.
     fn request_beep(&self, url: &String, pin: usize, freq: usize, sleep_ms: usize) {
         let rq_url = format!("{url}?pin={pin}&freq={freq}&sleep_ms={sleep_ms}");
         let rq = ehttp::Request::get(rq_url);
-        ehttp::fetch(rq, |response| debug!("{:?}", response.unwrap()));
+        ehttp::fetch(rq, |response| match response {
+            Ok(res) => debug!("{:?}", res),
+            Err(e) => {
+                warn!("{:?}", e)
+            }
+        });
     }
 }
 
@@ -291,9 +298,12 @@ impl Exercise for SpatialHearing {
             ui,
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
+            [30, 300],
+            [10, 50],
         );
 
         // Display spatial setup config on dark background
+        ui.set_min_height(300.);
         Frame::dark_canvas(ui.style()).show(ui, |ui| self.draw_3d_space(ui));
 
         egui::Grid::new("space_dimensions")
@@ -333,6 +343,7 @@ impl Exercise for SpatialHearing {
         }
         if ui.button("Start session").clicked() {
             self.init_soundsources();
+            self.evaluation.start();
             self.status = ExerciseStatus::Challenge;
         }
     }
@@ -385,7 +396,7 @@ mod tests {
 
     use crate::{
         exercises::{spatial_hearing::soundsource::SoundSource, ExerciseStatus},
-        shared::pos3::Pos3,
+        shared::Pos3,
     };
 
     use super::SpatialHearing;

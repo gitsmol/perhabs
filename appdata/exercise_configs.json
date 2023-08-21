@@ -1,125 +1,97 @@
 {
   "source": "Disk",
-  "vergence": [
+  "divergence": [
     {
-      "name": "Divergence (tiny)",
-      "levels": [
-        {
-          "name": "Easy",
-          "step": 1,
-          "pixel_size": 1
-        },
-        {
-          "name": "Medium",
-          "step": 2,
-          "pixel_size": 1
-        },
-        {
-          "name": "Hard",
-          "step": 3,
-          "pixel_size": 1
-        }
-      ]
+      "name": "Easy (tiny)",
+      "step": 1,
+      "pixel_size": 1
     },
     {
-      "name": "Convergence (tiny)",
-      "levels": [
-        {
-          "name": "Easy",
-          "step": -1,
-          "pixel_size": 1
-        },
-        {
-          "name": "Medium",
-          "step": -2,
-          "pixel_size": 1
-        },
-        {
-          "name": "Hard",
-          "step": -3,
-          "pixel_size": 1
-        }
-      ]
+      "name": "Medium (tiny)",
+      "step": 2,
+      "pixel_size": 1
     },
     {
-      "name": "Divergence (small)",
-      "levels": [
-        {
-          "name": "Easy",
-          "step": 1,
-          "pixel_size": 2
-        },
-        {
-          "name": "Medium",
-          "step": 2,
-          "pixel_size": 2
-        },
-        {
-          "name": "Hard",
-          "step": 3,
-          "pixel_size": 2
-        }
-      ]
+      "name": "Hard (tiny)",
+      "step": 3,
+      "pixel_size": 1
     },
     {
-      "name": "Convergence (small)",
-      "levels": [
-        {
-          "name": "Easy",
-          "step": -1,
-          "pixel_size": 2
-        },
-        {
-          "name": "Medium",
-          "step": -2,
-          "pixel_size": 2
-        },
-        {
-          "name": "Hard",
-          "step": -3,
-          "pixel_size": 2
-        }
-      ]
+      "name": "Easy (small)",
+      "step": 1,
+      "pixel_size": 2
     },
     {
-      "name": "Divergence (large)",
-      "levels": [
-        {
-          "name": "Easy",
-          "step": 1,
-          "pixel_size": 3
-        },
-        {
-          "name": "Medium",
-          "step": 2,
-          "pixel_size": 3
-        },
-        {
-          "name": "Hard",
-          "step": 3,
-          "pixel_size": 3
-        }
-      ]
+      "name": "Medium (small)",
+      "step": 2,
+      "pixel_size": 2
     },
     {
-      "name": "Convergence (large)",
-      "levels": [
-        {
-          "name": "Easy",
-          "step": -1,
-          "pixel_size": 3
-        },
-        {
-          "name": "Medium",
-          "step": -2,
-          "pixel_size": 3
-        },
-        {
-          "name": "Hard",
-          "step": -3,
-          "pixel_size": 3
-        }
-      ]
+      "name": "Hard (large)",
+      "step": 3,
+      "pixel_size": 2
+    },
+    {
+      "name": "Easy (large)",
+      "step": 1,
+      "pixel_size": 3
+    },
+    {
+      "name": "Medium (large)",
+      "step": 2,
+      "pixel_size": 3
+    },
+    {
+      "name": "Hard (large)",
+      "step": 3,
+      "pixel_size": 3
+    }
+  ],
+  "convergence": [
+    {
+      "name": "Easy (tiny)",
+      "step": -1,
+      "pixel_size": 1
+    },
+    {
+      "name": "Medium (tiny)",
+      "step": -2,
+      "pixel_size": 1
+    },
+    {
+      "name": "Hard (tiny)",
+      "step": -3,
+      "pixel_size": 1
+    },
+    {
+      "name": "Easy (small)",
+      "step": -1,
+      "pixel_size": 2
+    },
+    {
+      "name": "Medium (small)",
+      "step": -2,
+      "pixel_size": 2
+    },
+    {
+      "name": "Hard (large)",
+      "step": -3,
+      "pixel_size": 2
+    },
+    {
+      "name": "Easy (large)",
+      "step": -1,
+      "pixel_size": 3
+    },
+    {
+      "name": "Medium (large)",
+      "step": -2,
+      "pixel_size": 3
+    },
+    {
+      "name": "Hard (large)",
+      "step": -3,
+      "pixel_size": 3
     }
   ],
   "visual_recognition": [
@@ -189,6 +161,21 @@
     {
       "name": "Hard (small)",
       "arrow_size": 2,
+      "answer_timeout": 500
+    },
+    {
+      "name": "Easy (tiny)",
+      "arrow_size": 1,
+      "answer_timeout": 1000
+    },
+    {
+      "name": "Medium (tiny)",
+      "arrow_size": 1,
+      "answer_timeout": 750
+    },
+    {
+      "name": "Hard (tiny)",
+      "arrow_size": 1,
       "answer_timeout": 500
     }
   ],

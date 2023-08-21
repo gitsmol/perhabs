@@ -6,12 +6,12 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-pub mod appdata;
 pub mod exercise_config;
 pub mod exercise_config_collection;
 pub mod perhabs_config;
 pub mod sentences;
 
+/// Describes where an asset was loaded from.
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub enum AssetSource {
     Disk,
