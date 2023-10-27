@@ -179,8 +179,12 @@ impl SpatialHearing {
     /// Determine correctness of response.
     fn evaluate_response(&self) -> bool {
         // If either answer or response is not available, return false
-        let Some(answer) = &self.answer else { return false } ;
-        let Some(response) = &self.response else { return false };
+        let Some(answer) = &self.answer else {
+            return false;
+        };
+        let Some(response) = &self.response else {
+            return false;
+        };
 
         debug!("SpatialHearing: Comparing answer and response.");
         debug!("SpatialHearing: answer: {}", answer);
@@ -370,7 +374,7 @@ impl Exercise for SpatialHearing {
                 if let Some(pointer_pos) = visual_space.interact_pointer_pos() {
                     // Find a soundsource that matches the click.
                     let matching_source = self.sound_sources.iter().find(|s| {
-                        let Some(rect) = s.rect else {return false };
+                        let Some(rect) = s.rect else { return false };
                         if rect.contains(pointer_pos) {
                             debug!("SpatialHearing: matched click to {s}");
                             return true;

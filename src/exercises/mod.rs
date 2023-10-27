@@ -1,3 +1,4 @@
+mod binocular_saccades;
 mod cog_numbers;
 mod cog_words;
 mod depth_perception;
@@ -6,9 +7,11 @@ mod seq_numbers;
 pub mod spatial_drawing;
 mod spatial_hearing;
 mod vergence;
+mod visual_alignment;
 mod visual_recognition;
 mod visual_saccades;
 
+pub use binocular_saccades::BinoSaccades;
 pub use cog_numbers::CogNumbers;
 pub use cog_words::CogWords;
 pub use depth_perception::DepthPerception;
@@ -17,6 +20,7 @@ pub use seq_numbers::NumSeq;
 pub use spatial_drawing::SpatialDrawing;
 pub use spatial_hearing::SpatialHearing;
 pub use vergence::Vergence;
+pub use visual_alignment::VisualAlignment;
 pub use visual_recognition::VisRecognition;
 pub use visual_saccades::VisSaccades;
 

@@ -40,7 +40,7 @@ impl Default for CogNumbers {
             answers: Answers::default(),
             seq_length: 4,
             session: ExerciseStatus::None,
-            evaluation: Evaluation::new(Duration::seconds(60), 60),
+            evaluation: Evaluation::new(Duration::seconds(240), 10),
         }
     }
 }
@@ -134,7 +134,7 @@ impl Exercise for CogNumbers {
     }
 
     fn reset(&mut self) {
-        *self = CogNumbers::default();
+        *self = Default::default();
     }
 
     /// Show the configuration dialog
@@ -174,7 +174,7 @@ impl Exercise for CogNumbers {
             &mut self.evaluation.duration,
             &mut self.evaluation.repetitions,
             [30, 600],
-            [5, 20],
+            [5, 60],
         );
 
         // Draw a menu in two columns

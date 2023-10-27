@@ -1,4 +1,7 @@
-use crate::{exercises::Direction, shared::egui_style};
+use crate::{
+    exercises::Direction,
+    shared::{anaglyph::AnaglyphColor, egui_style},
+};
 
 use egui::{
     emath::{RectTransform, Rot2},
@@ -216,6 +219,56 @@ pub fn arrow_shape(
     let tail_bottom_right = to_screen * (pos + vec2(0., h));
     let r = Rect::from_two_pos(tail_top_left, tail_bottom_right);
     arrow.add_colored_rect(r, color);
+
+    // Rotate the arrow in the right direction. The default points to the right.
+    match direction {
+        Direction::Up => arrow.rotate(Rot2::from_angle(-1.570796), to_screen * pos),
+        Direction::Down => arrow.rotate(Rot2::from_angle(1.570796), to_screen * pos),
+        Direction::Left => arrow.rotate(Rot2::from_angle(3.141593), to_screen * pos),
+        Direction::Right => (),
+    }
+
+    // Return shape suitable for painter
+    Shape::Mesh(arrow)
+}
+
+/// Return a bicolored arrow shaped Mesh suitable for [`egui::Painter`].
+pub fn arrow_shape_anaglyph(
+    pos: Pos2,
+    size: f32,
+    direction: &Direction,
+    to_screen: RectTransform,
+    color: &AnaglyphColor,
+) -> Shape {
+    // Define some basic measures. M = measure, H = half measure.
+    // To keep the arrow in its intended shape, we need to take the aspect ratio
+    // of [`to_screen`] into account. In this case, we fix one dimension (height)
+    // in size and scale the other (width) according to the aspect ratio.
+    let aspect = to_screen.scale().x / to_screen.scale().y;
+    let m = size / 3. * 0.02;
+    let h = m / 2.;
+
+    // Create a mesh
+    let mut arrow = Mesh::default();
+
+    // Calculate arrowhead triangle positions and add to mesh.
+    // The horizontal size [`pos.x + m`] is corrected for aspect ratio
+    let right_arrow = vec![
+        to_screen * pos2(pos.x + m / aspect, pos.y), // Right corner
+        to_screen * pos2(pos.x, pos.y + m),          // Bottom corner
+        to_screen * pos2(pos.x, pos.y - m),          // Top corner
+    ];
+    for pos in right_arrow.iter() {
+        arrow.colored_vertex(pos.to_owned(), color.left); // Uses left eye color!
+    }
+    arrow.add_triangle(0, 1, 2);
+
+    // Add the rectangular arrow tail.
+    // Here too the horizontal size [`pos.x + m`] is corrected for aspect ratio
+    let tail_top_left = to_screen * (pos + vec2(-m / aspect, -h));
+    let tail_bottom_right = to_screen * (pos + vec2(0., h));
+    let r = Rect::from_two_pos(tail_top_left, tail_bottom_right);
+    arrow.add_colored_rect(r, color.right); // Uses right eye color!
 
     // Rotate the arrow in the right direction. The default points to the right.
     match direction {

@@ -27,7 +27,7 @@
       "pixel_size": 2
     },
     {
-      "name": "Hard (large)",
+      "name": "Hard (small)",
       "step": 3,
       "pixel_size": 2
     },
@@ -74,7 +74,7 @@
       "pixel_size": 2
     },
     {
-      "name": "Hard (large)",
+      "name": "Hard (small)",
       "step": -3,
       "pixel_size": 2
     },

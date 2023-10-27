@@ -1,5 +1,0 @@
-var searchIndex = JSON.parse('{\
-"lib":{"doc":"","t":[4,13,13,13,13,11,11,11,11,5,11,11,11,5,5,11,11,11,11,5],"n":["Direction","Down","Left","Right","Up","borrow","borrow_mut","clone","clone_into","dirwalk","eq","from","into","numvec_to_string","read_file","to_owned","try_from","try_into","type_id","write_string_to_file"],"q":["lib","","","","","","","","","","","","","","","","","","",""],"d":["","","","","","","","","","","","Returns the argument unchanged.","Calls <code>U::from(self)</code>.","","","","","","","Write a string to a given filepath."],"i":[0,1,1,1,1,1,1,1,1,0,1,1,1,0,0,1,1,1,1,0],"f":[0,0,0,0,0,[[]],[[]],[1,1],[[]],[2,[[5,[[4,[3]]]]]],[[1,1],6],[[]],[[]],[4,7],[3,[[11,[[9,[8]],10]]]],[[]],[[],11],[[],11],[[],12],[[2,7],[[11,[10]]]]],"p":[[4,"Direction"],[3,"Path"],[3,"PathBuf"],[3,"Vec"],[6,"Result"],[15,"bool"],[3,"String"],[3,"File"],[3,"BufReader"],[3,"Error"],[4,"Result"],[3,"TypeId"]]}\
-}');
-if (typeof window !== 'undefined' && window.initSearch) {window.initSearch(searchIndex)};
-if (typeof exports !== 'undefined') {exports.searchIndex = searchIndex};

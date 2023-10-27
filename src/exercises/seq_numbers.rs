@@ -58,7 +58,7 @@ impl Exercise for NumSeq {
     }
 
     fn reset(&mut self) {
-        *self = NumSeq::default();
+        *self = Default::default();
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {

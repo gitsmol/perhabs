@@ -193,6 +193,8 @@ impl Exercise for Vergence {
         // Remember color calibrations
         let tmp_color = self.anaglyph.color.clone();
         *self = Default::default();
+        // create arrays for a new anaglyph
+        self.anaglyph.initialize();
         self.anaglyph.color = tmp_color;
     }
 

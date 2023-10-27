@@ -258,6 +258,7 @@ impl Perhabs {
                 widgets::dark_mode_toggle_button(ui);
 
                 // Quit button
+                #[cfg(not(target_arch = "wasm32"))]
                 if ui.button("\u{2386} Quit").clicked() {
                     frame.close();
                 };

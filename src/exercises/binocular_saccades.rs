@@ -1,4 +1,5 @@
 use crate::exercises::Direction;
+use crate::shared::anaglyph::AnaglyphColor;
 use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
 use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
@@ -15,7 +16,8 @@ use rand::{seq::SliceRandom, Rng};
 use super::ExerciseStatus;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub struct VisSaccades {
+pub struct BinoSaccades {
+    colors: AnaglyphColor,
     session_status: ExerciseStatus,
     arrow_pos: Option<Pos2>,
     answer: Option<Direction>, // The right answer is the direction of the arrow
@@ -25,9 +27,10 @@ pub struct VisSaccades {
     evaluation: Evaluation<f32>,
 }
 
-impl Default for VisSaccades {
+impl Default for BinoSaccades {
     fn default() -> Self {
         Self {
+            colors: AnaglyphColor::default(),
             session_status: ExerciseStatus::None,
             exercise_params: VisSaccadesConfig::default(),
             arrow_pos: None,
@@ -42,7 +45,7 @@ impl Default for VisSaccades {
 // ***********
 // Internals: painting, calculations etc
 // ***********
-impl VisSaccades {
+impl BinoSaccades {
     fn arrow_painter(&self, ui: &mut egui::Ui) {
         // Set up
         let (response, painter) = ui.allocate_painter(
@@ -56,12 +59,12 @@ impl VisSaccades {
 
         if let Some(pos) = self.arrow_pos {
             if let Some(direction) = &self.answer {
-                let shape = widgets::arrow_shape(
+                let shape = widgets::arrow_shape_anaglyph(
                     pos,
                     self.exercise_params.arrow_size as f32,
                     direction,
                     to_screen,
-                    Color32::GREEN,
+                    &self.colors,
                 );
                 painter.add(shape);
             }
@@ -177,7 +180,7 @@ impl VisSaccades {
 // ***********
 // UI
 // ***********
-impl VisSaccades {
+impl BinoSaccades {
     /// Basic controls during a session
     fn ui_controls(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
@@ -213,13 +216,13 @@ impl VisSaccades {
     }
 }
 
-impl Exercise for VisSaccades {
+impl Exercise for BinoSaccades {
     fn name(&self) -> &'static str {
-        "Scanning (Saccades)"
+        "Binocular scanning (Saccades)"
     }
 
     fn description(&self) -> &'static str {
-        "Quickly scan the screen and respond."
+        "Quickly scan the screen and respond. Requires anaglyph glasses!"
     }
 
     fn reset(&mut self) {

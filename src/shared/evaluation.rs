@@ -1,5 +1,6 @@
 use crate::shared::timer::Timer;
 use chrono::{Duration, Local};
+use egui::{Pos2, Vec2};
 
 /// Manage a performance evaluation by keeping track of time and reps and
 /// storing results.
@@ -185,6 +186,19 @@ impl Evaluation<f32> {
             total_score += r;
         }
         total_score / self.show_results().len() as f32
+    }
+}
+
+impl Evaluation<Vec2> {
+    pub fn average_score(&self) -> f32 {
+        // Calculate average score.
+        let mut total_score = Vec2::new(0., 0.);
+        for r in self.show_results() {
+            total_score.x += r.x;
+            total_score.y += r.y;
+        }
+        total_score.x / self.show_results().len() as f32
+            + total_score.x / self.show_results().len() as f32
     }
 }
 

@@ -214,7 +214,7 @@ impl Exercise for CogWords {
     }
 
     fn reset(&mut self) {
-        *self = CogWords::default();
+        *self = Default::default();
     }
 
     /// Show the configuration dialog

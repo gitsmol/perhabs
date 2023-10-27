@@ -258,7 +258,7 @@ impl Exercise for VisRecognition {
     }
 
     fn reset(&mut self) {
-        *self = VisRecognition::default();
+        *self = Default::default();
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {

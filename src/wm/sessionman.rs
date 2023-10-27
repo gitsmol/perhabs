@@ -1,7 +1,7 @@
 use crate::{
     exercises::{
-        CogNumbers, CogWords, DepthPerception, EpisodicMemory, NumSeq, SpatialDrawing,
-        SpatialHearing, Vergence, VisRecognition, VisSaccades,
+        BinoSaccades, CogNumbers, CogWords, DepthPerception, EpisodicMemory, NumSeq,
+        SpatialDrawing, SpatialHearing, Vergence, VisRecognition, VisSaccades, VisualAlignment,
     },
     shared::AppData,
     widgets::menu_button,
@@ -27,9 +27,11 @@ impl Default for SessionManager {
                 Box::new(SpatialDrawing::default()),
                 Box::new(Vergence::default()),
                 Box::new(DepthPerception::default()),
+                Box::new(BinoSaccades::default()),
+                Box::new(VisualAlignment::default()),
                 Box::new(VisRecognition::default()),
                 Box::new(VisSaccades::default()),
-                Box::new(SpatialHearing::default()),
+                // Box::new(SpatialHearing::default()),
             ],
             open: None,
         }

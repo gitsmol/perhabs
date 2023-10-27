@@ -16,8 +16,8 @@ ndarray = "0.15.6"
 ndarray-rand = "0.14.0"
 log = "0.4.17"
 relative-path = "1.7.3"
-ehttp = "0.2.0"
-poll-promise = "0.2.0"
+ehttp = "0.3"
+poll-promise = "0.3"
 cpal = { version = "0.13.5", features = ["wasm-bindgen"] }
 num = "0.4.0"
 

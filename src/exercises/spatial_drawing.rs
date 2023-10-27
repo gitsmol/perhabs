@@ -143,7 +143,7 @@ impl Exercise for SpatialDrawing {
     }
 
     fn reset(&mut self) {
-        *self = SpatialDrawing::default();
+        *self = Default::default();
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {

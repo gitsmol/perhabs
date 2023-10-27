@@ -146,7 +146,7 @@ impl Exercise for DepthPerception {
     fn reset(&mut self) {
         // Remember color calibrations
         let tmp_color = self.anaglyph.color.clone();
-        *self = DepthPerception::default();
+        *self = Default::default();
         self.anaglyph.color = tmp_color;
     }
 

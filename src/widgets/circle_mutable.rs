@@ -58,15 +58,25 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
         // There is some awkard type conversion involved here for the benefit
         // of this function relying on the Integer trait.
         let percentage_remaining = {
-            // Some guard clauses: if we can't
+            // if we can't type convert revert to 0
             let range = (*max - *min).to_f32().unwrap_or(0.0);
             let div = (*value - *min).to_f32().unwrap_or(0.0);
 
-            100 - ((div / range as f32) * 100.0) as usize
+            100 - ((div / range as f32) * 100.0) as isize
         };
 
-        // Plot points to indicate remaining percentage and paint
+        // Plot points to indicate remaining percentage and paint polygon
         if percentage_remaining < 100 {
+            // Paint circle with big colored stroke. This circle is going to be partially
+            // obscured by the next circle to be painted.
+            painter.circle(
+                rect.center(),
+                radius,
+                Color32::TRANSPARENT,
+                Stroke::new(stroke_width, stroke_color),
+            );
+
+            // Paint circle that obscures the circle with the colored stroke.
             let mut points = vec![];
             for j in 0..percentage_remaining {
                 points.push(coord(angle(99., 99. - j as f32), radius + stroke_width));
@@ -74,14 +84,6 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
             points.push(rect.center());
             let bg_fill = ui.visuals().window_fill;
             painter.add(Shape::convex_polygon(points, bg_fill, Stroke::NONE));
-
-            // Paint circle
-            painter.circle(
-                rect.center(),
-                radius,
-                Color32::TRANSPARENT,
-                Stroke::new(stroke_width, stroke_color),
-            );
         }
 
         // Finally, paint inner circle with stroke. This stroke is always visible.
