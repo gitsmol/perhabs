@@ -18,6 +18,7 @@ pub struct Perhabs {
     appdata: AppData,
     show_about: bool,
     tts: tts::Tts,
+    error: Option<String>,
 }
 
 impl Default for Perhabs {
@@ -27,6 +28,7 @@ impl Default for Perhabs {
             sessionman: SessionManager::default(),
             appdata: AppData::default(),
             show_about: false,
+            error: None,
 
             #[cfg(target_os = "macos")]
             tts: tts::Tts::new(tts::Backends::AppKit).unwrap(), // NOTE default is AvKit which is bugged(?)
@@ -205,6 +207,9 @@ impl Perhabs {
 impl eframe::App for Perhabs {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        // Show errors if there are any
+        self.error_window(ctx);
+
         // Persistent menubar at the top of the screen.
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| self.menu_bar(ui, frame));
 
@@ -250,6 +255,39 @@ impl eframe::App for Perhabs {
 }
 
 impl Perhabs {
+    // Error window
+    fn error_window(&mut self, ctx: &egui::Context) {
+        // Check for error messages
+        match self.appdata.error_rx.try_recv() {
+            Ok(error) => {
+                self.error = Some(error);
+            }
+            Err(_) => return,
+        }
+
+        let desired_size = {
+            let avail_size = ctx.available_rect().size();
+            if avail_size.x < 600.0 {
+                avail_size
+            } else {
+                vec2(500.0, avail_size.y)
+            }
+        };
+        egui::Window::new("Error")
+            .collapsible(false)
+            .resizable(false)
+            .min_width(desired_size.x)
+            .anchor(Align2::CENTER_TOP, vec2(0., desired_size.y * 0.2))
+            .show(ctx, |ui| {
+                if let Some(error) = &self.error {
+                    ui.label(format!("{}", error));
+                }
+                if ui.button("Close").clicked() {
+                    self.error = None
+                }
+            });
+    }
+
     /// Persistent menu bar at the top of the screen
     fn menu_bar(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         egui::menu::bar(ui, |ui| {

@@ -1,7 +1,7 @@
 use crate::{
     exercises::{
         BinoSaccades, CogNumbers, CogWords, DepthPerception, EpisodicMemory, NumSeq,
-        SpatialDrawing, SpatialHearing, Vergence, VisRecognition, VisSaccades, VisualAlignment,
+        SpatialDrawing, Vergence, VisRecognition, VisSaccades, VisualAlignment,
     },
     shared::AppData,
     widgets::menu_button,

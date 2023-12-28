@@ -296,7 +296,7 @@ impl Exercise for SpatialHearing {
         }
     }
 
-    fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
+    fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {
         // Display the evaluation config
         eval_config_widgets(
             ui,

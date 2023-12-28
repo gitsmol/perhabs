@@ -1,6 +1,6 @@
 use crate::{
     exercises::Direction,
-    shared::{anaglyph::AnaglyphColor, egui_style},
+    shared::{egui_style, AnaglyphColor},
 };
 
 use egui::{

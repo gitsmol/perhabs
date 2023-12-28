@@ -1,6 +1,6 @@
 use crate::shared::timer::Timer;
 use chrono::{Duration, Local};
-use egui::{Pos2, Vec2};
+use egui::Vec2;
 
 /// Manage a performance evaluation by keeping track of time and reps and
 /// storing results.

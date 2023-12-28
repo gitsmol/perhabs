@@ -6,8 +6,9 @@ use egui::{
 use rand::Rng;
 
 use crate::{
-    exercises::Direction, shared::anaglyph::AnaglyphColor,
-    shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig, widgets,
+    exercises::Direction,
+    shared::asset_loader::exercise_config::depth_perception::DepthPerceptionConfig,
+    shared::AnaglyphColor, widgets,
 };
 
 /// Struct for anaglyph images, in this case a number of rings and an indicator arrow.

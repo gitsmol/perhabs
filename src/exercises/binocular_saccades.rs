@@ -1,6 +1,6 @@
 use crate::exercises::Direction;
-use crate::shared::anaglyph::AnaglyphColor;
-use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
+use crate::shared::asset_loader::exercise_config::vergence::VergenceConfig;
+use crate::shared::Anaglyph;
 use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
@@ -10,33 +10,33 @@ use crate::{
     {shared::Evaluation, shared::Timer},
 };
 use chrono::Duration;
-use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Pos2, Rect, Sense, Vec2};
+use egui::{pos2, vec2, Align, Frame, Key, Pos2, Vec2};
 use rand::{seq::SliceRandom, Rng};
 
 use super::ExerciseStatus;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct BinoSaccades {
-    colors: AnaglyphColor,
     session_status: ExerciseStatus,
-    arrow_pos: Option<Pos2>,
+    anaglyph: Anaglyph,
+    anaglyph_pos: Option<Pos2>,
     answer: Option<Direction>, // The right answer is the direction of the arrow
     response: Option<Direction>, // The given response is a direction
-    exercise_params: VisSaccadesConfig,
     answer_timeout_timer: Timer,
+    answer_timeout_ms: i64,
     evaluation: Evaluation<f32>,
 }
 
 impl Default for BinoSaccades {
     fn default() -> Self {
         Self {
-            colors: AnaglyphColor::default(),
             session_status: ExerciseStatus::None,
-            exercise_params: VisSaccadesConfig::default(),
-            arrow_pos: None,
+            anaglyph: Anaglyph::default(),
+            anaglyph_pos: None,
             answer: None,
             response: None,
             answer_timeout_timer: Timer::new(),
+            answer_timeout_ms: 1000,
             evaluation: Evaluation::new(Duration::seconds(60), 60),
         }
     }
@@ -46,33 +46,17 @@ impl Default for BinoSaccades {
 // Internals: painting, calculations etc
 // ***********
 impl BinoSaccades {
-    fn arrow_painter(&self, ui: &mut egui::Ui) {
-        // Set up
-        let (response, painter) = ui.allocate_painter(
-            ui.available_size_before_wrap(),
-            Sense::focusable_noninteractive(),
-        );
-        let to_screen = emath::RectTransform::from_to(
-            Rect::from_x_y_ranges(0.0..=1.0, 0.0..=1.0),
-            response.rect,
-        );
-
-        if let Some(pos) = self.arrow_pos {
-            if let Some(direction) = &self.answer {
-                let shape = widgets::arrow_shape_anaglyph(
-                    pos,
-                    self.exercise_params.arrow_size as f32,
-                    direction,
-                    to_screen,
-                    &self.colors,
-                );
-                painter.add(shape);
+    fn anaglyph_painter(&mut self, ui: &mut egui::Ui, appdata: &AppData) {
+        match self.anaglyph.draw(ui) {
+            Ok(_) => (),
+            Err(e) => {
+                appdata.error_tx.send(e.to_string());
             }
-        }
+        };
     }
 
     /// Randomly position an arrow pointing in a random direction.
-    fn new_arrow_pos(&mut self) {
+    fn new_anaglyph_pos(&mut self) {
         let mut rng = rand::thread_rng();
 
         if let Some(direction) = vec![
@@ -84,11 +68,13 @@ impl BinoSaccades {
         .choose(&mut rng)
         {
             self.answer = Some(*direction);
+            self.anaglyph.focal_position = *direction;
         }
 
-        let x: f32 = rng.gen_range(0.01..0.95);
-        let y: f32 = rng.gen_range(0.01..0.95);
-        self.arrow_pos = Some(pos2(x, y));
+        let x: f32 = rng.gen_range(0.15..0.85);
+        let y: f32 = rng.gen_range(0.15..0.85);
+        self.anaglyph_pos = Some(pos2(x, y));
+        self.anaglyph.screen_offset = Some(pos2(x, y));
     }
 
     /// Keeps track of answer, response, result progression.
@@ -111,11 +97,12 @@ impl BinoSaccades {
             // This exercise is always in response mode.
             ExerciseStatus::Response => {
                 // Setup and display answer
-                // If no arrow is visible, create new arrow and set answer timeout timer
+                // If no anaglyph is visible, create new anaglyph and set answer timeout timer
                 if let None = self.answer {
-                    self.new_arrow_pos();
+                    self.new_anaglyph_pos();
+                    self.anaglyph.initialize();
                     self.answer_timeout_timer
-                        .set(Duration::milliseconds(self.exercise_params.answer_timeout));
+                        .set(Duration::milliseconds(self.answer_timeout_ms));
                 }
 
                 // Continously allow response input
@@ -269,9 +256,22 @@ impl Exercise for BinoSaccades {
             [30, 120],
         );
 
+        ui.horizontal(|ui| {
+            if ui.button("Quick").clicked() {
+                self.answer_timeout_ms = 500;
+            }
+            if ui.button("Normal").clicked() {
+                self.answer_timeout_ms = 1000;
+            }
+            if ui.button("Slow").clicked() {
+                self.answer_timeout_ms = 1500;
+            }
+        });
+
         // Display all exercise configs
-        let mut func = |exercise: &VisSaccadesConfig| {
-            self.exercise_params = exercise.to_owned();
+        let mut func = |exercise: &VergenceConfig| {
+            self.anaglyph.initialize();
+            self.anaglyph.pixel_size = exercise.pixel_size;
             self.session_status = ExerciseStatus::Response;
             self.evaluation.start();
         };
@@ -279,15 +279,15 @@ impl Exercise for BinoSaccades {
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
             if let Some(config) =
-                exercise_config_menu_multicol::<VisSaccadesConfig>(ui, &config.visual_saccades, 3)
+                exercise_config_menu_multicol::<VergenceConfig>(ui, &config.convergence, 3)
             {
                 func(config)
             };
         }
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
         self.ui_controls(ui);
-        Frame::dark_canvas(ui.style()).show(ui, |ui| self.arrow_painter(ui));
+        Frame::dark_canvas(ui.style()).show(ui, |ui| self.anaglyph_painter(ui, appdata));
     }
 }

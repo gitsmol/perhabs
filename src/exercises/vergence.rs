@@ -13,8 +13,7 @@ use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
 use crate::wm::Exercise;
 
-use self::anaglyph::Anaglyph;
-mod anaglyph;
+use crate::shared::Anaglyph;
 
 struct Session {
     active: bool,

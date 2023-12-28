@@ -5,7 +5,7 @@ use egui::{Frame, Pos2};
 use rand::Rng;
 use tts::Tts;
 
-use crate::shared::anaglyph::AnaglyphColor;
+use crate::shared::AnaglyphColor;
 use crate::shared::AppData;
 use crate::shared::Evaluation;
 use crate::widgets;

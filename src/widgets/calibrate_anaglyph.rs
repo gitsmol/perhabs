@@ -1,4 +1,4 @@
-use crate::shared::anaglyph::AnaglyphColor;
+use crate::shared::AnaglyphColor;
 use egui::{emath, epaint::PathShape, pos2, vec2, Frame, Margin, Rect, Stroke};
 
 /// Shows a menu to calibrate the colors used in the anaglyph painting.
