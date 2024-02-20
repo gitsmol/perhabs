@@ -239,7 +239,7 @@ impl VisualAlignment {
             if y_shift >= 0.0 {
                 ui.label("down.")
             } else {
-                ui.label("to the left.")
+                ui.label("up.")
             }
         });
 

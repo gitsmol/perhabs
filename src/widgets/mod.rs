@@ -114,13 +114,13 @@ pub fn circle_with_data(
     );
 }
 
-/// Large menu button
-
-/// ## Params
-/// override_size:      When Some, determines the size of the button.
-///                     When None, vec2(ui.available_width(), 100.) is used.
-/// label_source:       Button label
-/// description_source: Button description
+/// Creates a large menu button with optional size override and descriptive text.
+///
+/// # Parameters
+/// - `override_size`: When `Some`, determines the size of the button.
+///                    When `None`, `vec2(ui.available_width(), 100.)` is used.
+/// - `label_source`: Text to display as the button label.
+/// - `description_source`: Text to display as the button description.
 pub fn menu_button(
     ui: &mut egui::Ui,
     override_size: Option<Vec2>,
