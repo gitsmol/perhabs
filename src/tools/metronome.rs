@@ -71,10 +71,10 @@ impl View for Metronome {
                     self.voice_tx.send(self.voice);
                 }
             });
-            ui.add(egui::Slider::new(&mut self.voice.freq, 80.0..=20_000.0).text("Freq"));
-            ui.add(egui::Slider::new(&mut self.voice.attack, 1000..=30000).text("Attack"));
-            ui.add(egui::Slider::new(&mut self.voice.sustain, 1000..=30000).text("Sustain"));
-            ui.add(egui::Slider::new(&mut self.voice.release, 1000..=30000).text("Release"));
+            ui.add(egui::Slider::new(&mut self.voice.freq, 80.0..=1_000.0).text("Freq"));
+            ui.add(egui::Slider::new(&mut self.voice.attack, 1000..=30_000).text("Attack"));
+            ui.add(egui::Slider::new(&mut self.voice.sustain, 1000..=30_000).text("Sustain"));
+            ui.add(egui::Slider::new(&mut self.voice.release, 1000..=30_000).text("Release"));
 
             if ui.button("Start metronome").clicked() {
                 self.running = true;

@@ -107,25 +107,23 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
         };
         let data_wt: WidgetText = value_string.into();
         let data_galley = data_wt.into_galley(ui, None, rect.width(), TextStyle::Heading);
-        let data_galley_size = data_galley.size();
 
         // Create galley for label
         let label_wt: WidgetText = label.into();
         let label_galley = label_wt.into_galley(ui, None, rect.width(), TextStyle::Small);
-        let label_galley_size = label_galley.size();
 
-        // Paint galleys
-        data_galley.paint_with_visuals(
-            ui.painter(),
-            rect.center() - (data_galley_size * 0.5),
-            ui.style().noninteractive(),
+        painter.galley(
+            rect.center() - data_galley.size() * 0.5,
+            data_galley,
+            ui.style().noninteractive().text_color(),
         );
-        label_galley.paint_with_visuals(
-            ui.painter(),
-            rect.center() - (label_galley_size * 0.5 - vec2(0., radius * 0.5)),
-            ui.style().noninteractive(),
+
+        painter.galley(
+            rect.center() - label_galley.size() * 0.5 + vec2(0., radius * 0.5),
+            label_galley,
+            ui.style().noninteractive().text_color(),
         );
-        //
+
         // Handle changing the duration
         //
         let delta = response.drag_delta();
@@ -253,22 +251,32 @@ pub fn circle_mut_duration(
         let data = format_min_secs(duration);
         let data_wt: WidgetText = data.into();
         let data_galley = data_wt.into_galley(ui, None, rect.width(), TextStyle::Heading);
-        let data_galley_size = data_galley.size();
-        data_galley.paint_with_visuals(
-            ui.painter(),
-            rect.center() - (data_galley_size * 0.5),
-            ui.style().noninteractive(),
+        painter.galley(
+            rect.center() - (data_galley.size() * 0.5),
+            data_galley,
+            ui.style().noninteractive().text_color(),
         );
+        // data_galley.paint_with_visuals(
+        //     ui.painter(),
+        //     rect.center() - (data_galley_size * 0.5),
+        //     ui.style().noninteractive(),
+        // );
 
         // Paint label
         let label_wt: WidgetText = label.into();
         let label_galley = label_wt.into_galley(ui, None, rect.width(), TextStyle::Small);
-        let label_galley_size = label_galley.size();
-        label_galley.paint_with_visuals(
-            ui.painter(),
-            rect.center() - (label_galley_size * 0.5 - vec2(0., radius * 0.5)),
-            ui.style().noninteractive(),
+
+        painter.galley(
+            rect.center() - (label_galley.size() * 0.5 - vec2(0., radius * 0.5)),
+            label_galley,
+            ui.style().noninteractive().text_color(),
         );
+
+        // label_galley.paint_with_visuals(
+        //     ui.painter(),
+        //     rect.center() - (label_galley_size * 0.5 - vec2(0., radius * 0.5)),
+        //     ui.style().noninteractive(),
+        // );
 
         // *****************************
         // Handle changing the duration

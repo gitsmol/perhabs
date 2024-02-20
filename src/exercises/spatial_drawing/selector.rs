@@ -85,17 +85,15 @@ impl super::SpatialDrawing {
         for puzzle in list {
             ui.centered_and_justified(|ui| {
                 Frame::dark_canvas(ui.style()).show(ui, |ui| {
-                    if self
-                        .ui_mini(ui, puzzle)
-                        // Show right-click menu
-                        .context_menu(|ui| {
+                    let ui_mini = self.ui_mini(ui, puzzle);
+                    if ui_mini.secondary_clicked() {
+                        ui_mini.context_menu(|ui| {
                             if ui.button("Edit").clicked() {
                                 self.edit_puzzle(puzzle);
-                            }
-                        })
-                        // On click, start puzzle
-                        .clicked()
-                    {
+                            };
+                        });
+                    };
+                    if ui_mini.clicked() {
                         self.pick_puzzle(puzzle);
                     }
                 });

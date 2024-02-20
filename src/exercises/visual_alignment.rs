@@ -113,7 +113,7 @@ impl VisualAlignment {
                 self.target_pos_on_screen,
                 Vec2::new(target_size, target_size),
             ),
-            Rounding::none(),
+            Rounding::ZERO,
             Stroke::new(stroke_size, self.colors.left),
         );
 
@@ -147,7 +147,7 @@ impl VisualAlignment {
         // Paint the target
         ui.painter().rect_stroke(
             Rect::from_center_size(target_pos_on_screen, Vec2::new(target_size, target_size)),
-            Rounding::none(),
+            Rounding::ZERO,
             Stroke::new(stroke_size, self.colors.left),
         );
 

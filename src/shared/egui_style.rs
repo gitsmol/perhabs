@@ -32,7 +32,7 @@ pub fn dark_visuals() -> Visuals {
 
         popup_shadow: shadow,
         resize_corner_size: 12.0,
-        text_cursor_width: 2.0,
+        // text_cursor_width: 2.0,
         text_cursor_preview: false,
         clip_rect_margin: 3.0, // should be at least half the size of the widest frame stroke + max WidgetVisuals::expansion
         button_frame: true,
@@ -42,6 +42,8 @@ pub fn dark_visuals() -> Visuals {
         striped: false,
 
         slider_trailing_fill: false,
+
+        ..Default::default()
     }
 }
 

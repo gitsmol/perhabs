@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     exercises::Direction,
     shared::{egui_style, AnaglyphColor},
@@ -5,9 +7,8 @@ use crate::{
 
 use egui::{
     emath::{RectTransform, Rot2},
-    pos2, vec2,
-    widget_text::WidgetTextGalley,
-    Color32, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, Vec2, WidgetText,
+    pos2, vec2, Color32, Galley, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, Vec2,
+    WidgetText,
 };
 
 pub mod calibrate_anaglyph;
@@ -96,21 +97,20 @@ pub fn circle_with_data(
     // Paint data
     let data_wt: WidgetText = data.into();
     let data_galley = data_wt.into_galley(ui, None, rect.width(), TextStyle::Heading);
-    let data_galley_size = data_galley.size();
-    data_galley.paint_with_visuals(
-        ui.painter(),
-        rect.center() - (data_galley_size * 0.5),
-        ui.style().noninteractive(),
+    painter.galley(
+        rect.center() - (data_galley.size() * 0.5),
+        data_galley,
+        ui.style().noninteractive().text_color(),
     );
 
     // Paint label
     let label_wt: WidgetText = label.into();
     let label_galley = label_wt.into_galley(ui, None, rect.width(), TextStyle::Small);
-    let label_galley_size = label_galley.size();
-    label_galley.paint_with_visuals(
-        ui.painter(),
-        rect.center() - (label_galley_size * 0.5 - vec2(0., radius * 0.5)),
-        ui.style().noninteractive(),
+
+    painter.galley(
+        rect.center() - (label_galley.size() * 0.5 - vec2(0., radius * 0.5)),
+        label_galley,
+        ui.style().noninteractive().text_color(),
     );
 }
 
@@ -158,7 +158,7 @@ pub fn menu_button(
         let label_wt: WidgetText = label_source.into();
         let label_galley = label_wt.into_galley(ui, None, text_size, TextStyle::Body);
         let description_wt: WidgetText = description_source.into();
-        let description_galley: WidgetTextGalley =
+        let description_galley: Arc<Galley> =
             description_wt.into_galley(ui, Some(true), text_size, TextStyle::Body);
 
         let visuals = ui.style().interact(&response);
@@ -174,8 +174,16 @@ pub fn menu_button(
         let label_pos = rect.left_top() + vec2(margin, margin);
         // The description goes in the same position but a little lower.
         let description_pos = label_pos + vec2(0., margin);
-        label_galley.paint_with_visuals(ui.painter(), label_pos, visuals);
-        description_galley.paint_with_visuals(ui.painter(), description_pos, visuals);
+        ui.painter().galley(
+            label_pos,
+            label_galley,
+            ui.visuals().noninteractive().text_color(),
+        );
+        ui.painter().galley(
+            description_pos,
+            description_galley,
+            ui.visuals().noninteractive().text_color(),
+        );
     }
 
     // return response

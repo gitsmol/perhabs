@@ -1,13 +1,15 @@
 use std::sync::mpsc::Receiver;
+use std::time::Duration;
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{Sample, Stream};
+use cpal::{FromSample, Sample, SizedSample, Stream};
 use log::debug;
 // wasm stuff only
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 #[cfg(target_arch = "wasm32")]
 use web_sys::console;
+
 //
 // Putting all the audio stuff here for now
 //
@@ -98,6 +100,14 @@ pub fn beep(rx: Receiver<Voice>) -> AudioHandle {
         cpal::SampleFormat::F32 => run::<f32>(&device, &config.into(), audio_ctx, rx),
         cpal::SampleFormat::I16 => run::<i16>(&device, &config.into(), audio_ctx, rx),
         cpal::SampleFormat::U16 => run::<u16>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::I8 => run::<i8>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::I32 => run::<i32>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::I64 => run::<i64>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::U8 => run::<u8>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::U32 => run::<u32>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::U64 => run::<u64>(&device, &config.into(), audio_ctx, rx),
+        cpal::SampleFormat::F64 => run::<f64>(&device, &config.into(), audio_ctx, rx),
+        _ => panic!("Unsupported sample format!"),
     })
 }
 
@@ -108,7 +118,7 @@ fn run<T>(
     rx: Receiver<Voice>,
 ) -> Stream
 where
-    T: Sample,
+    T: SizedSample + FromSample<f32>,
 {
     #[cfg(target_arch = "wasm32")]
     let err_fn = |err| console::error_1(&format!("an error occurred on stream: {}", err).into());
@@ -126,15 +136,18 @@ where
             for i in delete_voice {
                 audio_ctx.voices.swap_remove(i);
             }
-            let v = Sample::from::<f32>(&next_value(&mut audio_ctx, &rx));
-            for value in frame.iter_mut() {
-                *value = v;
+            let value: T = T::from_sample(next_value(&mut audio_ctx, &rx));
+
+            // let v = Sample::
+            //     // ::from::<f32>(&next_value(&mut audio_ctx, &rx));
+            for sample in frame.iter_mut() {
+                *sample = value;
             }
         }
     };
 
     let stream = device
-        .build_output_stream(config, audio_fn, err_fn)
+        .build_output_stream(config, audio_fn, err_fn, Some(Duration::from_millis(500)))
         .unwrap();
     match stream.play() {
         Ok(_) => debug!("I'm playing."),
@@ -177,16 +190,4 @@ fn next_value(audio_ctx: &mut AudioContext, rx: &Receiver<Voice>) -> f32 {
         value += (audio_ctx.clock * voice.freq * 3.141592 / audio_ctx.samplerate).sin() * amp;
     }
     value
-}
-
-fn write_data<T>(output: &mut [T], channels: usize, next_sample: &mut dyn FnMut() -> f32)
-where
-    T: cpal::Sample,
-{
-    for frame in output.chunks_mut(channels) {
-        let value: T = cpal::Sample::from::<f32>(&next_sample());
-        for sample in frame.iter_mut() {
-            *sample = value;
-        }
-    }
 }

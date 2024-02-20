@@ -1,12 +1,12 @@
 [package]
 name = "perhabs"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = {version = "1", features=["derive"]}
+serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 chrono = "0.4"
 rand = "0.8.5"
@@ -15,16 +15,16 @@ tts = "0.25"
 ndarray = "0.15.6"
 ndarray-rand = "0.14.0"
 log = "0.4.17"
-relative-path = "1.7.3"
+relative-path = "1.9.2"
 ehttp = "0.3"
 poll-promise = "0.3"
-cpal = { version = "0.13.5", features = ["wasm-bindgen"] }
+cpal = { version = "0.15", features = ["wasm-bindgen"] }
 num = "0.4.0"
 
 #egui stuff
-egui = "0.22"
-egui_extras = "0.22"
-eframe = { version = "0.22", features = ["persistence"] }
+egui = "0.26"
+egui_extras = "0.26"
+eframe = { version = "0.26", features = ["persistence"] }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -39,15 +39,15 @@ wasm-bindgen = "0.2"
 
 
 [dependencies.web-sys]
-version = "0.3.4"
+version = "0.3"
 features = [
-  'AudioContext',
-  'AudioDestinationNode',
-  'AudioNode',
-  'AudioParam',
-  'GainNode',
-  'OscillatorNode',
-  'OscillatorType',
+    'AudioContext',
+    'AudioDestinationNode',
+    'AudioNode',
+    'AudioParam',
+    'GainNode',
+    'OscillatorNode',
+    'OscillatorType',
 ]
 
 [profile.release]

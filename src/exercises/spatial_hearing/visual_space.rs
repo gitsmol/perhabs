@@ -47,7 +47,7 @@ impl super::SpatialHearing {
         );
         painter.add(RectShape::stroke(
             frame_z0,
-            Rounding::none(),
+            Rounding::ZERO,
             Stroke::new(1.0, Color32::YELLOW),
         ));
 
@@ -60,7 +60,7 @@ impl super::SpatialHearing {
         );
         painter.add(RectShape::stroke(
             frame_z1,
-            Rounding::none(),
+            Rounding::ZERO,
             Stroke::new(1.0, Color32::YELLOW),
         ));
 
@@ -107,7 +107,7 @@ impl super::SpatialHearing {
             if let Some(rect) = source.rect {
                 painter.add(RectShape::stroke(
                     rect,
-                    Rounding::none(),
+                    Rounding::ZERO,
                     Stroke::new(1.0, Color32::BLUE),
                 ));
             }
@@ -116,12 +116,16 @@ impl super::SpatialHearing {
         // If we are in result mode, paint the given answer and the right answer
         if self.status == ExerciseStatus::Result {
             // Unwrap answer and response or return (sort of a guard clause)
-            let Some(answer) = &self.answer else {return response};
-            let Some(response) = &self.response else {return response};
+            let Some(answer) = &self.answer else {
+                return response;
+            };
+            let Some(response) = &self.response else {
+                return response;
+            };
 
             // Paint the answer in filled blue
             if let Some(rect) = answer.rect {
-                painter.add(RectShape::filled(rect, Rounding::none(), Color32::BLUE));
+                painter.add(RectShape::filled(rect, Rounding::ZERO, Color32::BLUE));
             };
 
             // Paint the response in filled red or green
@@ -133,7 +137,7 @@ impl super::SpatialHearing {
                         Color32::RED
                     }
                 };
-                painter.add(RectShape::filled(rect, Rounding::none(), color));
+                painter.add(RectShape::filled(rect, Rounding::ZERO, color));
             };
         }
 

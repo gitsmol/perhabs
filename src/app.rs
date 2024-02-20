@@ -211,7 +211,7 @@ impl eframe::App for Perhabs {
         self.error_window(ctx);
 
         // Persistent menubar at the top of the screen.
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| self.menu_bar(ui, frame));
+        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| self.menu_bar(ui, ctx));
 
         // The central panel is where we display all windows and exercises.
         // Note the early return pattern in this code!
@@ -289,7 +289,7 @@ impl Perhabs {
     }
 
     /// Persistent menu bar at the top of the screen
-    fn menu_bar(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+    fn menu_bar(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         egui::menu::bar(ui, |ui| {
             ui.menu_button("File", |ui| {
                 // Toggle dark mode
@@ -298,7 +298,7 @@ impl Perhabs {
                 // Quit button
                 #[cfg(not(target_arch = "wasm32"))]
                 if ui.button("\u{2386} Quit").clicked() {
-                    frame.close();
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 };
             });
 
