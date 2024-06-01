@@ -1,7 +1,7 @@
 use super::menu_button;
 use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 
-/// Draws a menu consisting of two columns. All menu items are distributed across
+/// Draws a menu in multiple columns. All menu items are distributed across
 /// a given number of columns. For an uneven number of items,
 /// the last column gets the smallest number of items.
 ///
@@ -12,19 +12,16 @@ use crate::shared::asset_loader::exercise_config::ExerciseConfig;
 /// ## Example
 /// ```ignore
 /// if let Some(list_of_configs) =
-///     exercise_config_menu::<DepthPerceptionConfig>(&mut ui, &config.depth_perception, 3)
+///     exercise_config_menu::<MyConfig>(&mut ui, &config.some_exercise, 3)
 /// {
-///     let mut return_val: Option<&T> = None;
-///     for config in list_of_configs {
-///         if ui.button("Menu option").clicked {
-///             return_val = Some(config);
-///         };
+///     if let Some(config) = config_menu::<MyConfig>(ui, &config.some_exercise, 3)
+///     {
+///         // Use the selected config however you want.
+///         my_exercise_starter_function(config)
 ///     };
-///
-///     return_val
 /// };
 /// ```
-pub fn exercise_config_menu_multicol<'a, T>(
+pub fn exercise_config_menu<'a, T>(
     ui: &mut egui::Ui,
     config: &'a Vec<T>,
     num_cols: usize,
@@ -49,7 +46,7 @@ where
             let item_index_end = colnr * bin_size + bin_size;
             for i in item_index_start..item_index_end {
                 if let Some(exercise) = config.get(i) {
-                    if menu_button(&mut col[colnr], None, exercise.name(), "").clicked() {
+                    if menu_button(&mut col[colnr], None, None, exercise.name(), "").clicked() {
                         return_val = Some(exercise);
                     };
                 };

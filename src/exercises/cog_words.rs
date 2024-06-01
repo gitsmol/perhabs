@@ -213,6 +213,17 @@ impl Exercise for CogWords {
         "Recall and reorder a sequence of words."
     }
 
+    fn help(&self) -> &'static str {
+        "This exercise uses your computers voice to say a random sentence out loud. It is up to you to reorder the words in this sentence.
+
+Each sentence will be shown in full, alongside with
+- the words reversed
+- the words ordered alphabetically (A-Z)
+- the words ordered alphabetically reversed (Z-A)
+
+Pick your language and work your brain!"
+    }
+
     fn reset(&mut self) {
         *self = Default::default();
     }
@@ -241,16 +252,7 @@ impl Exercise for CogWords {
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
         // An explanation of this exercise.
-        ui.label(
-            "This exercise uses your computers voice to say a random sentence out loud. It is up to you to reorder the words in this sentence.
-
-Each sentence will be shown in full, alongside with
-- the words reversed
-- the words ordered alphabetically (A-Z)
-- the words ordered alphabetically reversed (Z-A)
-
-Pick your language and work your brain!",
-        );
+        ui.label(self.help());
         ui.separator();
 
         // Show language picker
@@ -272,7 +274,9 @@ Pick your language and work your brain!",
                 // Column 1 gets populated with at least half the buttons
                 for i in 0..col_1_range as usize {
                     if let Some(file) = config.sentences_files.get(i) {
-                        if menu_button(&mut col[0], None, file.language.as_str(), "").clicked() {
+                        if menu_button(&mut col[0], None, None, file.language.as_str(), "")
+                            .clicked()
+                        {
                             func(file);
                         };
                     };
@@ -281,7 +285,9 @@ Pick your language and work your brain!",
                 // Column 2 gets populated with the remaining buttons
                 for i in col_1_range as usize..buttons_total as usize {
                     if let Some(file) = config.sentences_files.get(i) {
-                        if menu_button(&mut col[1], None, file.language.as_str(), "").clicked() {
+                        if menu_button(&mut col[1], None, None, file.language.as_str(), "")
+                            .clicked()
+                        {
                             func(file);
                         };
                     };

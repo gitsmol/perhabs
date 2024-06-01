@@ -263,6 +263,10 @@ impl Exercise for VisualAlignment {
         "Test the alignment of your eyes."
     }
 
+    fn help(&self) -> &'static str {
+        "This excercise tests for the alignment of your eyes. Use the mouse or keyboard to put the circle exactly inside the square. After the exercise is finished, the average (mis)alignment is calculated."
+    }
+
     fn reset(&mut self) {
         // Remember color calibrations
         let tmp_color = self.colors.clone();
@@ -321,7 +325,7 @@ impl Exercise for VisualAlignment {
             return;
         }
 
-        ui.label("This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.");
+        ui.label(self.help());
         ui.separator();
 
         widgets::evaluation::eval_config_widgets(

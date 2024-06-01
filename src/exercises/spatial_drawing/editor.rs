@@ -31,10 +31,13 @@ impl super::SpatialDrawing {
         }
 
         painter.extend(self.puzzle.shapes(&to_screen, 10., Color32::KHAKI));
-        painter.extend(
-            self.puzzle_grid
-                .shapes(self.puzzle.size(), &to_screen, 5., Color32::WHITE),
-        );
+        painter.extend(self.puzzle_grid.shapes(
+            self.puzzle.size(),
+            &to_screen,
+            0.07,
+            Color32::WHITE,
+            false,
+        ));
 
         response
     }

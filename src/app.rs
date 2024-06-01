@@ -206,7 +206,7 @@ impl Perhabs {
 
 impl eframe::App for Perhabs {
     /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Show errors if there are any
         self.error_window(ctx);
 

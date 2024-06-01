@@ -118,6 +118,10 @@ impl Exercise for EpisodicMemory {
         "Challenge yourself to remember things you've seen, heard and done."
     }
 
+    fn help(&self) -> &'static str {
+        "This exercise will ask you different questions about things in your past. Try to recall as much as you can to answer the questions."
+    }
+
     fn reset(&mut self) {
         *self = EpisodicMemory::default();
     }
@@ -143,9 +147,12 @@ impl Exercise for EpisodicMemory {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
+        ui.label(self.help());
+        ui.separator();
+
         if let Some(config) = &appdata.config {
             for file in &config.episodic_memory_files {
-                if menu_button(ui, None, file.language.as_str(), "").clicked() {
+                if menu_button(ui, None, None, file.language.as_str(), "").clicked() {
                     self.prompts.selected_file = Some(file.to_owned());
                     // If the selected value changes set the contents to none.
                     // This triggers the contents guarantee and fetches the appropriate file.

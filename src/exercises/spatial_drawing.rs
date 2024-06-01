@@ -6,7 +6,9 @@ mod selector;
 
 use crate::{shared::AppData, wm::Exercise};
 
-use self::painters::{PuzzleGrid, SpatialPuzzle};
+use self::painters::SpatialPuzzle;
+
+use super::shared::grid::Grid;
 
 #[derive(PartialEq, Eq)]
 enum Transformation {
@@ -49,7 +51,7 @@ impl std::fmt::Display for SessionStatus {
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct SpatialDrawing {
     state: SessionStatus,
-    puzzle_grid: PuzzleGrid,
+    puzzle_grid: Grid,
     puzzle_edit_list: Vec<SpatialPuzzle>,
     puzzle: SpatialPuzzle,
     puzzle_transform: Transformation,
@@ -62,7 +64,7 @@ impl Default for SpatialDrawing {
     fn default() -> Self {
         Self {
             state: SessionStatus::Selecting,
-            puzzle_grid: PuzzleGrid::new(),
+            puzzle_grid: Grid::new(0),
             puzzle_edit_list: vec![],
             puzzle: SpatialPuzzle::new(5),
             puzzle_transform: Transformation::RightTilt,
@@ -140,6 +142,10 @@ impl Exercise for SpatialDrawing {
 
     fn description(&self) -> &'static str {
         "Draw a shape mirrored or on its side."
+    }
+
+    fn help(&self) -> &'static str {
+        ""
     }
 
     fn reset(&mut self) {

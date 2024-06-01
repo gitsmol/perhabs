@@ -3,7 +3,7 @@ use std::path::Path;
 use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
 
 use crate::{
-    exercises::spatial_drawing::{painters::PuzzleGrid, SessionStatus},
+    exercises::{shared::grid::Grid, spatial_drawing::SessionStatus},
     shared::{asset_loader::write_string_to_file, AppData},
 };
 
@@ -37,10 +37,13 @@ impl super::SpatialDrawing {
         );
 
         painter.extend(puzzle.shapes(&to_screen, 6., Color32::KHAKI));
-        painter.extend(
-            self.puzzle_grid
-                .shapes(puzzle.size(), &to_screen, 3., Color32::WHITE),
-        );
+        painter.extend(self.puzzle_grid.shapes(
+            puzzle.size(),
+            &to_screen,
+            0.05,
+            Color32::WHITE,
+            false,
+        ));
 
         response
     }
@@ -50,7 +53,7 @@ impl super::SpatialDrawing {
         debug!("Starting spatial puzzle.");
         self.puzzle = puzzle.to_owned();
         self.state = SessionStatus::Exercising;
-        self.puzzle_grid = PuzzleGrid::new()
+        self.puzzle_grid = Grid::new(puzzle.size());
     }
 
     /// Pick a puzzle and edit it.

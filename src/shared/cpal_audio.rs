@@ -2,7 +2,7 @@ use std::sync::mpsc::Receiver;
 use std::time::Duration;
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{FromSample, Sample, SizedSample, Stream};
+use cpal::{FromSample, SizedSample, Stream};
 use log::debug;
 // wasm stuff only
 #[cfg(target_arch = "wasm32")]
@@ -138,8 +138,6 @@ where
             }
             let value: T = T::from_sample(next_value(&mut audio_ctx, &rx));
 
-            // let v = Sample::
-            //     // ::from::<f32>(&next_value(&mut audio_ctx, &rx));
             for sample in frame.iter_mut() {
                 *sample = value;
             }

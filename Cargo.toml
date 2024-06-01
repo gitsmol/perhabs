@@ -1,6 +1,6 @@
 [package]
 name = "perhabs"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -16,7 +16,7 @@ ndarray = "0.15.6"
 ndarray-rand = "0.14.0"
 log = "0.4.17"
 relative-path = "1.9.2"
-ehttp = "0.3"
+ehttp = "0.5"
 poll-promise = "0.3"
 cpal = { version = "0.15", features = ["wasm-bindgen"] }
 num = "0.4.0"

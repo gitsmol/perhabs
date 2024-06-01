@@ -265,6 +265,10 @@ impl Exercise for SpatialHearing {
         *self = Default::default();
     }
 
+    fn help(&self) -> &'static str {
+        ""
+    }
+
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {
         let menu_window = egui::Window::new(self.name())
             .anchor(

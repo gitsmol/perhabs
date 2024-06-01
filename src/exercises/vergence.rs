@@ -10,7 +10,7 @@ use crate::shared::AppData;
 use crate::shared::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::wm::Exercise;
 
 use crate::shared::Anaglyph;
@@ -56,7 +56,9 @@ impl Default for Vergence {
 // Internals: painting, calculations etc
 // ***********
 impl Vergence {
-    /// Evaluate given answer
+    /// Evaluate given answer and progressively make the excercise harder as
+    /// the streak of right answers continues to build. When the wrong answer is given,
+    /// reset the exercise difficulty.
     fn evaluate_answer(&mut self, a: Direction) {
         // If the answer is correct, add true to the results vec.
         // If the previous answer was also correct (indicated by the answer threshold),
@@ -188,6 +190,12 @@ impl Exercise for Vergence {
         "Train your eyes to diverge and converge. Requires glasses in two different colors."
     }
 
+    fn help(&self) -> &'static str {
+        "This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.
+
+        The exercise will get harder as you give more correct answers."
+    }
+
     fn reset(&mut self) {
         // Remember color calibrations
         let tmp_color = self.anaglyph.color.clone();
@@ -241,7 +249,7 @@ impl Exercise for Vergence {
             return;
         }
 
-        ui.label("This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.");
+        ui.label(self.help());
         ui.separator();
 
         // Display the evaluation config
@@ -268,20 +276,16 @@ impl Exercise for Vergence {
                 .drag_to_scroll(true)
                 .show(ui, |ui| {
                     ui.heading("Convergence");
-                    if let Some(config) = exercise_config_menu_multicol::<VergenceConfig>(
-                        ui,
-                        &excconfig.convergence,
-                        3,
-                    ) {
+                    if let Some(config) =
+                        exercise_config_menu::<VergenceConfig>(ui, &excconfig.convergence, 3)
+                    {
                         func(config)
                     };
 
                     ui.heading("Divergence");
-                    if let Some(config) = exercise_config_menu_multicol::<VergenceConfig>(
-                        ui,
-                        &excconfig.divergence,
-                        3,
-                    ) {
+                    if let Some(config) =
+                        exercise_config_menu::<VergenceConfig>(ui, &excconfig.divergence, 3)
+                    {
                         func(config)
                     };
                 });

@@ -2,7 +2,7 @@ use crate::exercises::Direction;
 use crate::shared::asset_loader::exercise_config::visual_recognition::VisRecognitionConfig;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 
 use crate::{
     wm::Exercise,
@@ -261,6 +261,10 @@ impl Exercise for VisRecognition {
         *self = Default::default();
     }
 
+    fn help(&self) -> &'static str {
+        "This exercise shows a number of arrows. After the arrows disappear, quickly enter the corresponding arrows on the keyboard."
+    }
+
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {
         let default_window = egui::Window::new(self.name())
             .anchor(
@@ -292,6 +296,10 @@ impl Exercise for VisRecognition {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
+        // Show help
+        ui.label(self.help());
+        ui.separator();
+
         // Display the evaluation config
         eval_config_widgets(
             ui,
@@ -310,11 +318,9 @@ impl Exercise for VisRecognition {
 
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
-            if let Some(config) = exercise_config_menu_multicol::<VisRecognitionConfig>(
-                ui,
-                &config.visual_recognition,
-                2,
-            ) {
+            if let Some(config) =
+                exercise_config_menu::<VisRecognitionConfig>(ui, &config.visual_recognition, 2)
+            {
                 func(config)
             };
         }

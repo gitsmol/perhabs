@@ -1,12 +1,13 @@
 use crate::{
     exercises::{
         BinoSaccades, CogNumbers, CogWords, DepthPerception, EpisodicMemory, NumSeq,
-        SpatialDrawing, Vergence, VisRecognition, VisSaccades, VisualAlignment,
+        NumberedSquares, SpatialDrawing, Vergence, VisRecognition, VisSaccades, VisualAlignment,
     },
     shared::AppData,
     widgets::menu_button,
 };
 
+use egui::vec2;
 use tts::Tts;
 
 /// Stores all available exercises (sessions). In order to only display one, store its name in open
@@ -31,6 +32,7 @@ impl Default for SessionManager {
                 Box::new(VisualAlignment::default()),
                 Box::new(VisRecognition::default()),
                 Box::new(VisSaccades::default()),
+                Box::new(NumberedSquares::default()),
                 // Box::new(SpatialHearing::default()),
             ],
             open: None,
@@ -41,7 +43,7 @@ impl Default for SessionManager {
 impl SessionManager {
     pub fn buttons(&mut self, ui: &mut egui::Ui) {
         for session in &self.sessions {
-            if menu_button(ui, None, session.name(), session.description()).clicked() {
+            if menu_button(ui, None, None, session.name(), session.description()).clicked() {
                 self.open = Some(session.name());
             };
         }
@@ -55,8 +57,15 @@ impl SessionManager {
             // Column 1 gets populated with at least half the buttons
             for i in 0..col_1_range as usize {
                 if let Some(session) = self.sessions.get(i) {
-                    if menu_button(&mut col[0], None, session.name(), session.description())
-                        .clicked()
+                    let desired_width = col[0].available_width();
+                    if menu_button(
+                        &mut col[0],
+                        Some(vec2(desired_width, 90.)),
+                        None,
+                        session.name(),
+                        session.description(),
+                    )
+                    .clicked()
                     {
                         self.open = Some(session.name());
                     };
@@ -66,8 +75,16 @@ impl SessionManager {
             // Column 2 gets populated with the remaining buttons
             for i in col_1_range as usize..buttons_total as usize {
                 if let Some(session) = self.sessions.get(i) {
-                    if menu_button(&mut col[1], None, session.name(), session.description())
-                        .clicked()
+                    let desired_width = col[1].available_width();
+
+                    if menu_button(
+                        &mut col[1],
+                        Some(vec2(desired_width, 90.)),
+                        None,
+                        session.name(),
+                        session.description(),
+                    )
+                    .clicked()
                     {
                         self.open = Some(session.name());
                     };
@@ -98,11 +115,15 @@ pub trait Exercise {
 
     fn description(&self) -> &'static str;
 
-    // Show windows, etc
+    fn help(&self) -> &'static str;
+
+    /// Entry into the ui codepath.
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts);
 
+    /// Shows the exercise menu.
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
 
+    /// Shows the exercise session i.e. the exercise as it is being trained.
     fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, tts: &mut Tts);
 
     // To make sure we can clean up when quitting session.

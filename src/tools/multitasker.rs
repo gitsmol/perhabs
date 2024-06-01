@@ -194,6 +194,10 @@ impl Exercise for MultiTasker {
         "No description."
     }
 
+    fn help(&self) -> &'static str {
+        ""
+    }
+
     fn reset(&mut self) {
         *self = MultiTasker::default();
     }

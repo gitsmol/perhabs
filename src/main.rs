@@ -33,7 +33,7 @@ fn main() {
     wasm_bindgen_futures::spawn_local(async {
         let wr = eframe::WebRunner::new();
         wr.start(
-            "the_canvas_id", // hardcode it
+            "perhabs_canvas", // hardcode it
             web_options,
             Box::new(|cc| Box::new(app::Perhabs::new(cc))),
         )

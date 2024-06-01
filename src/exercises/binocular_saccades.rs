@@ -1,9 +1,11 @@
+use std::ops::Neg;
+
 use crate::exercises::Direction;
 use crate::shared::asset_loader::exercise_config::vergence::VergenceConfig;
 use crate::shared::Anaglyph;
 use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::widgets::{self};
 use crate::{
     wm::Exercise,
@@ -20,6 +22,7 @@ pub struct BinoSaccades {
     session_status: ExerciseStatus,
     anaglyph: Anaglyph,
     anaglyph_pos: Option<Pos2>,
+    offset_variation: isize,
     answer: Option<Direction>, // The right answer is the direction of the arrow
     response: Option<Direction>, // The given response is a direction
     answer_timeout_timer: Timer,
@@ -33,11 +36,12 @@ impl Default for BinoSaccades {
             session_status: ExerciseStatus::None,
             anaglyph: Anaglyph::default(),
             anaglyph_pos: None,
+            offset_variation: 0,
             answer: None,
             response: None,
             answer_timeout_timer: Timer::new(),
             answer_timeout_ms: 1000,
-            evaluation: Evaluation::new(Duration::seconds(60), 60),
+            evaluation: Evaluation::new(Duration::try_seconds(60).unwrap_or_default(), 60),
         }
     }
 }
@@ -55,10 +59,14 @@ impl BinoSaccades {
         };
     }
 
-    /// Randomly position an arrow pointing in a random direction.
-    fn new_anaglyph_pos(&mut self) {
+    /// Randomly pick three parameters:
+    /// - the position of the diamond inside the anaglyph
+    /// - the position of the anaglyph on the screen
+    /// - the offset of the two parts of the anaglyph
+    fn new_anaglyph_params(&mut self) {
         let mut rng = rand::thread_rng();
 
+        // Pick a direction for the diamond
         if let Some(direction) = vec![
             Direction::Left,
             Direction::Right,
@@ -71,15 +79,28 @@ impl BinoSaccades {
             self.anaglyph.focal_position = *direction;
         }
 
-        let x: f32 = rng.gen_range(0.15..0.85);
-        let y: f32 = rng.gen_range(0.15..0.85);
+        // Pick a position on the screen for the anaglyph
+        let x: f32 = rng.gen_range(0.05..0.8);
+        let y: f32 = rng.gen_range(0.05..0.8);
         self.anaglyph_pos = Some(pos2(x, y));
         self.anaglyph.screen_offset = Some(pos2(x, y));
+
+        // Pick the background_offset for the anaglyph
+        // based on the difficulty of the exercise
+        let offset_range: isize = 3 * self.offset_variation;
+        let bg_offset: isize = rng.gen_range(offset_range.neg()..=offset_range.abs());
+        debug!(
+            "Setting bg_offset to {} from offset_range of {} - {}",
+            bg_offset,
+            offset_range.neg(),
+            offset_range.abs()
+        );
+        self.anaglyph.background_offset = bg_offset;
     }
 
     /// Keeps track of answer, response, result progression.
-    /// This exercise is only every in Response mode:
-    /// - constantly display new arrows until timeout or user input
+    /// This exercise is only ever in Response mode:
+    /// - constantly display new glyphs until timeout or user input
     /// - record responses:
     ///   - correct response = result 1.0
     ///   - incorrect or no response = result 0.0
@@ -99,10 +120,11 @@ impl BinoSaccades {
                 // Setup and display answer
                 // If no anaglyph is visible, create new anaglyph and set answer timeout timer
                 if let None = self.answer {
-                    self.new_anaglyph_pos();
+                    self.new_anaglyph_params();
                     self.anaglyph.initialize();
-                    self.answer_timeout_timer
-                        .set(Duration::milliseconds(self.answer_timeout_ms));
+                    self.answer_timeout_timer.set(
+                        Duration::try_milliseconds(self.answer_timeout_ms).unwrap_or_default(),
+                    );
                 }
 
                 // Continously allow response input
@@ -212,6 +234,10 @@ impl Exercise for BinoSaccades {
         "Quickly scan the screen and respond. Requires anaglyph glasses!"
     }
 
+    fn help(&self) -> &'static str {
+        "This exercise shows anaglyph images in random positions on the screen. In each image is a diamond. Use the arrow keys to indicate where in the image the diamond is, before time runs out."
+    }
+
     fn reset(&mut self) {
         *self = Default::default();
     }
@@ -247,6 +273,10 @@ impl Exercise for BinoSaccades {
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut tts::Tts) {
+        ui.heading("Explanation");
+        ui.label(self.help());
+        ui.separator();
+
         // Display the evaluation config
         eval_config_widgets(
             ui,
@@ -256,30 +286,44 @@ impl Exercise for BinoSaccades {
             [30, 120],
         );
 
+        // Some buttons to set the response time limit
         ui.horizontal(|ui| {
-            if ui.button("Quick").clicked() {
-                self.answer_timeout_ms = 500;
-            }
-            if ui.button("Normal").clicked() {
-                self.answer_timeout_ms = 1000;
-            }
-            if ui.button("Slow").clicked() {
-                self.answer_timeout_ms = 1500;
+            let desired_width = ui.available_width() / 3.;
+            for button in [("Quick", 500), ("Normal", 1000), ("Relaxed", 1500)] {
+                let bg_color = match self.answer_timeout_ms {
+                    x if x == button.1 => Some(ui.visuals().selection.bg_fill),
+                    _ => None,
+                };
+
+                if widgets::menu_button(
+                    ui,
+                    Some(vec2(desired_width, 60.)),
+                    bg_color,
+                    button.0,
+                    format!("{}ms response time", button.1).as_str(),
+                )
+                .clicked()
+                {
+                    self.answer_timeout_ms = button.1;
+                };
             }
         });
+
+        // separator
+        ui.separator();
 
         // Display all exercise configs
         let mut func = |exercise: &VergenceConfig| {
             self.anaglyph.initialize();
             self.anaglyph.pixel_size = exercise.pixel_size;
+            self.offset_variation = exercise.step;
             self.session_status = ExerciseStatus::Response;
             self.evaluation.start();
         };
 
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
-            if let Some(config) =
-                exercise_config_menu_multicol::<VergenceConfig>(ui, &config.convergence, 3)
+            if let Some(config) = exercise_config_menu::<VergenceConfig>(ui, &config.divergence, 3)
             {
                 func(config)
             };

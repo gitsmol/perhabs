@@ -7,8 +7,8 @@ use crate::{
 
 use egui::{
     emath::{RectTransform, Rot2},
-    pos2, vec2, Color32, Galley, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke, TextStyle, Vec2,
-    WidgetText,
+    pos2, vec2, Color32, FontId, Galley, Mesh, Pos2, Rect, Response, Sense, Shape, Stroke,
+    TextStyle, Vec2, WidgetText,
 };
 
 pub mod calibrate_anaglyph;
@@ -124,6 +124,7 @@ pub fn circle_with_data(
 pub fn menu_button(
     ui: &mut egui::Ui,
     override_size: Option<Vec2>,
+    override_color: Option<Color32>,
     label_source: &str,
     description_source: &str,
 ) -> egui::Response {
@@ -132,7 +133,7 @@ pub fn menu_button(
         if let Some(size) = override_size {
             size
         } else {
-            egui::vec2(ui.available_width(), 100.)
+            egui::vec2(ui.available_width(), 70.)
         }
     };
 
@@ -153,27 +154,40 @@ pub fn menu_button(
 
     // Make sure we need to paint:
     if ui.is_rect_visible(rect) {
-        // Some type conversions and setting up text.
-        let text_size = desired_size[0] * 0.8;
-        let label_wt: WidgetText = label_source.into();
-        let label_galley = label_wt.into_galley(ui, None, text_size, TextStyle::Body);
-        let description_wt: WidgetText = description_source.into();
+        // Some type conversions and setting up text with the right font size.
+        let text_length = desired_size[0] * 0.8;
+        let label_rt: WidgetText = egui::RichText::new(label_source)
+            .font(FontId::proportional(15.))
+            .into();
+        let label_galley = label_rt.into_galley(ui, None, text_length, TextStyle::Body);
+
+        let description_rt: WidgetText = egui::RichText::new(description_source)
+            .font(FontId::proportional(11.))
+            .into();
         let description_galley: Arc<Galley> =
-            description_wt.into_galley(ui, Some(true), text_size, TextStyle::Body);
+            description_rt.into_galley(ui, Some(true), text_length, TextStyle::Small);
 
         let visuals = ui.style().interact(&response);
 
         // All coordinates are in absolute screen coordinates so we use `rect` to place the elements.
         let rect = rect.expand(visuals.expansion);
         let radius = 0.05 * rect.height(); // Round corners slightly.
-        ui.painter()
-            .rect(rect, radius, visuals.bg_fill, visuals.bg_stroke);
+
+        // If override_color is used, force bg to that color
+        let bg_color = match override_color {
+            Some(color) => color,
+            None => visuals.bg_fill,
+        };
+
+        ui.painter().rect(rect, radius, bg_color, visuals.bg_stroke);
 
         // Put the label in the right position within the button.
         let margin = (rect.height() * 0.25).min(rect.width() * 0.25);
         let label_pos = rect.left_top() + vec2(margin, margin);
+
         // The description goes in the same position but a little lower.
-        let description_pos = label_pos + vec2(0., margin);
+        let description_margin = margin.max(label_galley.size().y * 1.25);
+        let description_pos = label_pos + vec2(0., description_margin);
         ui.painter().galley(
             label_pos,
             label_galley,

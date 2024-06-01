@@ -2,7 +2,7 @@ use crate::exercises::Direction;
 use crate::shared::asset_loader::exercise_config::visual_saccades::VisSaccadesConfig;
 use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::widgets::{self};
 use crate::{
     wm::Exercise,
@@ -222,6 +222,10 @@ impl Exercise for VisSaccades {
         "Quickly scan the screen and respond."
     }
 
+    fn help(&self) -> &'static str {
+        "This exercise will display arrows pointing in different directions. Quickly respond by entering the corresponding arrow on your keyboard."
+    }
+
     fn reset(&mut self) {
         *self = Default::default();
     }
@@ -276,7 +280,7 @@ impl Exercise for VisSaccades {
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
             if let Some(config) =
-                exercise_config_menu_multicol::<VisSaccadesConfig>(ui, &config.visual_saccades, 3)
+                exercise_config_menu::<VisSaccadesConfig>(ui, &config.visual_saccades, 3)
             {
                 func(config)
             };

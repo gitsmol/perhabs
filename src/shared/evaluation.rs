@@ -209,7 +209,8 @@ mod tests {
 
     #[test]
     fn average_score_f32() {
-        let mut evaluation: Evaluation<f32> = Evaluation::new(Duration::seconds(10), 10);
+        let mut evaluation: Evaluation<f32> =
+            Evaluation::new(Duration::try_seconds(10).unwrap(), 10);
         evaluation.add_result(0.3);
         evaluation.add_result(1.0);
         evaluation.add_result(0.5);
@@ -219,7 +220,8 @@ mod tests {
 
     #[test]
     fn average_score_bool() {
-        let mut evaluation: Evaluation<bool> = Evaluation::new(Duration::seconds(10), 10);
+        let mut evaluation: Evaluation<bool> =
+            Evaluation::new(Duration::try_seconds(10).unwrap(), 10);
         evaluation.add_result(true);
         evaluation.add_result(false);
         evaluation.add_result(false);

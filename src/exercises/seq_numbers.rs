@@ -57,6 +57,10 @@ impl Exercise for NumSeq {
         "Calculate numbers based on simple rules."
     }
 
+    fn help(&self) -> &'static str {
+        "Randomly generate a string of numbers according to simple rules. Then try to calculate and call out each number in your mind."
+    }
+
     fn reset(&mut self) {
         *self = Default::default();
     }

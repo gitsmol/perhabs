@@ -4,10 +4,12 @@ mod cog_words;
 mod depth_perception;
 mod episodic_memory;
 mod seq_numbers;
+mod shared;
 pub mod spatial_drawing;
 mod spatial_hearing;
 mod vergence;
 mod visual_alignment;
+mod visual_puzzles;
 mod visual_recognition;
 mod visual_saccades;
 
@@ -21,6 +23,7 @@ pub use spatial_drawing::SpatialDrawing;
 pub use spatial_hearing::SpatialHearing;
 pub use vergence::Vergence;
 pub use visual_alignment::VisualAlignment;
+pub use visual_puzzles::NumberedSquares;
 pub use visual_recognition::VisRecognition;
 pub use visual_saccades::VisSaccades;
 

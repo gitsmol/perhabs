@@ -214,11 +214,12 @@ impl Anaglyph {
                 };
 
                 if focal_mask_coord == &1 && focal_coord == &1 {
-                    // pixel starts at
+                    // pixel starts at (left top)
                     let coords_min = vec2(
                         (x as isize * pixel_size + focal_offset * pixel_size + bg_offset) as f32,
                         (y as isize * pixel_size) as f32,
                     );
+                    // pixel ends at (right bottom)
                     let coords_max = coords_min + vec2(*pixel_size as f32, *pixel_size as f32);
                     let pixel = RectShape::filled(
                         Rect {
@@ -333,5 +334,10 @@ impl Anaglyph {
                 self.initialize()
             };
         });
+    }
+
+    /// What is the normalized size of the anaglyph?
+    pub fn size(&self) -> usize {
+        self.grid_size * self.pixel_size.abs() as usize
     }
 }

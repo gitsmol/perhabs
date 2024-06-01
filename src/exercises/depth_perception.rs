@@ -9,7 +9,7 @@ use crate::shared::AppData;
 use crate::shared::Evaluation;
 use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
-use crate::widgets::exercise_config_menu::exercise_config_menu_multicol;
+use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::wm::Exercise;
 
 use self::anaglyph::Anaglyph;
@@ -143,6 +143,10 @@ impl Exercise for DepthPerception {
         "Learn to see (minor) differences in object depth."
     }
 
+    fn help(&self) -> &'static str {
+        "This excercise shows a number of circles. One of the circles appears further away or closer than the other circles. Point out the circle using the arrows on your keyboard and press enter."
+    }
+
     fn reset(&mut self) {
         // Remember color calibrations
         let tmp_color = self.anaglyph.color.clone();
@@ -191,8 +195,7 @@ impl Exercise for DepthPerception {
             );
             return;
         }
-
-        ui.label("This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.");
+        ui.label(self.help());
         ui.separator();
 
         // Display the evaluation config
@@ -213,11 +216,9 @@ impl Exercise for DepthPerception {
 
         // Display exercise configs
         if let Some(config) = &appdata.excconfig {
-            if let Some(config) = exercise_config_menu_multicol::<DepthPerceptionConfig>(
-                ui,
-                &config.depth_perception,
-                2,
-            ) {
+            if let Some(config) =
+                exercise_config_menu::<DepthPerceptionConfig>(ui, &config.depth_perception, 2)
+            {
                 func(config)
             };
         }
