@@ -1,4 +1,4 @@
-use egui::{emath, Color32, Frame, Pos2, Rect, Response, Sense};
+use egui::{emath, vec2, Color32, Frame, Pos2, Rect, Response, Sense};
 
 use crate::shared::AppData;
 
@@ -22,7 +22,7 @@ impl super::SpatialDrawing {
                 let canvas_pos = from_screen * pointer_pos;
                 if let Some(pos) =
                     self.puzzle_grid
-                        .match_coords(self.puzzle.size(), canvas_pos, 0.01)
+                        .match_coords(self.puzzle.size(), canvas_pos, vec2(0.1, 0.1))
                 {
                     debug!("Adding to line edit: {:?}", pos);
                     self.puzzle.edit(*pos);

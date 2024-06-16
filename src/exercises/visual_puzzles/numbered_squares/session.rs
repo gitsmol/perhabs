@@ -22,13 +22,20 @@ impl NumberedSquares {
         let abs_size: f32 = {
             let margin = 0.9;
             (1.0 / self.grid_size as f32) * margin * to_screen.scale().min_elem()
+            // 0.09 * to_screen.scale().min_elem()
         };
         for col in self.grid.get_all_coords(self.grid_size) {
             for pos in col.iter() {
                 let rect = Rect::from_center_size(to_screen * *pos, vec2(abs_size, abs_size));
-                let color = match self.answers.sequence.contains(pos) {
-                    true => Color32::DARK_GREEN,
-                    false => Color32::LIGHT_GRAY,
+                let color = {
+                    if self.answers.response.contains(pos) {
+                        Color32::YELLOW
+                    } else {
+                        match self.answers.sequence.contains(pos) {
+                            true => Color32::DARK_GREEN,
+                            false => Color32::LIGHT_GRAY,
+                        }
+                    }
                 };
                 painter.add(egui::Shape::Rect(RectShape::filled(
                     rect,
@@ -73,6 +80,23 @@ impl NumberedSquares {
                 FontId::monospace(12.0),
                 Color32::from_additive_luminance(240),
             );
+        }
+
+        if response.clicked() {
+            // Show pointer position
+            let pointer_pos = match response.interact_pointer_pos() {
+                Some(pos) => pos,
+                None => Pos2::ZERO,
+            };
+
+            let canvas_pos = from_screen * pointer_pos;
+            let clickable_area_size = abs_size / 2.0 * from_screen.scale();
+            if let Some(pos) =
+                self.grid
+                    .match_coords(self.grid_size, canvas_pos, clickable_area_size)
+            {
+                self.answers.response.push(pos.to_owned());
+            }
         }
 
         response
@@ -159,7 +183,7 @@ impl NumberedSquares {
         if response.clicked() {
             if let Some(pointer_pos) = response.interact_pointer_pos() {
                 let canvas_pos = from_screen * pointer_pos;
-                let clickable_area_size = 1.0 / self.grid_size as f32;
+                let clickable_area_size = abs_size / 2.0 * from_screen.scale();
                 if let Some(pos) =
                     self.grid
                         .match_coords(self.grid_size, canvas_pos, clickable_area_size)

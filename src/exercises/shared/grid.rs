@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use egui::{
     emath::RectTransform,
     epaint::{CircleShape, RectShape},
-    pos2, vec2, Color32, Pos2, Rect, Rounding, Shape,
+    pos2, vec2, Color32, Pos2, Rect, Rounding, Shape, Vec2,
 };
 
 /// A struct containing a hashmap of the positions of circles guiding a drawing exercise.
@@ -82,12 +82,14 @@ impl Grid {
     /// Check if a given coordinate matches a crossing and return a ref to that coord.
     /// The given tolerance determines how far from the center of the crossing the match
     /// will still be considered valid.
-    pub fn match_coords(&self, grid_size: usize, coord: Pos2, tolerance: f32) -> Option<&Pos2> {
+    pub fn match_coords(&self, grid_size: usize, coord: Pos2, tolerances: Vec2) -> Option<&Pos2> {
         if let Some(positions) = self.positions.get(&grid_size) {
             for row in positions {
                 for pos in row {
-                    let in_bound_x = (coord.x - tolerance..=coord.x + tolerance).contains(&pos.x);
-                    let in_bound_y = (coord.y - tolerance..=coord.y + tolerance).contains(&pos.y);
+                    let in_bound_x =
+                        (coord.x - tolerances.x..=coord.x + tolerances.y).contains(&pos.x);
+                    let in_bound_y =
+                        (coord.y - tolerances.y..=coord.y + tolerances.y).contains(&pos.y);
                     if in_bound_x && in_bound_y {
                         return Some(pos);
                     }
@@ -169,9 +171,9 @@ mod tests {
     fn test_gen_coords_2x2() {
         let grid = Grid::new();
         let coords = grid.gen_coords(2);
-        assert_eq!(coords.len(), 2);
-        assert_eq!(coords[0].len(), 2);
-        assert_eq!(coords[0][0], pos2(0.333333333, 0.3333333333));
+        assert_eq!(coords.len(), 1);
+        assert_eq!(coords[0].len(), 1);
+        assert_eq!(coords[0][0], pos2(0.5, 0.5));
     }
 
     #[test]
@@ -180,12 +182,12 @@ mod tests {
         // [1] = y
         let grid = Grid::new();
         let coords = grid.gen_coords(3);
-        assert_eq!(coords.len(), 3);
-        assert_eq!(coords[0].len(), 3);
-        assert_eq!(coords[1].len(), 3);
-        assert_eq!(coords[0][0], pos2(0.25, 0.25));
-        assert_eq!(coords[0][1], pos2(0.25, 0.5));
-        assert_eq!(coords[1][0], pos2(0.5, 0.25));
-        assert_eq!(coords[1][1], pos2(0.5, 0.5));
+        assert_eq!(coords.len(), 2);
+        assert_eq!(coords[0].len(), 2);
+        assert_eq!(coords[1].len(), 2);
+        assert_eq!(coords[0][0], pos2(0.3333333333, 0.333333333333));
+        assert_eq!(coords[0][1], pos2(0.3333333333, 0.6666666666667));
+        assert_eq!(coords[1][0], pos2(0.666666666667, 0.333333333333));
+        assert_eq!(coords[1][1], pos2(0.666666666667, 0.6666666666667));
     }
 }
