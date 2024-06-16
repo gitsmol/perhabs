@@ -231,7 +231,7 @@
   ],
   "spatial_drawing": [
     {
-      "grid_size": 5,
+      "grid_size": 6,
       "lines": [
         [
           {
@@ -266,7 +266,7 @@
       ]
     },
     {
-      "grid_size": 5,
+      "grid_size": 6,
       "lines": [
         [
           {
@@ -331,7 +331,7 @@
       ]
     },
     {
-      "grid_size": 5,
+      "grid_size": 6,
       "lines": [
         [
           {
@@ -386,7 +386,7 @@
       ]
     },
     {
-      "grid_size": 5,
+      "grid_size": 6,
       "lines": [
         [
           {

@@ -38,7 +38,7 @@ pub use visual_saccades::VisSaccades;
 /// Result,    The user has responded, challenge response can be compared
 /// Finished,  The exercise is over.
 #[derive(Debug, PartialEq)]
-enum ExerciseStatus {
+enum ExerciseStage {
     None,
     Challenge,
     Response,

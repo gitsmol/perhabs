@@ -11,7 +11,7 @@ use crate::shared::Evaluation;
 use crate::widgets;
 use crate::wm::Exercise;
 
-use super::ExerciseStatus;
+use super::ExerciseStage;
 
 /// Exercise to train binocular convergence/divergence usign anaglyph images.
 pub struct VisualAlignment {
@@ -21,7 +21,7 @@ pub struct VisualAlignment {
     sight_pos_on_screen: Pos2,
     calibrating: bool,
     evaluation: Evaluation<Vec2>,
-    status: ExerciseStatus,
+    status: ExerciseStage,
 }
 
 impl Default for VisualAlignment {
@@ -32,8 +32,8 @@ impl Default for VisualAlignment {
             target_pos_on_screen: Pos2::new(0.5, 0.5),
             sight_pos_on_screen: Pos2::new(100., 100.),
             calibrating: false,
-            evaluation: Evaluation::new(Duration::seconds(60), 10),
-            status: ExerciseStatus::None,
+            evaluation: Evaluation::new(Duration::try_seconds(60).unwrap_or_default(), 10),
+            status: ExerciseStage::None,
         }
     }
 }
@@ -62,7 +62,7 @@ impl VisualAlignment {
         };
 
         if ctx.input(|i| i.key_pressed(Key::Enter)) {
-            self.status = ExerciseStatus::Response;
+            self.status = ExerciseStage::Response;
         };
     }
 
@@ -77,17 +77,17 @@ impl VisualAlignment {
 
         // Stop when finished
         if self.evaluation.is_finished() {
-            self.status = ExerciseStatus::Finished;
+            self.status = ExerciseStage::Finished;
             return;
         };
 
         // When the user gives a response, process the response and
         // start the next challenge
-        if self.status == ExerciseStatus::Response {
+        if self.status == ExerciseStage::Response {
             let target_sight_offset = self.evaluate_answer();
             self.evaluation.add_result(target_sight_offset);
             self.target_pos_normalized = self.gen_random_pos2();
-            self.status = ExerciseStatus::Challenge
+            self.status = ExerciseStage::Challenge
         };
     }
 
@@ -290,14 +290,14 @@ impl Exercise for VisualAlignment {
         // - No session shows the exercise menu
         match self.status {
             // Show menu
-            ExerciseStatus::None => {
+            ExerciseStage::None => {
                 menu_window.show(ctx, |ui| {
                     self.ui(ui, appdata, tts);
                 });
             }
 
             // Show finished menu
-            ExerciseStatus::Finished => {
+            ExerciseStage::Finished => {
                 menu_window.show(ctx, |ui| self.finished_screen(ui));
             }
 
@@ -338,7 +338,7 @@ impl Exercise for VisualAlignment {
 
         if ui.button("Start").clicked() {
             self.evaluation.start();
-            self.status = ExerciseStatus::Challenge;
+            self.status = ExerciseStage::Challenge;
         }
 
         // Add some space and show calibration button
@@ -360,7 +360,7 @@ impl Exercise for VisualAlignment {
         // Show target and sight on dark background
         Frame::dark_canvas(ui.style()).show(ui, |ui| {
             if self.paint_target(ui).clicked() {
-                self.status = ExerciseStatus::Response;
+                self.status = ExerciseStage::Response;
             }
         });
     }

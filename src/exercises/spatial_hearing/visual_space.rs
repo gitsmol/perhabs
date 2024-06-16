@@ -1,6 +1,6 @@
 use egui::{emath, epaint::RectShape, pos2, Color32, Pos2, Rect, Rounding, Sense, Shape, Stroke};
 
-use crate::{exercises::ExerciseStatus, shared::Pos3};
+use crate::{exercises::ExerciseStage, shared::Pos3};
 
 impl super::SpatialHearing {
     /// How do we represent a 3D space in a simplistic 2D fashion?
@@ -114,7 +114,7 @@ impl super::SpatialHearing {
         }
 
         // If we are in result mode, paint the given answer and the right answer
-        if self.status == ExerciseStatus::Result {
+        if self.status == ExerciseStage::Result {
             // Unwrap answer and response or return (sort of a guard clause)
             let Some(answer) = &self.answer else {
                 return response;

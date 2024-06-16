@@ -13,7 +13,7 @@ use egui::{emath, pos2, vec2, Align, Color32, Frame, Key, Rect, Vec2};
 use rand::seq::SliceRandom;
 use std::iter::zip;
 
-use super::ExerciseStatus;
+use super::ExerciseStage;
 
 /// Visual exercise to train quick recognition and retention of shapes.
 /// Draws a number of arrows in the middle of the screen. The arrows remain visible
@@ -21,7 +21,7 @@ use super::ExerciseStatus;
 /// sequence of arrows they have seen.
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct VisRecognition {
-    session_status: ExerciseStatus,
+    session_status: ExerciseStage,
     exercise_params: VisRecognitionConfig,
     answer: Vec<Direction>,   // The correct answer: a sequence of directions
     timer: Timer,             // Keeps track of timeouts
@@ -32,12 +32,12 @@ pub struct VisRecognition {
 impl Default for VisRecognition {
     fn default() -> Self {
         Self {
-            session_status: ExerciseStatus::None,
+            session_status: ExerciseStage::None,
             exercise_params: VisRecognitionConfig::default(),
             answer: vec![],
             timer: Timer::new(),
             response: vec![],
-            evaluation: Evaluation::new(Duration::seconds(60), 60),
+            evaluation: Evaluation::new(Duration::try_seconds(60).unwrap_or_default(), 60),
         }
     }
 }
@@ -64,8 +64,8 @@ impl VisRecognition {
         let x_start = center - vec2(self.answer.len() as f32 / 2. * (measure * 2.), 0.);
 
         // Paint the answer
-        if self.session_status == ExerciseStatus::Challenge
-            || self.session_status == ExerciseStatus::Result
+        if self.session_status == ExerciseStage::Challenge
+            || self.session_status == ExerciseStage::Result
         {
             for (i, direction) in self.answer.iter().enumerate() {
                 let pos = x_start + vec2(i as f32 * margin, 0.);
@@ -82,8 +82,8 @@ impl VisRecognition {
 
         // Paint the response
         // Draw response arrows below the given sequence.
-        if self.session_status == ExerciseStatus::Response
-            || self.session_status == ExerciseStatus::Result
+        if self.session_status == ExerciseStage::Response
+            || self.session_status == ExerciseStage::Result
         {
             for (i, direction) in self.response.iter().enumerate() {
                 let pos = x_start + vec2(i as f32 * margin, margin * 2.);
@@ -162,23 +162,25 @@ impl VisRecognition {
 
         // When the evaluation time is up or number of reps is reached, stop immediately.
         if self.evaluation.is_finished() {
-            self.session_status = ExerciseStatus::Finished;
+            self.session_status = ExerciseStage::Finished;
         }
 
         match self.session_status {
-            ExerciseStatus::Challenge =>
+            ExerciseStage::Challenge =>
             // Setup and display answer
             {
                 if self.answer.len() == 0 {
-                    self.timer
-                        .set(Duration::milliseconds(self.exercise_params.answer_timeout));
+                    self.timer.set(
+                        Duration::try_milliseconds(self.exercise_params.answer_timeout)
+                            .unwrap_or_default(),
+                    );
                     self.add_arrows();
                 }
                 if self.timer.is_finished() {
-                    self.session_status = ExerciseStatus::Response;
+                    self.session_status = ExerciseStage::Response;
                 }
             }
-            ExerciseStatus::Response =>
+            ExerciseStage::Response =>
             // Allow response input
             {
                 self.read_keypress(ctx);
@@ -188,19 +190,19 @@ impl VisRecognition {
                     let score = self.evaluate_response();
                     self.evaluation.add_result(score);
                     // Set a two second timer to display result
-                    self.timer.set(Duration::seconds(2));
+                    self.timer.set(Duration::try_seconds(2).unwrap_or_default());
                     // Progress to result
-                    self.session_status = ExerciseStatus::Result;
+                    self.session_status = ExerciseStage::Result;
                 }
             }
-            ExerciseStatus::Result =>
+            ExerciseStage::Result =>
             // display answer and response,
             {
                 // Finally, restart
                 if self.timer.is_finished() {
                     self.answer.clear();
                     self.response.clear();
-                    self.session_status = ExerciseStatus::Challenge;
+                    self.session_status = ExerciseStage::Challenge;
                 }
             }
             // None and Finished don't trigger progression.
@@ -278,11 +280,11 @@ impl Exercise for VisRecognition {
 
         match self.session_status {
             // Default shows the menu
-            ExerciseStatus::None => {
+            ExerciseStage::None => {
                 default_window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
             // After an evaluation show the review
-            ExerciseStatus::Finished => {
+            ExerciseStage::Finished => {
                 default_window.show(ctx, |ui| self.finished_screen(ui));
             }
             // Any other status means we are in session.
@@ -312,7 +314,7 @@ impl Exercise for VisRecognition {
         // Anonymous function that uses the exercise config
         let mut func = |exercise: &VisRecognitionConfig| {
             self.exercise_params = exercise.to_owned();
-            self.session_status = ExerciseStatus::Challenge;
+            self.session_status = ExerciseStage::Challenge;
             self.evaluation.start();
         };
 
@@ -328,7 +330,7 @@ impl Exercise for VisRecognition {
 
     fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut tts::Tts) {
         self.ui_controls(ui);
-        if self.session_status == ExerciseStatus::Finished {
+        if self.session_status == ExerciseStage::Finished {
             ui.label("Score: ");
             for i in self.evaluation.show_results() {
                 ui.label(format!("{}", i));

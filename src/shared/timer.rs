@@ -37,7 +37,7 @@ impl Timer {
         self.duration = duration;
     }
 
-    /// Stop a running timer
+    /// Stop a running timer and set `end_time` to `None`
     pub fn reset(&mut self) {
         self.end_time = None;
     }

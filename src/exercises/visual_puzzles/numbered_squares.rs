@@ -1,32 +1,37 @@
-use crate::shared::{AppData, Evaluation};
+use crate::shared::{AppData, Evaluation, Timer};
 use crate::widgets::{self, menu_button};
 use crate::wm::Exercise;
 use chrono::Duration;
-use egui::{
-    emath::{self, RectTransform},
-    epaint::CircleShape,
-    pos2, Color32, Pos2, Rect, Response, Sense, Shape,
-};
-use egui::{vec2, Align, RichText, Vec2};
+
+use egui::Pos2;
+use egui::{vec2, Align, Vec2};
 use rand::prelude::*;
+mod session;
 
 use tts::{self, Tts};
 
 use crate::exercises::shared::grid::Grid;
-use crate::exercises::ExerciseStatus;
+use crate::exercises::ExerciseStage;
 
 #[derive(Default)]
 struct Answers {
-    sequence: Vec<[usize; 2]>,
-    response: Vec<[usize; 2]>,
+    sequence: Vec<Pos2>,
+    response: Vec<Pos2>,
 }
 
 /// Sequences
 pub struct NumberedSquares {
     seq_length: usize,
-    status: ExerciseStatus,
+    stage: ExerciseStage,
     answers: Answers,
     grid: Grid,
+    grid_size: usize,
+    challenge_ms: i64,
+    challenge_timer: Timer,
+    response_ms: i64,
+    response_timer: Timer,
+    result_timer: Timer,
+    result_ms: i64,
     evaluation: Evaluation<bool>,
 }
 
@@ -35,8 +40,15 @@ impl Default for NumberedSquares {
         Self {
             answers: Answers::default(),
             seq_length: 4,
-            status: ExerciseStatus::None,
-            grid: Grid::new(10),
+            stage: ExerciseStage::None,
+            grid: Grid::new(),
+            grid_size: 10,
+            challenge_ms: 2000,
+            challenge_timer: Timer::new(),
+            response_ms: 10_000,
+            response_timer: Timer::new(),
+            result_timer: Timer::new(),
+            result_ms: 5000,
             evaluation: Evaluation::new(Duration::try_seconds(240).unwrap_or_default(), 10),
         }
     }
@@ -45,38 +57,77 @@ impl Default for NumberedSquares {
 impl NumberedSquares {
     /// Keeps track of exercise progression
     fn progressor(&mut self) {
-        // 1. allow response
-        // 2. evaluate anwers
-        // 3. show result
-        // 4. finished
-
         // end exercise when evaluation is finished.
         if self.evaluation.is_finished() {
-            self.status = ExerciseStatus::Finished;
+            self.stage = ExerciseStage::Finished;
+        };
+
+        // if we are still running, progress through exercise stages
+        match self.stage {
+            // Showing numbers on squares
+            ExerciseStage::Challenge => {
+                if self.challenge_timer.is_finished() {
+                    self.challenge_timer.reset();
+                    self.response_timer
+                        .set(Duration::try_milliseconds(self.response_ms).unwrap_or_default());
+                    self.stage = ExerciseStage::Response;
+                }
+            }
+            // Allowing user input
+            ExerciseStage::Response => {
+                if self.response_timer.is_finished() {
+                    self.response_timer.reset();
+                    self.result_timer
+                        .set(Duration::try_milliseconds(self.result_ms).unwrap_or_default());
+                    self.stage = ExerciseStage::Result;
+                }
+            }
+            // Showing correct/incorrect
+            ExerciseStage::Result => {
+                if self.result_timer.is_finished() {
+                    self.next();
+                }
+            }
+            _ => (),
         };
     }
 
-    fn next(&mut self, _: &mut tts::Tts) {
-        match self.status {
-            ExerciseStatus::Challenge => {
-                self.evaluation.add_result(true);
-                self.status = ExerciseStatus::Result;
-            }
-            ExerciseStatus::Result => {
-                self.status = ExerciseStatus::Challenge;
-            }
-            _ => (),
+    /// Evaluate response, store result, move on to next challenge
+    fn next(&mut self) {
+        self.evaluation.add_result(self.evaluate_response());
+        self.gen_sequence();
+        self.answers.response.clear();
+        self.stage = ExerciseStage::Challenge;
+        self.challenge_timer
+            .set(Duration::try_milliseconds(self.challenge_ms).unwrap_or_default())
+    }
+
+    fn evaluate_response(&self) -> bool {
+        if self.answers.response == self.answers.sequence {
+            true
+        } else {
+            false
         }
     }
 
+    /// Generates a sequence of valid and unique positions on the grid
     fn gen_sequence(&mut self) {
-        let mut seq = vec![];
+        self.answers.sequence.clear();
         let mut rng = thread_rng();
-        while seq.len() < self.seq_length {
+        let all_coords: Vec<Pos2> = self
+            .grid
+            .get_all_coords(self.grid_size)
+            .into_iter()
+            .flatten()
+            .collect();
+
+        while self.answers.sequence.len() < self.seq_length {
             // this means no seq longer than 11 numbers (0..10)!
-            let num = rng.gen_range(0..=10);
-            if !seq.contains(&num) {
-                seq.push(num);
+            let num = rng.gen_range(0..all_coords.len());
+            if let Some(pos) = all_coords.get(num) {
+                if !self.answers.sequence.contains(pos) {
+                    self.answers.sequence.push(*pos);
+                };
             };
         }
     }
@@ -96,23 +147,26 @@ impl NumberedSquares {
         }
     }
 
-    /// Shows the original drawing
-    pub fn draw_grid(&mut self, ui: &mut egui::Ui) -> Response {
-        // Setup
-        let (response, painter) =
-            ui.allocate_painter(ui.available_size_before_wrap(), Sense::click());
-        let to_screen = emath::RectTransform::from_to(
-            Rect::from_min_size(Pos2::ZERO, response.rect.square_proportions()),
-            response.rect,
-        );
-
-        // Push shapes to painter
-        painter.extend(
-            self.grid
-                .shapes(self.grid.size(), &to_screen, 1., Color32::KHAKI, true),
-        );
-
-        response
+    fn draw_debug_info(&self, ui: &mut egui::Ui) {
+        // debug info in top bar
+        ui.horizontal(|ui| {
+            ui.label(format!("Sequence: {:?}", self.answers.sequence));
+            ui.label(format!("Reponse: {:?}", self.answers.response));
+            ui.label(format!("Stage: {:?}", self.stage));
+            ui.add_space(10.0);
+            ui.label(format!(
+                "Challenge timer: {:?}",
+                self.challenge_timer.remaining().to_string()
+            ));
+            ui.label(format!(
+                "Response timer: {:?}",
+                self.response_timer.remaining().to_string()
+            ));
+            ui.label(format!(
+                "Result timer: {:?}",
+                self.result_timer.remaining().to_string()
+            ));
+        });
     }
 }
 
@@ -147,11 +201,11 @@ impl Exercise for NumberedSquares {
             .collapsible(false);
 
         // If we aren't showing the menu or the finished screen, we're in a session.
-        match self.status {
-            ExerciseStatus::None => {
+        match self.stage {
+            ExerciseStage::None => {
                 window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
-            ExerciseStatus::Finished => {
+            ExerciseStage::Finished => {
                 window.show(ctx, |ui| self.finished_screen(ui));
             }
             _ => {
@@ -161,7 +215,7 @@ impl Exercise for NumberedSquares {
             }
         };
 
-        if self.status != ExerciseStatus::None {}
+        if self.stage != ExerciseStage::None {}
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
@@ -181,7 +235,10 @@ impl Exercise for NumberedSquares {
         let mut func = |i| {
             self.seq_length = i;
             self.evaluation.start();
-            self.status = ExerciseStatus::Challenge;
+            self.gen_sequence();
+            self.stage = ExerciseStage::Challenge;
+            self.challenge_timer
+                .set(Duration::try_milliseconds(self.challenge_ms).unwrap_or_default())
         };
 
         ui.columns(2, |col| {
@@ -205,7 +262,14 @@ impl Exercise for NumberedSquares {
         });
     }
 
-    fn session(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
+    fn session(&mut self, ui: &mut egui::Ui, appdata: &AppData, _: &mut Tts) {
+        // Always check progression
+        self.progressor();
+
+        if appdata.debug {
+            self.draw_debug_info(ui);
+        };
+
         // session menu bar
         ui.horizontal(|ui| {
             if ui.button("Close").clicked() {
@@ -221,8 +285,14 @@ impl Exercise for NumberedSquares {
             ));
         });
 
-        egui::Frame::canvas(ui.style()).show(ui, |ui| self.draw_grid(ui));
-        if self.status == ExerciseStatus::Challenge {}
-        if self.status == ExerciseStatus::Response {}
+        // Draw grid
+        egui::Frame::dark_canvas(ui.style()).show(ui, |ui| {
+            if appdata.debug {
+                self.draw_debug(ui);
+                return;
+            }
+
+            self.draw_session(ui);
+        });
     }
 }

@@ -1,7 +1,5 @@
-use std::collections::HashMap;
+use egui::{emath::RectTransform, Color32, Pos2, Shape, Stroke};
 
-use egui::{emath::RectTransform, epaint::CircleShape, pos2, Color32, Pos2, Shape, Stroke};
-use log::debug;
 use serde::{Deserialize, Serialize};
 
 /// A puzzle is a collection of lines on a grid in normalized (0.0 - 1.0) coordinates.

@@ -37,7 +37,7 @@ impl super::SpatialDrawing {
         );
 
         painter.extend(puzzle.shapes(&to_screen, 6., Color32::KHAKI));
-        painter.extend(self.puzzle_grid.shapes(
+        painter.extend(self.puzzle_grid.draw_shapes(
             puzzle.size(),
             &to_screen,
             0.05,
@@ -53,7 +53,7 @@ impl super::SpatialDrawing {
         debug!("Starting spatial puzzle.");
         self.puzzle = puzzle.to_owned();
         self.state = SessionStatus::Exercising;
-        self.puzzle_grid = Grid::new(puzzle.size());
+        self.puzzle_grid = Grid::new();
     }
 
     /// Pick a puzzle and edit it.
@@ -132,7 +132,7 @@ impl super::SpatialDrawing {
                         ui.end_row();
                     }
 
-                    for i in 5..=7 {
+                    for i in 6..=8 {
                         ui.vertical_centered_justified(|ui| {
                             ui.label(format!("Add a {i} by {i} puzzle.", i = i));
                             Frame::dark_canvas(ui.style()).show(ui, |ui| {

@@ -51,7 +51,7 @@ impl<T> Evaluation<T> {
 
     /// Set duration from number of seconds.
     pub fn set_duration_secs(&mut self, secs: i64) {
-        self.duration = Duration::seconds(secs);
+        self.duration = Duration::try_seconds(secs).unwrap_or_default();
     }
 
     /// Set required number of repetitions.

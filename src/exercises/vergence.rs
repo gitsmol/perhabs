@@ -45,7 +45,7 @@ impl Default for Vergence {
         Self {
             anaglyph: Anaglyph::default(),
             calibrating: false,
-            evaluation: Evaluation::new(Duration::seconds(60), 60),
+            evaluation: Evaluation::new(Duration::try_seconds(60).unwrap_or_default(), 60),
             session: Session::default(),
             step: 0,
         }

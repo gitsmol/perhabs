@@ -76,17 +76,17 @@ pub fn eval_config_widgets(
         ui.horizontal(|ui| {
             if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button("Short")
             ).clicked() {
-                *duration = Duration::seconds(duration_range_secs[0]);
+                *duration = Duration::try_seconds(duration_range_secs[0]).unwrap_or_default();
                 *reps = rep_range[0];
             };
             if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button("Medium")
             ).clicked() {
-                *duration = Duration::seconds(duration_range_secs[1] / 2);
+                *duration = Duration::try_seconds(duration_range_secs[1] / 2).unwrap_or_default();
                 *reps = rep_range[1] / 2;
             };
             if ui.add_sized(vec2(60., 30.), |ui: &mut egui::Ui| ui.button("Long")
             ).clicked() {
-                *duration = Duration::seconds(duration_range_secs[1]);
+                *duration = Duration::try_seconds(duration_range_secs[1]).unwrap_or_default();
                 *reps = rep_range[1];
             };
         });
@@ -99,9 +99,9 @@ pub fn eval_config_widgets(
                 circle_mut_duration(
                     ui,
                     duration,
-                    &Duration::seconds(1),
-                    &Duration::seconds(duration_range_secs[0]),
-                    &Duration::seconds(duration_range_secs[1]),
+                    &Duration::try_seconds(1).unwrap_or_default(),
+                    &Duration::try_seconds(duration_range_secs[0]).unwrap_or_default(),
+                    &Duration::try_seconds(duration_range_secs[1]).unwrap_or_default(),
                     &String::from("Duration"),
                     125.,
                     Color32::DARK_BLUE,

@@ -1,43 +1,40 @@
 use std::collections::HashMap;
 
 use egui::{
-    emath::{self, RectTransform},
+    emath::RectTransform,
     epaint::{CircleShape, RectShape},
-    pos2, vec2, Color32, Pos2, Rect, Response, Rounding, Sense, Shape,
+    pos2, vec2, Color32, Pos2, Rect, Rounding, Shape,
 };
 
 /// A struct containing a hashmap of the positions of circles guiding a drawing exercise.
 /// The coordinates to the circles are stored in two nested vectors in X, Y order.
 /// The hashmap starts out empty. The positions for a given key (grid size) are calculated
 /// on demand and thereafter read from the hashmap.
+///
+/// The positions calculated are the intersections ('crossings') on a grid. For most
+/// purposes, they can practically be used as the centers of a square *between* gridlines.
 pub struct Grid {
-    size: usize,
     positions: HashMap<usize, Vec<Vec<Pos2>>>,
 }
 
 impl Grid {
     /// Create guide circles on an evenly spaced grid of given size.
-    pub fn new(size: usize) -> Self {
+    pub fn new() -> Self {
         Self {
             positions: HashMap::new(),
-            size,
         }
     }
 
-    pub fn size(&self) -> usize {
-        self.size
-    }
-
-    fn gen_positions(&self, grid_size: usize) -> Vec<Vec<Pos2>> {
+    /// Generate the positions of the crossings on the grid as normalized coordinates
+    /// So the top-left crossing would be at (0.0, 0.0). The next one at (0.1, 0.1) etc...
+    /// To draw to screen, use a [`RectTransform`] to find the correct scaling of the
+    /// normalized values.
+    fn gen_coords(&self, grid_size: usize) -> Vec<Vec<Pos2>> {
         let mut rows_pos = vec![];
         let mut cols_pos = vec![];
 
-        // Add 1 to row and column to account for skipping the first and the last ones.
-        // Counting from zero compensates for the first one we skip.
-        // The first and last are skipped because they would be exactly on the edges
-        // of the coordinate system, having x or y of 0 or 1.
-        let rows = grid_size + 1;
-        let columns = grid_size + 1;
+        let rows = grid_size;
+        let columns = grid_size;
 
         for i in 0..rows {
             let x: f32 = i as f32 / rows as f32;
@@ -56,24 +53,24 @@ impl Grid {
         rows_pos
     }
 
-    fn get_positions(&mut self, grid_size: usize) -> Vec<Vec<Pos2>> {
+    /// Tries to get all crossing coordinates for the grid
+    pub fn get_all_coords(&mut self, grid_size: usize) -> Vec<Vec<Pos2>> {
         // Can we find the positions for the given grid size?
         match self.positions.get(&grid_size) {
-            // Yes, calculate shapes.
+            // Yes, return positions
             Some(positions) => positions.to_owned(),
             // No, calculate positions first, then retry.
             None => {
-                debug!("Calculating PuzzleGrid positions for size {}", grid_size);
-                self.positions
-                    .insert(grid_size, self.gen_positions(grid_size));
-                self.get_positions(grid_size)
+                debug!("Calculating `Grid` positions for size {}", grid_size);
+                self.positions.insert(grid_size, self.gen_coords(grid_size));
+                self.get_all_coords(grid_size)
             }
         }
     }
 
-    /// Retrieve the (normalized) coordinates of a circle's center.
+    /// Retrieve the (normalized) coordinates of a crossing on the grid.
     pub fn get_coordinate(&mut self, grid_size: usize, column: usize, row: usize) -> Option<Pos2> {
-        let positions = self.get_positions(grid_size);
+        let positions = self.get_all_coords(grid_size);
         if let Some(row) = positions.get(row) {
             if let Some(coord) = row.get(column) {
                 return Some(coord.to_owned());
@@ -82,18 +79,17 @@ impl Grid {
         None
     }
 
-    /// Check if a given coordinate matches a guide circle and
-    /// return a reference to that circle's position.
-    pub fn match_coords(&self, grid_size: usize, coord: Pos2) -> Option<&Pos2> {
+    /// Check if a given coordinate matches a crossing and return a ref to that coord.
+    /// The given tolerance determines how far from the center of the crossing the match
+    /// will still be considered valid.
+    pub fn match_coords(&self, grid_size: usize, coord: Pos2, tolerance: f32) -> Option<&Pos2> {
         if let Some(positions) = self.positions.get(&grid_size) {
-            // Set 1% tolerance (ie how big is the clickable square)
-            let tolerance = 0.01;
             for row in positions {
                 for pos in row {
-                    if coord.x - tolerance < pos.x && coord.x + tolerance > pos.x {
-                        if coord.y - tolerance < pos.y && coord.y + tolerance > pos.y {
-                            return Some(pos);
-                        }
+                    let in_bound_x = (coord.x - tolerance..=coord.x + tolerance).contains(&pos.x);
+                    let in_bound_y = (coord.y - tolerance..=coord.y + tolerance).contains(&pos.y);
+                    if in_bound_x && in_bound_y {
+                        return Some(pos);
                     }
                 }
             }
@@ -101,17 +97,19 @@ impl Grid {
         None
     }
 
-    /// Calculate shapes for the given grid size. If the given grid size is not already
-    /// stored in the positions hashmap, add the positions and recurse into this function
+    /// Recursive function that calculates shapes for the given grid size. If the given
+    /// grid size is not already stored in the positions hashmap, add the positions and
+    /// recurse into this function.
+    ///
     /// The default shape is a circle. Setting squircle to true generates squircle shapes.
     /// # Arguments
     ///
-    /// * `grid_size` - The size of the grid for which to shapes.
+    /// * `grid_size` - The size of the grid for which to draw shapes.
     /// * `screen` - A transformation that maps normalized coordinates to screen coordinates.
     /// * `rel_size` - The relative size of the squircles as a fraction of 1 (1 = 100%)
     /// * `color` - The color of the squircles.
     /// * `squircle` - Make the shape a squircle. Defaults to false.
-    pub fn shapes(
+    pub fn draw_shapes(
         &mut self,
         grid_size: usize,
         screen: &RectTransform,
@@ -155,11 +153,39 @@ impl Grid {
             }
             // No, calculate positions first, then retry.
             None => {
-                debug!("Calculating PuzzleGrid positions for size {}", grid_size);
-                self.positions
-                    .insert(grid_size, self.gen_positions(grid_size));
-                self.shapes(grid_size, screen, rel_size, color, squircle)
+                debug!("Calculating grid positions for size {}", grid_size);
+                self.positions.insert(grid_size, self.gen_coords(grid_size));
+                self.draw_shapes(grid_size, screen, rel_size, color, squircle)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_gen_coords_2x2() {
+        let grid = Grid::new();
+        let coords = grid.gen_coords(2);
+        assert_eq!(coords.len(), 2);
+        assert_eq!(coords[0].len(), 2);
+        assert_eq!(coords[0][0], pos2(0.333333333, 0.3333333333));
+    }
+
+    #[test]
+    fn test_gen_coords_3x3() {
+        // [0] = x
+        // [1] = y
+        let grid = Grid::new();
+        let coords = grid.gen_coords(3);
+        assert_eq!(coords.len(), 3);
+        assert_eq!(coords[0].len(), 3);
+        assert_eq!(coords[1].len(), 3);
+        assert_eq!(coords[0][0], pos2(0.25, 0.25));
+        assert_eq!(coords[0][1], pos2(0.25, 0.5));
+        assert_eq!(coords[1][0], pos2(0.5, 0.25));
+        assert_eq!(coords[1][1], pos2(0.5, 0.5));
     }
 }

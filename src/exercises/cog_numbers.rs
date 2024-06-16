@@ -7,7 +7,7 @@ use rand::prelude::*;
 
 use tts::{self, Tts};
 
-use super::{numvec_to_string, ExerciseStatus};
+use super::{numvec_to_string, ExerciseStage};
 
 struct Answers {
     sequence: String,
@@ -29,7 +29,7 @@ impl Default for Answers {
 /// Sequences
 pub struct CogNumbers {
     seq_length: usize,
-    session: ExerciseStatus,
+    session: ExerciseStage,
     answers: Answers,
     evaluation: Evaluation<bool>,
 }
@@ -39,8 +39,8 @@ impl Default for CogNumbers {
         Self {
             answers: Answers::default(),
             seq_length: 4,
-            session: ExerciseStatus::None,
-            evaluation: Evaluation::new(Duration::seconds(240), 10),
+            session: ExerciseStage::None,
+            evaluation: Evaluation::new(Duration::try_seconds(240).unwrap_or_default(), 10),
         }
     }
 }
@@ -50,18 +50,18 @@ impl CogNumbers {
     fn progressor(&mut self) {
         // end exercise when evaluation is finished.
         if self.evaluation.is_finished() {
-            self.session = ExerciseStatus::Finished;
+            self.session = ExerciseStage::Finished;
         };
     }
 
     fn next(&mut self, tts: &mut tts::Tts) {
         match self.session {
-            ExerciseStatus::Challenge => {
+            ExerciseStage::Challenge => {
                 self.evaluation.add_result(true);
-                self.session = ExerciseStatus::Result;
+                self.session = ExerciseStage::Result;
             }
-            ExerciseStatus::Result => {
-                self.session = ExerciseStatus::Challenge;
+            ExerciseStage::Result => {
+                self.session = ExerciseStage::Challenge;
                 self.pick_sequence();
                 self.say(tts);
             }
@@ -161,10 +161,10 @@ Try to rearrange the numbers and work your brain!"
             .collapsible(false);
 
         match self.session {
-            ExerciseStatus::None => {
+            ExerciseStage::None => {
                 window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
-            ExerciseStatus::Finished => {
+            ExerciseStage::Finished => {
                 window.show(ctx, |ui| self.finished_screen(ui));
             }
             _ => {
@@ -175,7 +175,7 @@ Try to rearrange the numbers and work your brain!"
             }
         };
 
-        if self.session != ExerciseStatus::None {}
+        if self.session != ExerciseStage::None {}
     }
 
     fn ui(&mut self, ui: &mut egui::Ui, _: &AppData, _: &mut Tts) {
@@ -195,7 +195,7 @@ Try to rearrange the numbers and work your brain!"
         let mut func = |i| {
             self.seq_length = i;
             self.evaluation.start();
-            self.session = ExerciseStatus::Result;
+            self.session = ExerciseStage::Result;
         };
 
         ui.columns(2, |col| {
@@ -237,7 +237,7 @@ Try to rearrange the numbers and work your brain!"
         });
 
         ui.vertical_centered(|ui| {
-            if self.session == ExerciseStatus::Result {
+            if self.session == ExerciseStage::Result {
                 ui.add_space(spacer * 4.);
 
                 ui.label("Sentence");
@@ -257,7 +257,7 @@ Try to rearrange the numbers and work your brain!"
                 ui.add_space(spacer);
             };
 
-            if self.session == ExerciseStatus::Challenge {
+            if self.session == ExerciseStage::Challenge {
                 ui.add_space(spacer * 4.);
                 ui.label("Try to reorder the numbers in your head.\nPress repeat (enter) to hear the numbers again.");
                 ui.add_space(spacer * 9.);

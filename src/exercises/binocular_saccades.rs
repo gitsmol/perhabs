@@ -15,11 +15,11 @@ use chrono::Duration;
 use egui::{pos2, vec2, Align, Frame, Key, Pos2, Vec2};
 use rand::{seq::SliceRandom, Rng};
 
-use super::ExerciseStatus;
+use super::ExerciseStage;
 
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct BinoSaccades {
-    session_status: ExerciseStatus,
+    session_status: ExerciseStage,
     anaglyph: Anaglyph,
     anaglyph_pos: Option<Pos2>,
     offset_variation: isize,
@@ -33,7 +33,7 @@ pub struct BinoSaccades {
 impl Default for BinoSaccades {
     fn default() -> Self {
         Self {
-            session_status: ExerciseStatus::None,
+            session_status: ExerciseStage::None,
             anaglyph: Anaglyph::default(),
             anaglyph_pos: None,
             offset_variation: 0,
@@ -111,12 +111,12 @@ impl BinoSaccades {
 
         // When the evaluation time is up or number of reps is reached, stop immediately.
         if self.evaluation.is_finished() {
-            self.session_status = ExerciseStatus::Finished;
+            self.session_status = ExerciseStage::Finished;
         }
 
         match self.session_status {
             // This exercise is always in response mode.
-            ExerciseStatus::Response => {
+            ExerciseStage::Response => {
                 // Setup and display answer
                 // If no anaglyph is visible, create new anaglyph and set answer timeout timer
                 if let None = self.answer {
@@ -255,11 +255,11 @@ impl Exercise for BinoSaccades {
 
         match self.session_status {
             // Default shows the menu
-            ExerciseStatus::None => {
+            ExerciseStage::None => {
                 menu_window.show(ctx, |ui| self.ui(ui, appdata, tts));
             }
             // After an evaluation show the review
-            ExerciseStatus::Finished => {
+            ExerciseStage::Finished => {
                 menu_window.show(ctx, |ui| self.finished_screen(ui));
             }
             // Any other status means we are in session.
@@ -317,7 +317,7 @@ impl Exercise for BinoSaccades {
             self.anaglyph.initialize();
             self.anaglyph.pixel_size = exercise.pixel_size;
             self.offset_variation = exercise.step;
-            self.session_status = ExerciseStatus::Response;
+            self.session_status = ExerciseStage::Response;
             self.evaluation.start();
         };
 

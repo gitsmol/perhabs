@@ -54,7 +54,7 @@ impl super::SpatialDrawing {
             };
             painter.extend(exercise_shapes);
         }
-        painter.extend(self.puzzle_grid.shapes(
+        painter.extend(self.puzzle_grid.draw_shapes(
             self.puzzle.size(),
             &to_screen,
             0.07,
@@ -87,7 +87,7 @@ impl super::SpatialDrawing {
 
         // Push shapes to painter
         painter.extend(self.puzzle.shapes(&to_screen, 10., Color32::KHAKI));
-        painter.extend(self.puzzle_grid.shapes(
+        painter.extend(self.puzzle_grid.draw_shapes(
             self.puzzle.size(),
             &to_screen,
             0.07,

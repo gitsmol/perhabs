@@ -64,7 +64,7 @@ impl Default for SpatialDrawing {
     fn default() -> Self {
         Self {
             state: SessionStatus::Selecting,
-            puzzle_grid: Grid::new(0),
+            puzzle_grid: Grid::new(),
             puzzle_edit_list: vec![],
             puzzle: SpatialPuzzle::new(5),
             puzzle_transform: Transformation::RightTilt,
