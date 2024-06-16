@@ -152,13 +152,13 @@ impl NumberedSquares {
             painter.add(RectShape::filled(
                 bg_rect,
                 Rounding::same(3.0),
-                Color32::from_white_alpha(10),
+                Color32::from_black_alpha(200),
             ));
             if self.evaluate_response() {
                 ui.painter().text(
                     bg_rect.center(),
                     Align2::CENTER_BOTTOM,
-                    "{U+2713}",
+                    "\u{2714}",
                     FontId::proportional(50.),
                     Color32::GREEN,
                 );
@@ -166,7 +166,7 @@ impl NumberedSquares {
                 ui.painter().text(
                     bg_rect.center(),
                     Align2::CENTER_BOTTOM,
-                    "{U+2713}",
+                    "\u{2716}",
                     FontId::proportional(50.),
                     Color32::RED,
                 );

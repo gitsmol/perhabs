@@ -48,7 +48,7 @@ impl Default for NumberedSquares {
             response_ms: 10_000,
             response_timer: Timer::new(),
             result_timer: Timer::new(),
-            result_ms: 5000,
+            result_ms: 2000,
             evaluation: Evaluation::new(Duration::try_seconds(240).unwrap_or_default(), 10),
         }
     }
@@ -75,7 +75,9 @@ impl NumberedSquares {
             }
             // Allowing user input
             ExerciseStage::Response => {
-                if self.response_timer.is_finished() {
+                let go_next = self.response_timer.is_finished()
+                    || self.answers.response.len() == self.answers.sequence.len();
+                if go_next {
                     self.response_timer.reset();
                     self.result_timer
                         .set(Duration::try_milliseconds(self.result_ms).unwrap_or_default());
@@ -291,7 +293,6 @@ impl Exercise for NumberedSquares {
                 self.draw_debug(ui);
                 return;
             }
-
             self.draw_session(ui);
         });
     }
