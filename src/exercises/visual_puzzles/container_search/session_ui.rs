@@ -1,13 +1,15 @@
 use egui::{
     emath,
-    epaint::{CircleShape, RectShape},
-    pos2, vec2, Align2, Color32, FontId, Pos2, Rect, Response, Rounding, Sense,
+    epaint::{CircleShape, CubicBezierShape, QuadraticBezierShape, RectShape},
+    pos2, vec2, Align2, Color32, FontId, Mesh, Pos2, Rect, Response, Rounding, Sense, Shape,
+    Stroke,
 };
 
 use crate::exercises::ExerciseStage;
 
 use super::ContainerSearch;
 
+const SECRET_COLOR: Color32 = Color32::LIGHT_YELLOW;
 const UNOPENED_COLOR: Color32 = Color32::DARK_GREEN;
 const OPENED_COLOR: Color32 = Color32::LIGHT_GRAY;
 const RESULT_BG_COLOR: Color32 = Color32::from_black_alpha(200);
@@ -57,7 +59,7 @@ impl ContainerSearch {
         }
 
         for pos in &self.containers.opened {
-            painter.add(self.create_rect_shape(pos, OPENED_COLOR, to_screen, abs_size));
+            painter.add(self.create_opened_box_shape(pos, OPENED_COLOR, to_screen, abs_size));
         }
     }
 
@@ -94,6 +96,47 @@ impl ContainerSearch {
         ))
     }
 
+    fn create_opened_box_shape(
+        &self,
+        pos: &Pos2,
+        color: Color32,
+        to_screen: &emath::RectTransform,
+        abs_size: f32,
+    ) -> Vec<Shape> {
+        let rect = Rect::from_center_size(to_screen * *pos, vec2(abs_size, abs_size));
+        let outer_shape = egui::Shape::Rect(RectShape::filled(
+            rect,
+            Rounding::same(abs_size * ROUNDING_FACTOR),
+            color,
+        ));
+        let mut shapes: Vec<Shape> = vec![outer_shape];
+
+        let depth = abs_size * 0.2;
+        let stroke = Stroke::new(1.0, Color32::from_black_alpha(50));
+
+        let left_top_inside = rect.left_top() + vec2(depth, depth);
+        let left_bottom_inside = rect.left_bottom() + vec2(depth, -depth);
+        let right_top_inside = rect.right_top() - vec2(depth, -depth);
+        let right_bottom_inside = rect.right_bottom() - vec2(depth, depth);
+
+        let lines = [
+            Shape::line_segment([rect.left_top(), left_top_inside], stroke),
+            Shape::line_segment([rect.left_bottom(), left_bottom_inside], stroke),
+            Shape::line_segment([rect.right_top(), right_top_inside], stroke),
+            Shape::line_segment([rect.right_bottom(), right_bottom_inside], stroke),
+        ];
+
+        let inside_rect = RectShape::filled(
+            Rect::from_two_pos(left_top_inside, right_bottom_inside),
+            Rounding::ZERO,
+            Color32::from_black_alpha(50),
+        );
+        shapes.push(Shape::Rect(inside_rect));
+
+        shapes.extend(lines);
+        shapes
+    }
+
     fn draw_result(
         &self,
         painter: &egui::Painter,
@@ -106,6 +149,14 @@ impl ContainerSearch {
             Rounding::same(3.0),
             RESULT_BG_COLOR,
         ));
+
+        // draw secrets
+        let shape = CircleShape::filled(
+            to_screen * self.containers.secret,
+            self.calculate_abs_size(to_screen) / 4.,
+            SECRET_COLOR,
+        );
+        painter.add(shape);
 
         if let Some(result) = self.round_score.last() {
             let (symbol, color) = match result {

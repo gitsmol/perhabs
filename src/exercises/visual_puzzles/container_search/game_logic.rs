@@ -54,14 +54,14 @@ impl ContainerSearch {
         };
     }
 
-    /// Evaluate response, store result, move on to next move
+    /// Prepare next round within the current challenge
     fn next_round(&mut self) {
         self.containers.reset_opened();
         self.gen_secret();
         self.stage = ExerciseStage::Response;
     }
 
-    /// Evaluate response, store result, move on to next challenge
+    /// Clean up and move on to next challenge
     fn next_challenge(&mut self) {
         self.round_score.clear();
         self.containers.clear();
@@ -79,9 +79,14 @@ impl ContainerSearch {
             return;
         }
 
+        // We opened an empty container: keep going
+        self.containers.unopened.retain(|f| f != pos);
+        self.containers.opened.push(*pos);
+
         // This container contains an already found secret: fail
         if self.containers.found_secrets.contains(pos) {
             self.evaluation.add_result((self.num_containers, false));
+            self.round_score.push(false);
             self.stage = ExerciseStage::Result;
             self.result_timer
                 .set(Duration::try_milliseconds(self.result_ms).unwrap_or_default());
@@ -102,9 +107,5 @@ impl ContainerSearch {
                 .set(Duration::try_milliseconds(self.result_ms).unwrap_or_default());
             return;
         };
-
-        // We opened an empty container: keep going
-        self.containers.unopened.retain(|f| f != pos);
-        self.containers.opened.push(*pos);
     }
 }
