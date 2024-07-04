@@ -1,11 +1,4 @@
-use crate::{
-    exercises::{
-        BinoSaccades, CogNumbers, CogWords, DepthPerception, EpisodicMemory, NumSeq,
-        NumberedSquares, SpatialDrawing, Vergence, VisRecognition, VisSaccades, VisualAlignment,
-    },
-    shared::AppData,
-    widgets::menu_button,
-};
+use crate::{exercises::*, shared::AppData, widgets::menu_button};
 
 use egui::vec2;
 use tts::Tts;
@@ -33,7 +26,7 @@ impl Default for SessionManager {
                 Box::new(VisRecognition::default()),
                 Box::new(VisSaccades::default()),
                 Box::new(NumberedSquares::default()),
-                // Box::new(SpatialHearing::default()),
+                Box::new(ContainerSearch::default()), // Box::new(SpatialHearing::default()),
             ],
             open: None,
         }

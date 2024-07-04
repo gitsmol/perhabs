@@ -12,7 +12,7 @@ fn format_min_secs(duration: &Duration) -> String {
     format!("{}:{:02}", mins, secs)
 }
 
-/// Circle to display and alter a duration.
+/// Circle to display and alter an integer.
 /// Senses both clicks and drags.
 /// When dragged, changes the given integer by another integer (change_by).
 /// Performs bounds checking: won't change value beyond given min or max.
@@ -99,7 +99,7 @@ pub fn circle_mut_integer<T: Integer + ToPrimitive + Copy>(
         // *************
         // Create galley for data
         let value_string = {
-            if let Some(int) = value.to_usize() {
+            if let Some(int) = value.to_isize() {
                 String::from(format!("{}", int))
             } else {
                 String::from("Num err")

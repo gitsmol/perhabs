@@ -3,7 +3,7 @@ use egui::{
     Sense,
 };
 
-use crate::{exercises::ExerciseStage, shared::AppData};
+use crate::exercises::ExerciseStage;
 
 use super::NumberedSquares;
 
@@ -67,7 +67,6 @@ impl NumberedSquares {
 
         // Show quad position
         // highlighting
-        let clickable_area_size = 1.0 / self.grid_size as f32;
         let rect = Rect::from_center_size(pointer_pos, vec2(abs_size, abs_size));
         painter.debug_rect(rect, Color32::RED, format!("{:?}", canvas_pos));
 

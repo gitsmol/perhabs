@@ -23,7 +23,7 @@ pub use spatial_drawing::SpatialDrawing;
 pub use spatial_hearing::SpatialHearing;
 pub use vergence::Vergence;
 pub use visual_alignment::VisualAlignment;
-pub use visual_puzzles::NumberedSquares;
+pub use visual_puzzles::{ContainerSearch, NumberedSquares};
 pub use visual_recognition::VisRecognition;
 pub use visual_saccades::VisSaccades;
 

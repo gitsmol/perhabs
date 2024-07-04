@@ -164,6 +164,34 @@ impl<T> Evaluation<T> {
 // Calculating scores
 // ***********
 
+impl Evaluation<(usize, bool)> {
+    pub fn average_score(&self) -> f32 {
+        // Calculate average score.
+        let mut total_score = 0.0;
+        for r in self.show_results() {
+            match r.1 {
+                true => total_score += 1.0,
+                false => (),
+            }
+        }
+        total_score / self.show_results().len() as f32
+    }
+
+    pub fn max_difficulty(&self) -> usize {
+        self.show_results()
+            .iter()
+            .map(|f| f.0)
+            .max()
+            .unwrap_or_default()
+    }
+
+    pub fn mean_difficulty(&self) -> usize {
+        // Calculate average score.
+        let total_score: usize = self.show_results().iter().map(|f| f.0).sum();
+        total_score / self.show_results().len()
+    }
+}
+
 impl Evaluation<bool> {
     pub fn average_score(&self) -> f32 {
         // Calculate average score.
