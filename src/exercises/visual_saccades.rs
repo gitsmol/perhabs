@@ -4,6 +4,7 @@ use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::widgets::{self};
+use crate::wm::ExerciseType;
 use crate::{
     wm::Exercise,
     {shared::Evaluation, shared::Timer},
@@ -226,6 +227,10 @@ impl Exercise for VisSaccades {
 
     fn help(&self) -> &'static str {
         "This exercise will display arrows pointing in different directions. Quickly respond by entering the corresponding arrow on your keyboard."
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive, ExerciseType::Visual]
     }
 
     fn reset(&mut self) {

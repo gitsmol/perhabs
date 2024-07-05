@@ -1,6 +1,6 @@
 use crate::shared::{AppData, Evaluation, Timer};
 use crate::widgets::{self, menu_button};
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 use chrono::Duration;
 
 use egui::Pos2;
@@ -183,6 +183,10 @@ impl Exercise for NumberedSquares {
 
     fn help(&self) -> &'static str {
         "Todo!"
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive, ExerciseType::Visual]
     }
 
     fn reset(&mut self) {

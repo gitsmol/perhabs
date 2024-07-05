@@ -1,6 +1,6 @@
 use crate::shared::{AppData, Evaluation};
 use crate::widgets::{self, menu_button};
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 use chrono::Duration;
 use egui::{vec2, Align, RichText, Vec2};
 use rand::prelude::*;
@@ -142,6 +142,10 @@ Each string of numbers will be shown in full, alongside with
 - the numbers ordered large to small
 
 Try to rearrange the numbers and work your brain!"
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive]
     }
 
     fn reset(&mut self) {

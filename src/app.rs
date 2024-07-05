@@ -229,7 +229,7 @@ impl eframe::App for Perhabs {
             self.tools.windows(ctx, &self.appdata, &mut self.tts);
 
             // Show the session menu or an active session if present
-            if self.sessionman.open.is_some() {
+            if self.sessionman.open_session.is_some() {
                 self.sessionman
                     .session_show(ctx, &self.appdata, &mut self.tts);
                 return;
@@ -314,10 +314,10 @@ impl Perhabs {
             ui.toggle_value(&mut self.show_about, "About");
 
             // Only show quit when a session is active.
-            if let Some(session_name) = self.sessionman.open {
+            if let Some(session_name) = self.sessionman.open_session {
                 ui.add_space(ui.available_width() - 85.);
                 if ui.button("\u{2386} Quit session").clicked() {
-                    self.sessionman.open = None;
+                    self.sessionman.open_session = None;
                     // Reset the session on close
                     for session in &mut self.sessionman.sessions {
                         if session.name() == session_name {
@@ -343,7 +343,7 @@ impl Perhabs {
             .movable(false)
             .collapsible(false)
             .show(ctx, |ui| {
-                self.sessionman.buttons_cols(ui);
+                self.sessionman.exercise_buttons_cols(ui);
             });
     }
 
@@ -353,7 +353,7 @@ impl Perhabs {
         ui.add_space(10.);
         ScrollArea::new([false, true])
             .drag_to_scroll(true)
-            .show(ui, |ui| self.sessionman.buttons(ui));
+            .show(ui, |ui| self.sessionman.exercise_buttons(ui));
     }
 
     fn about_screen(&mut self, ctx: &egui::Context) {

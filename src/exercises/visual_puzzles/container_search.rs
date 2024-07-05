@@ -1,6 +1,6 @@
 use crate::shared::{AppData, Evaluation, Timer};
 use crate::widgets::{self, menu_button};
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 use chrono::Duration;
 
 mod containers;
@@ -90,6 +90,10 @@ impl Exercise for ContainerSearch {
 
     fn help(&self) -> &'static str {
         "You are presented with a number of boxes. In one of the boxes is a secret. If you find the secret, the boxes close again. It is now forbidden to click the box containing the secret you found. A new secret is hidden in one of the boxes. You must find it! Repeat this until all boxes contain a secret you found."
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive, ExerciseType::Visual]
     }
 
     fn reset(&mut self) {

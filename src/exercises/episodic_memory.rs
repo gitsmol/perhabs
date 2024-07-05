@@ -1,7 +1,7 @@
 use crate::shared::asset_loader::sentences::Sentences;
 use crate::shared::{asset_loader, AppData};
 use crate::widgets::{loading_bar_vertical, loading_screen, menu_button};
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 use egui::{vec2, Align, Color32, RichText, TextEdit, Vec2};
 use tts::{self, Tts};
 
@@ -120,6 +120,10 @@ impl Exercise for EpisodicMemory {
 
     fn help(&self) -> &'static str {
         "This exercise will ask you different questions about things in your past. Try to recall as much as you can to answer the questions."
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive]
     }
 
     fn reset(&mut self) {

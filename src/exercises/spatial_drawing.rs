@@ -4,7 +4,10 @@ mod exercise;
 pub mod painters;
 mod selector;
 
-use crate::{shared::AppData, wm::Exercise};
+use crate::{
+    shared::AppData,
+    wm::{Exercise, ExerciseType},
+};
 
 use self::painters::SpatialPuzzle;
 
@@ -146,6 +149,10 @@ impl Exercise for SpatialDrawing {
 
     fn help(&self) -> &'static str {
         ""
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive, ExerciseType::Visual]
     }
 
     fn reset(&mut self) {

@@ -7,6 +7,7 @@ use crate::shared::AppData;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::widgets::{self};
+use crate::wm::ExerciseType;
 use crate::{
     wm::Exercise,
     {shared::Evaluation, shared::Timer},
@@ -240,6 +241,10 @@ impl Exercise for BinoSaccades {
 
     fn reset(&mut self) {
         *self = Default::default();
+    }
+
+    fn excercise_type(&self) -> Vec<crate::wm::ExerciseType> {
+        vec![ExerciseType::Visual]
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut tts::Tts) {

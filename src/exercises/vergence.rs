@@ -14,6 +14,7 @@ use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::wm::Exercise;
 
 use crate::shared::Anaglyph;
+use crate::wm::ExerciseType;
 
 struct Session {
     active: bool,
@@ -194,6 +195,10 @@ impl Exercise for Vergence {
         "This excercise shows a square. Inside the square is a diamond. Press the arrow key to indicate where you see the diamond in the square: left, right, up or down.
 
         The exercise will get harder as you give more correct answers."
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Visual]
     }
 
     fn reset(&mut self) {

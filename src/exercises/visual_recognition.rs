@@ -4,6 +4,7 @@ use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
 
+use crate::wm::ExerciseType;
 use crate::{
     wm::Exercise,
     {shared::AppData, shared::Evaluation, shared::Timer},
@@ -261,6 +262,10 @@ impl Exercise for VisRecognition {
 
     fn reset(&mut self) {
         *self = Default::default();
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive, ExerciseType::Visual]
     }
 
     fn help(&self) -> &'static str {

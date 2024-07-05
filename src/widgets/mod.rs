@@ -119,6 +119,8 @@ pub fn circle_with_data(
 /// # Parameters
 /// - `override_size`: When `Some`, determines the size of the button.
 ///                    When `None`, `vec2(ui.available_width(), 100.)` is used.
+/// - `override_color`: When `Some`, determines the color of the button.
+///                     When `None`, `ui.style().interact().bg_fill` is used.
 /// - `label_source`: Text to display as the button label.
 /// - `description_source`: Text to display as the button description.
 pub fn menu_button(

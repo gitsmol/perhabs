@@ -1,7 +1,7 @@
 use crate::shared::asset_loader::sentences::{SentenceFile, Sentences};
 use crate::shared::{asset_loader, AppData};
 use crate::widgets::menu_button;
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 use egui::{vec2, Align, RichText, Vec2};
 use tts::{self, Tts};
 
@@ -222,6 +222,10 @@ Each sentence will be shown in full, alongside with
 - the words ordered alphabetically reversed (Z-A)
 
 Pick your language and work your brain!"
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive]
     }
 
     fn reset(&mut self) {

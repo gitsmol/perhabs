@@ -1,4 +1,4 @@
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 use crate::{exercises::numvec_to_string, shared::AppData};
 use egui::RichText;
 use rand::prelude::*;
@@ -196,6 +196,10 @@ impl Exercise for MultiTasker {
 
     fn help(&self) -> &'static str {
         ""
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive]
     }
 
     fn reset(&mut self) {

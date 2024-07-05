@@ -1,4 +1,7 @@
-use crate::{shared::AppData, wm::Exercise};
+use crate::{
+    shared::AppData,
+    wm::{Exercise, ExerciseType},
+};
 use egui::{vec2, Align, Vec2};
 use rand::prelude::*;
 use tts::Tts;
@@ -59,6 +62,10 @@ impl Exercise for NumSeq {
 
     fn help(&self) -> &'static str {
         "Randomly generate a string of numbers according to simple rules. Then try to calculate and call out each number in your mind."
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Cognitive]
     }
 
     fn reset(&mut self) {

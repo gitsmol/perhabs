@@ -9,7 +9,7 @@ use crate::shared::AnaglyphColor;
 use crate::shared::AppData;
 use crate::shared::Evaluation;
 use crate::widgets;
-use crate::wm::Exercise;
+use crate::wm::{Exercise, ExerciseType};
 
 use super::ExerciseStage;
 
@@ -265,6 +265,10 @@ impl Exercise for VisualAlignment {
 
     fn help(&self) -> &'static str {
         "This excercise tests for the alignment of your eyes. Use the mouse or keyboard to put the circle exactly inside the square. After the exercise is finished, the average (mis)alignment is calculated."
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Visual]
     }
 
     fn reset(&mut self) {

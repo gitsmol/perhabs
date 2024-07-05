@@ -11,6 +11,7 @@ use crate::widgets;
 use crate::widgets::evaluation::eval_config_widgets;
 use crate::widgets::exercise_config_menu::exercise_config_menu;
 use crate::wm::Exercise;
+use crate::wm::ExerciseType;
 
 use self::anaglyph::Anaglyph;
 mod anaglyph;
@@ -152,6 +153,10 @@ impl Exercise for DepthPerception {
         let tmp_color = self.anaglyph.color.clone();
         *self = Default::default();
         self.anaglyph.color = tmp_color;
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Visual]
     }
 
     fn show(&mut self, ctx: &egui::Context, appdata: &AppData, tts: &mut Tts) {

@@ -7,6 +7,7 @@ use crate::shared::Pos3;
 use crate::widgets::evaluation::eval_config_widgets;
 
 use crate::widgets::{self};
+use crate::wm::ExerciseType;
 use crate::{
     wm::Exercise,
     {shared::Evaluation, shared::Timer},
@@ -263,6 +264,10 @@ impl Exercise for SpatialHearing {
 
     fn reset(&mut self) {
         *self = Default::default();
+    }
+
+    fn excercise_type(&self) -> Vec<ExerciseType> {
+        vec![ExerciseType::Auditory]
     }
 
     fn help(&self) -> &'static str {
